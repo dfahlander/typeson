@@ -7,7 +7,8 @@ JSON can only contain simple types. If you want to serialize a complex object, y
 2. Want to persist complex types
 
 # Features
-* Can stringify Dates, RegExps, Errors by default
+* Can stringify Dates, RegExps, Errors by default (will support more times soon...)
+* This library is a single ES5 compliant JS file of 11kb (1.5k minified and gzipped)
 * You can register any type to be stringifyable (serializable)
 * Can handle cyclic references, such as lists of objects where each object has a reference to the list
 * Generated output is always JSON. It will just also add a single "$types" property on the root containing type info related
@@ -84,3 +85,26 @@ Parses Typeson genereted JSON back into the original complex structure again.
 new Typeson().parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
+## register (typeSpec)
+
+### typeSpec
+{TypeName: [tester, encapsulator, reviver]}
+
+### Sample
+
+```js
+var typeson = new Typeson();
+
+typeson.register({
+  DateObject: [
+    x => x instanceof Date, // tester
+    date => date.getTime(), // encapsulator
+    obj => new Date(obj)    // reviver
+  ],
+  RegularExpression: [
+    x = x instanceof RegExp,
+    re => ({source: re.source, flags: re.flags}),
+    o => new RegExp (o.source, o.flags)
+  ]
+});
+```
