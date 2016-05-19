@@ -43,15 +43,15 @@ Creates an instance of Typeson, on which you may configure additional types to s
 Whether or not to support cyclic references. Default true unless explicitely set to false. If this property is false, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as JSON.stringify() would do). If this property is true, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
 ##### types
-A map of `{TypeName: string => [tester, encapsulator reviver]}`.
+A map of TypeName:string to an array of three functions; tester, encapsulator and reviver `{TypeName: string => [tester, encapsulator, reviver]}`. The functions are described below.
 
-##### tester
+##### tester (obj : any) : boolean
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
-##### encapsulator
+##### encapsulator (obj: YourType) : Object
 Function that maps you instance to a JSON-serializable object.
 
-##### reviver
+##### reviver (obj: Object) : YourType
 Function that maps you JSON-serializable object into a real instance of your type.
 
 ### Sample
