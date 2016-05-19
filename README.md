@@ -31,25 +31,25 @@ var parsed = typeson.parse(tson);
 Creates an instance of Typeson, on which you may configure additional types to support, or call stringify() or parse() on.
 
 ### Arguments
-#### options (optional):
+##### options (optional):
 {
     cyclic?: boolean, // Default true
     types?: {TypeName: [tester, encapsulator, reviver]} // Defaults to the built-in types (currently Date, RegExp and Error)
 }
 
-#### cyclic
+##### cyclic
 Whether or not to support cyclic references. Default true unless explicitely set to false. If this property is false, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as JSON.stringify() would do). If this property is true, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
-#### types
+##### types
 A map of {TypeName: string => [tester, encapsulator reviver].
 
-#### tester
+##### tester
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
-#### encapsulator
+##### encapsulator
 Function that maps you instance to a JSON-serializable object.
 
-#### reviver
+##### reviver
 Function that maps you JSON-serializable object into a real instance of your type.
 
 ### Sample
@@ -73,5 +73,14 @@ new Typeson().stringify ({date: new Date()})
 Output:
 ```js
 {"date": 1463667643065, "$types": {"date": "Date"}}
+```
+
+## parse (obj, [reviver])
+
+Parses Typeson genereted JSON back into the original complex structure again.
+
+### Sample
+```js
+new Typeson().parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
