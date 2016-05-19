@@ -2,16 +2,17 @@
 JSON with type info
 
 # Why?
-JSON can only contain simple types. If you want to serialize a complex object, you need something better. You might need it when you:
-1. Want to send complex types over the wire
-2. Want to persist complex types
+JSON can only contain simple types. Many times you'd want to serialize Dates and Errors but there's no standard JSON-ish way to do that. Typically, you'd need it when you:
+1. want to send complex types over the wire
+2. want to persist complex types
 
 # Features
 * Can stringify Dates, RegExps, Errors by default (will support more times soon...)
-* This library is a single ES5 compliant JS file of 11kb (1.5k minified and gzipped)
-* You can register any type to be stringifyable (serializable)
+* Produces standard JSON with an additional $types property in case it is needed.
+* Minimalistic: This library is a single ES5 compliant JS file of 11kb (1.5k minified and gzipped)
+* You can register any type to be stringifyable (serializable) with your typeson instance.
 * Can handle cyclic references, such as lists of objects where each object has a reference to the list
-* Generated output is always JSON. It will just also add a single "$types" property on the root containing type info related
+* Minimalisticlt produced JSON with just a single "$types" property on the root containing type info related
   to each special property.
 * Will produce standard JSON identical to that of JSON.stringify() in case you object doesnt contain special types or cyclic references.
 
