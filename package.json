@@ -1,0 +1,25 @@
+{
+  "name": "typeson",
+  "version": "1.0.0",
+  "description": "JSON with types",
+  "main": "typeson.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dfahlander/typeson.git"
+  },
+  "keywords": [
+    "JSON",
+    "remoting",
+    "serialization",
+    "types"
+  ],
+  "author": "dfahlander",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dfahlander/typeson/issues"
+  },
+  "homepage": "https://github.com/dfahlander/typeson#readme"
+}
