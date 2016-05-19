@@ -32,10 +32,12 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 ### Arguments
 ##### options (optional):
+```
 {
     cyclic?: boolean, // Default true
-    types?: {TypeName: [tester, encapsulator, reviver]} // Defaults to the built-in types (currently Date, RegExp and Error)
+    types?: {TypeName: [tester, encapsulator, reviver]}
 }
+```
 
 ##### cyclic
 Whether or not to support cyclic references. Default true unless explicitely set to false. If this property is false, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as JSON.stringify() would do). If this property is true, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
