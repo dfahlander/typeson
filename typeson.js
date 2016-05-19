@@ -56,10 +56,20 @@
          * @param {Object} obj - Object to encapsulate.
          */
         var encapsulate = this.encapsulate = function (obj) {
+            var types = {};
             // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-            var ret = traverse (obj, encapsulator, 'cyclic' in options ? options.cyclic : true);
+            var ret = traverse (obj, encapsulator, 'cyclic' in options ? options.cyclic : true, types);
             // Add $types to result only if we ever bumped into a special type
-            if (keys(types).length) ret.$types = types;
+            if (keys(types).length) {
+                // Special if array was serialized because JSON would ignore custom $types prop on an array.
+                if (Array.isArray(ret)) {
+                    var rv = {};
+                    ret.forEach(function(v,i){rv[i] = v;});
+                    types[""] = "[]";
+                    ret = rv;
+                }
+                ret.$types = types;
+            }
             return ret;
 
             function encapsulator (key, value, clone, $typeof) {
@@ -112,6 +122,8 @@
                 if (!reviver) throw new Error ("Unregistered Type: " + type);
                 return reviver(clone);
             });
+            //if (types[""] == "[]") return keys(rv).map(function (i){return rv[i]});
+            //return rv;
         };
         
         /** Register custom types.
@@ -146,6 +158,7 @@
         revivers.NaN = function() { return NaN; };
         revivers.Infinity = function () { return Infinity; };
         revivers["-Infinity"] = function () { return -Infinity; };
+        revivers["[]"] = function(a) { return keys(a).map(function (i){return a[i]}); }; // If root obj is an array (special)
         // Register option.types, or if not specified, the built-in types.
         this.register(options.types || {
             Date: [
@@ -171,32 +184,40 @@
         });    
     }
 
-    var refObjs, refKeys, target, replacer, types, checkCyclic;
+    var refObjs, refKeys, target, replacer, types;
     
-    /** traverse() utility */
-    function traverse (value, _replacer, cyclic) {
-        refObjs = refKeys = [];
+    function resetTraverse() {
+        refObjs = [];
+        refKeys = [];
         target = null;
-        replacer = _replacer;
-        types = {};
-        checkCyclic = cyclic;
-        return continueTraversing(value, '');
+        replacer = null;
+        types = null;
     }
     
-    function continueTraversing (value, keypath) {
+    /** traverse() utility */
+    function traverse (value, _replacer, cyclic, outTypes) {
+        resetTraverse();
+        replacer = _replacer;
+        types = outTypes || {};
+        var ret = continueTraversing(value, '', cyclic);
+        resetTraverse(); // Free memory
+        return ret;
+    }
+    
+    function continueTraversing (value, keypath, cyclic) {
         var type = typeof value;
         // Don't add edge cases for NaN, Infinity or -Infinity here. Do such things in a replacer callback instead.
         if (type in {number:1, string:1, boolean:1, undefined:1, function:1, symbol:1})
             return replacer (keypath, value, value, type);
         if (value === null) return null;
-        if (checkCyclic) {
+        if (cyclic) {
             // Options set to detect cyclic references and be able to rewrite them.
             var refIndex = refObjs.indexOf(value);
             if (refIndex < 0) {
                 refObjs.push(value);
                 refKeys.push(keypath);
             } else {
-                types[key] = "#";
+                types[keypath] = "#";
                 return '#'+refKeys[refIndex];
             }
         }
@@ -204,7 +225,7 @@
         if (!target) target = clone;
         // Iterate object or array
         keys(value).forEach(function (key) {
-            var val = continueTraversing(value[key], keypath + (keypath ? '.':'') + key);
+            var val = continueTraversing(value[key], keypath + (keypath ? '.':'') + key, cyclic);
             if (val !== undefined) clone[key] = val; 
         });
         return replacer (keypath, value, clone, type);
