@@ -4,7 +4,8 @@
   "description": "JSON with types",
   "main": "typeson.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "build": "node_modules/.bin/uglifyjs typeson.js -o typeson.min.js --source-map typeson.min.js.map"
   },
   "repository": {
     "type": "git",
