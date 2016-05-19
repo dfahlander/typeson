@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/dfahlander/typeson/issues"
   },
-  "homepage": "https://github.com/dfahlander/typeson#readme"
+  "homepage": "https://github.com/dfahlander/typeson#readme",
+  "devDependencies": {
+    "uglify-js": "^2.6.2"
+  }
 }
