@@ -20,7 +20,6 @@
      */
     function Typeson (options) {
         options = options || {};
-        var cyclic = 'cyclic' in options ? options.cyclic : true;
         // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ["Date", value.getTime()]
         var replacers = [];
         // Revivers: map {type => reviver}. Sample: {"Date": value => new Date(value)}
@@ -57,12 +56,8 @@
          * @param {Object} obj - Object to encapsulate.
          */
         var encapsulate = this.encapsulate = function (obj) {
-            var types = {}, // Type specification to put on result
-                refObjs = [], // Cyclic reference detection
-                refKeys = []; // Cyclic reference values. These two could be replaced with a Map() instance.
-
             // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-            var ret = traverse (obj, encapsulator, '');
+            var ret = traverse (obj, encapsulator, 'cyclic' in options ? options.cyclic : true);
             // Add $types to result only if we ever bumped into a special type
             if (keys(types).length) ret.$types = types;
             return ret;
@@ -81,15 +76,6 @@
                     }
                     return value;
                 }
-                // Resolve cyclic references
-                var refIndex = refObjs.indexOf(value);
-                if (refIndex < 0) {
-                    refObjs.push(value);
-                    refKeys.push(key);
-                } else {
-                    types[key] = "#";
-                    return '#'+refKeys[refIndex];
-                }
                 // Optimization: Never try finding a replacer when value is a plain object.
                 if (value.constructor === Object) return clone;
                 
@@ -100,7 +86,7 @@
                     if (replacement) {
                         types[key] = replacement[0];// replacement[0] = Type Identifyer
                         // Now, also traverse the result in case it contains it own types to replace
-                        return traverse(replacement[1], encapsulator, key);
+                        return continueTraversing(replacement[1], key);
                     }
                 }
                 return clone;
@@ -114,7 +100,7 @@
         var revive = this.revive = function (obj) {
             var types = obj.$types;
             if (!types) return obj; // No type info added. Revival not needed.
-            return traverse (obj, function (key, value, clone, $typeof, target) {
+            return traverse (obj, function (key, value, clone, $typeof) {
                 if (key === '$types') return; // return undefined to tell traverse to ignore it.
                 var type = types[key];
                 if (!type) return clone; // This is the default (just a plain Object).
@@ -125,7 +111,7 @@
                 var reviver = revivers[type];
                 if (!reviver) throw new Error ("Unregistered Type: " + type);
                 return reviver(clone);
-            }, '');
+            });
         };
         
         /** Register custom types.
@@ -170,7 +156,8 @@
         
             RegExp: [
                 function (x) { return x instanceof RegExp; },
-                function (rexp) { return {source: rexp.source, flags: rexp.flags}; },
+                function (rexp) {
+                     return {source: rexp.source, flags: (rexp.global?'g':'')+(rexp.ignoreCase?'i':'')+(rexp.multiLine?'m':'') }; },
                 function (data) { return new RegExp (data.source, data.flags); }
             ],
         
@@ -184,21 +171,43 @@
         });    
     }
 
-
+    var refObjs, refKeys, target, replacer, types, checkCyclic;
+    
     /** traverse() utility */
-    function traverse (value, replacer, keypath, target) {
+    function traverse (value, _replacer, cyclic) {
+        refObjs = refKeys = [];
+        target = null;
+        replacer = _replacer;
+        types = {};
+        checkCyclic = cyclic;
+        return continueTraversing(value, '');
+    }
+    
+    function continueTraversing (value, keypath) {
         var type = typeof value;
         // Don't add edge cases for NaN, Infinity or -Infinity here. Do such things in a replacer callback instead.
-        if (type in {number:1, string:1, boolean:1, undefined:1})
-            return replacer (keypath, value, value, type, target);
+        if (type in {number:1, string:1, boolean:1, undefined:1, function:1, symbol:1})
+            return replacer (keypath, value, value, type);
         if (value === null) return null;
+        if (checkCyclic) {
+            // Options set to detect cyclic references and be able to rewrite them.
+            var refIndex = refObjs.indexOf(value);
+            if (refIndex < 0) {
+                refObjs.push(value);
+                refKeys.push(keypath);
+            } else {
+                types[key] = "#";
+                return '#'+refKeys[refIndex];
+            }
+        }
         var clone = Array.isArray(value) ? new Array(value.length) : {};
-        // Iterate object, function or array
+        if (!target) target = clone;
+        // Iterate object or array
         keys(value).forEach(function (key) {
-            var val = traverse(value[key], replacer, keypath + (keypath ? '.':'') + key, target || clone);
+            var val = continueTraversing(value[key], keypath + (keypath ? '.':'') + key);
             if (val !== undefined) clone[key] = val; 
         });
-        return replacer (keypath, value, clone, type, target);
+        return replacer (keypath, value, clone, type);
     }
     
     /** getByKeyPath() utility */
