@@ -2,9 +2,7 @@
 JSON with type info
 
 # Why?
-JSON can only contain simple types. Many times you'd want to serialize Dates and Errors but there's no standard JSON-ish way to do that. Typically, you'd need it when you:
-1. want to send complex types over the wire
-2. want to persist complex types
+JSON can only contain simple types: strings, numbers, booleans, Arrays and Objects. In case you want to serialize a Date or an Error object for example, you will need fix that manually. Typeson is just JSON that supports built-in javascript types as well as those types you register.
 
 # Features
 * Can stringify Dates, RegExps, Errors by default (will support more times soon...)
