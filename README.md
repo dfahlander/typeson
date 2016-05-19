@@ -2,7 +2,7 @@
 JSON with type info
 
 # Why?
-JSON can only contain simple types: strings, numbers, booleans, Arrays and Objects. In case you want to serialize a Date or an Error object for example, you will need fix that manually. Typeson is just JSON that complements certain properties with type info. The type info is not put in each property. Instead, theres a $types property in the result that maps each non-trivial property to a type name. A registry of type names defines how to encapsulate and revive each type.
+JSON can only contain simple types: strings, numbers, booleans, Arrays and Objects. In case you want to serialize a Date or an Error object for example, you will need fix that manually. Typeson is just JSON that complements non-trivial properties with type info. The type info is not put in each property. Instead, theres a $types property in the result that maps each non-trivial property to a type name. A registry of type names defines how to encapsulate and revive each type.
 
 # Features
 * Can stringify Dates, RegExps, Errors by default (will support more times soon...)
