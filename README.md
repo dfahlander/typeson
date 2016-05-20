@@ -4,6 +4,12 @@ JSON with type info
 # Why?
 JSON can only contain simple types: strings, numbers, booleans, Arrays and Objects. In case you want to serialize a Date or an Error object for example, you will need fix that manually. Typeson is just JSON that complements non-trivial properties with type info. The metadata is a $types property in the result that maps each non-trivial property to a type name. You can configure the registry of type names and defines how to encapsulate and revive custom types.
 
+# Compatibility
+* Node
+* Browser
+* Worker
+* ES5
+
 # Features
 * Can stringify Dates, RegExps, Errors by default (will support more times soon...)
 * Produces standard JSON with an additional $types property in case it is needed.
@@ -32,24 +38,26 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 ### Arguments
 ##### options (optional):
+```
 {
     cyclic?: boolean, // Default true
-    types?: {TypeName: [tester, encapsulator, reviver]} // Defaults to the built-in types (currently Date, RegExp and Error)
+    types?: {TypeName: [tester, encapsulator, reviver]}
 }
+```
 
 ##### cyclic
 Whether or not to support cyclic references. Default true unless explicitely set to false. If this property is false, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as JSON.stringify() would do). If this property is true, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
 ##### types
-A map of {TypeName: string => [tester, encapsulator reviver].
+A map of TypeName:string to an array of three functions; tester, encapsulator and reviver `{TypeName: string => [tester, encapsulator, reviver]}`. The functions are described below.
 
-##### tester
+##### tester (obj : any) : boolean
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
-##### encapsulator
+##### encapsulator (obj: YourType) : Object
 Function that maps you instance to a JSON-serializable object.
 
-##### reviver
+##### reviver (obj: Object) : YourType
 Function that maps you JSON-serializable object into a real instance of your type.
 
 ### Sample
