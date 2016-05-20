@@ -3,7 +3,8 @@
    typeof define === 'function' && define.amd ? define(factory) :
    global.Typeson = factory();
 }(this, function () { 'use strict';
-    var keys = Object.keys;
+    var keys = Object.keys,
+        isArray = Array.isArray;
 
     /* Typeson - JSON with types
      * License: The MIT License (MIT)
@@ -14,6 +15,7 @@
      * Supports built-in types such as Date, Error, Regexp etc by default but can
      * also be extended to support custom types using the register() method.
      * Typeson also resolves cyclic references.
+     * 
      * @constructor
      * @param {{cyclic: boolean, types: Object}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
      *  If types is specified, the default built-in types will not be registered but instead the given types spec will be used.
@@ -62,7 +64,7 @@
             // Add $types to result only if we ever bumped into a special type
             if (keys(types).length) {
                 // Special if array was serialized because JSON would ignore custom $types prop on an array.
-                if (Array.isArray(ret)) {
+                if (isArray(ret)) {
                     var rv = {};
                     ret.forEach(function(v,i){rv[i] = v;});
                     types[""] = "[]";
@@ -125,32 +127,35 @@
             //if (types[""] == "[]") return keys(rv).map(function (i){return rv[i]});
             //return rv;
         };
-        
+                
         /** Register custom types.
          * For examples how to use this method, search for "Register built-in types" in typeson.js.
-         * @param {Object.<string,Function[]} typeSpec - Types and their functions [test, encapsulate, revive];
+         * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
          */
-        this.register = function (typeSpec) {
-            keys(typeSpec).forEach(function (typeIdentifyer) {
-                var spec = typeSpec[typeIdentifyer],
-                    test = spec[0],
-                    replace = spec[1],
-                    revive = spec[2],
-                    existingReviver = revivers[typeSpec];
-                if (existingReviver) {
-                    if (existingReviver.toString() !== revive.toString())
-                        throw new Error ("Type " + typeIdentifyer + " is already registered with incompatible behaviour");
-                    // Ignore re-registration if identical
-                    return;
-                }
-                function replacer (value) {
-                    return test(value) && [typeIdentifyer, replace(value)];
-                }
-                replacers.push(replacer);
-                revivers[typeIdentifyer] = revive;
-                regTypes[typeIdentifyer] = spec; // Record to be retrueved via public types property.
+        var register = this.register = function (typeSpecSets) {
+            [].concat(typeSpecSets).forEach(function (typeSpec) { 
+                keys(typeSpec).forEach(function (typeIdentifyer) {
+                    var spec = typeSpec[typeIdentifyer],
+                        test = spec[0],
+                        replace = spec[1],
+                        revive = spec[2],
+                        existingReviver = revivers[typeSpec];
+                    if (existingReviver) {
+                        if (existingReviver.toString() !== revive.toString())
+                            throw new Error ("Type " + typeIdentifyer + " is already registered with incompatible behaviour");
+                        // Ignore re-registration if identical
+                        return;
+                    }
+                    function replacer (value) {
+                        return test(value) && [typeIdentifyer, replace(value)];
+                    }
+                    replacers.push(replacer);
+                    revivers[typeIdentifyer] = revive;
+                    regTypes[typeIdentifyer] = spec; // Record to be retrueved via public types property.
+                });
             });
-        }
+            return this;
+        };
         
         //
         // Setup Default Configuration
@@ -159,6 +164,7 @@
         revivers.Infinity = function () { return Infinity; };
         revivers["-Infinity"] = function () { return -Infinity; };
         revivers["[]"] = function(a) { return keys(a).map(function (i){return a[i]}); }; // If root obj is an array (special)
+        
         // Register option.types, or if not specified, the built-in types.
         this.register(options.types || {
             Date: [
@@ -167,21 +173,12 @@
                 function (time) { return new Date(time); }
             ],
         
-            RegExp: [
-                function (x) { return x instanceof RegExp; },
-                function (rexp) {
-                     return {source: rexp.source, flags: (rexp.global?'g':'')+(rexp.ignoreCase?'i':'')+(rexp.multiLine?'m':'') }; },
-                function (data) { return new RegExp (data.source, data.flags); }
-            ],
-        
             Error: [
                 function (x) { return x instanceof Error; },
                 function (error) { return {name: error.name, message: error.message}; },
                 function (data) { var e = new Error (data.message); e.name = data.name; return e; }
-            ],
-            
-            // TODO: Add more built-in types here!
-        });    
+            ]
+        });
     }
 
     var refObjs, refKeys, target, replacer, types;
@@ -221,7 +218,7 @@
                 return '#'+refKeys[refIndex];
             }
         }
-        var clone = Array.isArray(value) ? new Array(value.length) : {};
+        var clone = isArray(value) ? new Array(value.length) : {};
         if (!target) target = clone;
         // Iterate object or array
         keys(value).forEach(function (key) {
@@ -241,6 +238,11 @@
         }
         return obj[keyPath];
     }
+    
+    // Mixin all instance properties to also be static properties so that
+    // the Typeson constructor can be used as the default instance itself.
+    var instance = new Typeson();
+    keys(instance).map(function(key){ Typeson[key] = instance[key];});
     
     return Typeson;
 }));

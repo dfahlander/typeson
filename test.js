@@ -13,7 +13,7 @@ function run(tests){tests.forEach(function(test){
 })}
 function roundtrip(x) {
     var tson = typeson.stringify(x, null, 2);
-    console.log(tson);
+    //console.log(tson);
     return typeson.parse(tson);
 }
 
@@ -32,7 +32,6 @@ run ([function shouldSupportBasicTypes () {
     assert (!res.e, "Symbols should not follow by default");
     assert (Array.isArray(res.f) && res.f.length === 0, "Array value");
     assert (res.g instanceof Date && res.g.toString() == date.toString(), "Date value");
-    assert (res.h instanceof RegExp && res.h.ignoreCase && res.h.global && !res.h.multiline, "Regexp value");
     
 }, function shouldResolveCyclics() {
     //
@@ -50,7 +49,7 @@ run ([function shouldSupportBasicTypes () {
     data.list[3].children = [data.list[0], data.list[1]];
     
     var tson = typeson.stringify(data,null, 2);
-    console.log(tson);
+    //console.log(tson);
     var result = typeson.parse(tson);
     
     assert(data.list.length === 10, "Data.list.length should be 10");

@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "JSON with types",
   "main": "typeson.js",
   "scripts": {
