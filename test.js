@@ -114,6 +114,26 @@ run ([function shouldSupportBasicTypes () {
     assert (res.length === 3, "Should have length 3");
     assert (res[2] === 3, "Third item should be 3");
     
+}, function shouldSupportIntermedateTypes() {
+    function CustomDate(date) {
+        this._date = date;
+    }
+    var typeson = new Typeson()
+        .register(globalTypeson.types)
+        .register({
+            CustomDate: [
+                x => x instanceof CustomDate,
+                cd => cd._date,
+                date => new CustomDate(date)
+            ]
+        });
+    var date = new Date();
+    var input = new CustomDate(new Date);
+    var tson = typeson.stringify(input);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert (back instanceof CustomDate, "Should get CustomDate back");
+    assert (back._date.getTime() === date.getTime(), "Should have correct value");
 }, function shouldRunReplacersRecursively(){
     //
     // shouldRunReplacersRecursively

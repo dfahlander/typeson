@@ -12,11 +12,9 @@ var keys = Object.keys,
  * Typeson also resolves cyclic references.
  * 
  * @constructor
- * @param {{cyclic: boolean, types: Object}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
- *  If types is specified, the default built-in types will not be registered but instead the given types spec will be used.
+ * @param {{cyclic: boolean}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
  */
 function Typeson (options) {
-    options = options || {};
     // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ["Date", value.getTime()]
     var replacers = [];
     // Revivers: map {type => reviver}. Sample: {"Date": value => new Date(value)}
@@ -28,36 +26,31 @@ function Typeson (options) {
     /** Seraialize given object to Typeson.
      * 
      * Arguments works identical to those of JSON.stringify().
-     * 
-     * @param {Object} obj - Object to serialize.
-     * @param {Function} [replacer] - Optional replacer function taking (key, value) and returning value.
-     * @param {number} [space] - Optional space parameter to make the output prettier.
      */
-    this.stringify = function (obj, replacer, space) {
+    this.stringify = function (obj, replacer, space) { // replacer here has nothing to do with our replacers.
         return JSON.stringify (encapsulate(obj), replacer, space);
     }
     
     /** Parse Typeson back into an obejct.
      * 
      * Arguments works identical to those of JSON.parse().
-     * 
-     * @param {String} text - Typeson or JSON to parse.
-     * @param {Function} [reviver] - Optional function taking (key, value) and returning value. 
      */
     this.parse = function (text, reviver) {
-        return revive (JSON.parse (text, reviver));
+        return revive (JSON.parse (text, reviver)); // This reviver has nothing to do with our revivers.
     }
 
-    /** Encapsulate a complex object into a plain Object that would survive JSON.stringify().
+    /** Encapsulate a complex object into a plain Object by replacing regisered types with
+     * plain objects representing the types data.
+     * 
      * This method is used internally by Typeson.stringify().  
      * @param {Object} obj - Object to encapsulate.
      */
     var encapsulate = this.encapsulate = function (obj) {
         var types = {},
-            refObjs=[],
-            refKeys=[];
+            refObjs=[], // For checking cyclic references
+            refKeys=[]; // For checking cyclic references
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var ret = traverse ('', obj, 'cyclic' in options ? options.cyclic : true);
+        var ret = _encapsulate ('', obj, options && ('cyclic' in options) ? options.cyclic : true);
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
             // Special if array was serialized because JSON would ignore custom $types prop on an array.
@@ -66,12 +59,12 @@ function Typeson (options) {
         }
         return ret;
         
-        function traverse(keypath, value, cyclic) {
+        function _encapsulate (keypath, value, cyclic) {
             var $typeof = typeof value;
             if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
                 return $typeof === 'number' ?
                     isNaN(value) || value === -Infinity || value === Infinity ?
-                        replacer(keypath, value) :
+                        replace(keypath, value) :
                         value :
                     value;
             if (value == null) return value;
@@ -88,7 +81,7 @@ function Typeson (options) {
             }
             var replaced = value.constructor === Object ?
                 value : // Optimization: if plain object, don't try finding a replacer
-                replacer(keypath, value);
+                replace(keypath, value);
             if (replaced !== value) return replaced;
             if (value == null) return value;
             var clone;
@@ -99,23 +92,29 @@ function Typeson (options) {
             else return value; // Only clone vanilla objects and arrays.
             // Iterate object or array
             keys(value).forEach(function (key) {
-                var val = traverse(keypath + (keypath ? '.':'') + key, value[key], cyclic);
+                var val = _encapsulate(keypath + (keypath ? '.':'') + key, value[key], cyclic);
                 if (val !== undefined) clone[key] = val;
             });
             return clone;
         }
         
-        function replacer (key, value) {
+        function replace (key, value) {
             // Encapsulate registered types
             var i = replacers.length;
             while (i--) {
-                var replacement = replacers[i](value);
-                if (replacement) {
-                    var type = replacement[0],
-                        existing = types[key];
-                    types[key] = existing ? [type].concat(existing) : type;
+                if (replacers[i].test(value)) {
+                    var type = replacers[i].type;
+                    if (revivers[type]) {
+                        // Record the type only if a corresponding reviver exists.
+                        // This is to support specs where only replacement is done.
+                        // For example ensuring deep cloning of the object, or
+                        // replacing a type to its equivalent without the need to revive it.
+                        var existing = types[key];
+                        // type can comprise an array of types (see test shouldSupportIntermediateTypes)
+                        types[key] = existing ? [type].concat(existing) : type;
+                    }
                     // Now, also traverse the result in case it contains it own types to replace
-                    return traverse(key, replacement[1], false);
+                    return _encapsulate(key, replacers[i].replace(value), false);
                 }
             }
             return value;
@@ -124,7 +123,8 @@ function Typeson (options) {
 
     /** Revive an encapsulated object.
      * This method is used internally by JSON.parse().
-     * @param {Object} obj - Object corresponding to the Typeson spec.
+     * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
+     * will be replaced with its true type instead of just plain objects.
      */
     var revive = this.revive = function (obj) {
         var types = obj.$types,
@@ -136,103 +136,58 @@ function Typeson (options) {
             types = types.$;
             ignore$Types = false;
         }
-        return traverse (obj, function (key, value, clone, $typeof) {
-            if (ignore$Types && key === '$types') return; // return undefined to tell traverse to ignore it.
-            var type = types[key];
-            if (!type) return clone; // This is the default (just a plain Object).
-            if (type === '#')
-                // Revive cyclic referenced object
-                return getByKeyPath(target, value.substr(1)); // 1 === "#".length; 
+        return _revive ('', obj);
                 
-            var reviver = revivers[type];
-            if (!reviver) throw new Error ("Unregistered Type: " + type);
-            return reviver(clone);
-        });
+        function _revive (keypath, value, target) {
+            if (ignore$Types && keypath === '$types') return;
+            var type = types[keypath];
+            if (value && (value.constructor === Object || value.constructor === Array)) {
+                var clone = isArray(value) ? new Array(value.length) : {};
+                // Iterate object or array
+                keys(value).forEach(function (key) {
+                    var val = _revive(keypath + (keypath ? '.':'') + key, value[key], target || clone);
+                    if (val !== undefined) clone[key] = val;
+                });
+                value = clone;            
+            }
+            if (!type) return value;
+            if (type === '#') return getByKeyPath(target, value.substr(1));
+            return [].concat(type).reduce(function(val, type) {
+                var reviver = revivers[type];
+                if (!reviver) throw new Error ("Unregistered type: " + type);
+                return reviver(val);
+            }, value);
+        }
     };
             
-    /** Register custom types.
-     * For examples how to use this method, search for "Register built-in types" in typeson.js.
+    /** Register types.
+     * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
      * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
      */
     var register = this.register = function (typeSpecSets) {
         [].concat(typeSpecSets).forEach(function (typeSpec) { 
             keys(typeSpec).forEach(function (typeIdentifyer) {
                 var spec = typeSpec[typeIdentifyer],
-                    test = spec[0],
-                    replace = spec[1],
-                    revive = spec[2],
-                    existingReviver = revivers[typeSpec];
-                if (existingReviver) {
-                    if (existingReviver.toString() !== revive.toString())
-                        throw new Error ("Type " + typeIdentifyer + " is already registered with incompatible behaviour");
-                    // Ignore re-registration if identical
-                    return;
+                    existingReplacer = replacers.filter(function(r){ return r.type === typeIdentifyer; });
+                if (existingReplacer.length) {
+                    // Remove existing spec and replace with this one.
+                    replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
+                    delete revivers[typeIdentifyer];
+                    delete regTypes[typeIdentifyer];
                 }
-                function replacer (value) {
-                    return test(value) && [typeIdentifyer, replace(value)];
+                if (spec) {
+                    replacers.push({
+                        type: typeIdentifyer,
+                        test: spec[0],
+                        replace: spec[1]
+                    });
+                    if (spec[2]) revivers[typeIdentifyer] = spec[2];
+                    regTypes[typeIdentifyer] = spec; // Record to be retrieved via public types property.
                 }
-                replacers.push(replacer);
-                revivers[typeIdentifyer] = revive;
-                regTypes[typeIdentifyer] = spec; // Record to be retrueved via public types property.
             });
         });
         return this;
     };
-    
-    //
-    // Setup Default Configuration
-    //
-    revivers.NaN = function() { return NaN; };
-    revivers.Infinity = function () { return Infinity; };
-    revivers["-Infinity"] = function () { return -Infinity; };
-    revivers["[]"] = function(a) { return keys(a).map(function (i){return a[i]}); }; // If root obj is an array (special)
-}
-
-var refObjs, refKeys, target, replacer, types;
-
-function resetTraverse() {
-    refObjs = [];
-    refKeys = [];
-    target = null;
-    replacer = null;
-    types = null;
-}
-
-/** traverse() utility */
-function traverse (value, _replacer, cyclic, outTypes) {
-    resetTraverse();
-    replacer = _replacer;
-    types = outTypes || {};
-    var ret = continueTraversing(value, '', cyclic);
-    resetTraverse(); // Free memory
-    return ret;
-}
-
-function continueTraversing (value, keypath, cyclic) {
-    var type = typeof value;
-    // Don't add edge cases for NaN, Infinity or -Infinity here. Do such things in a replacer callback instead.
-    if (type in {number:1, string:1, boolean:1, undefined:1, function:1, symbol:1})
-        return replacer (keypath, value, value, type);
-    if (value === null) return null;
-    if (cyclic) {
-        // Options set to detect cyclic references and be able to rewrite them.
-        var refIndex = refObjs.indexOf(value);
-        if (refIndex < 0) {
-            refObjs.push(value);
-            refKeys.push(keypath);
-        } else {
-            types[keypath] = "#";
-            return '#'+refKeys[refIndex];
-        }
-    }
-    var clone = isArray(value) ? new Array(value.length) : {};
-    if (!target) target = clone;
-    // Iterate object or array
-    keys(value).forEach(function (key) {
-        var val = continueTraversing(value[key], keypath + (keypath ? '.':'') + key, cyclic);
-        if (val !== undefined) clone[key] = val; 
-    });
-    return replacer (keypath, value, clone, type);
 }
 
 /** getByKeyPath() utility */
