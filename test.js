@@ -1,6 +1,28 @@
 var Typeson = require('./typeson');
 
-var typeson = new Typeson();
+var typeson = new Typeson().register({
+    Date: [
+        function (x) { return x instanceof Date; },
+        function (date) { return date.getTime(); },
+        function (time) { return new Date(time); }
+    ],
+    Error: [
+        function (x) { return x instanceof Error; },
+        function (error) { return {name: error.name, message: error.message}; },
+        function (data) {
+            var e = new Error (data.message);
+            e.name = data.name;
+            return e;
+        }
+    ],
+    SpecialNumber: [
+        function (x) { return typeof x === 'number' && isNaN(x) || x === Infinity || x === -Infinity; },
+        function (n) { return isNaN(n) ? "NaN" : n > 0 ? "Infinity" : "-Infinity" },
+        function (s) { return {NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity}[s];}
+    ]
+});
+
+var globalTypeson = typeson;
 
 // The test framework I need:
 function assert (x, msg) {
@@ -115,14 +137,15 @@ run ([function shouldSupportBasicTypes () {
         date: new CustomDate(date, "Otto")
     }
     
-    var typeson = new Typeson();
-    typeson.register({
-        CustomDate: [
-            x => x instanceof CustomDate,
-            cd => ({_date: cd.getRealDate(), name: cd.name}),
-            obj => new CustomDate(obj._date, obj.name)
-        ]
-    });
+    var typeson = new Typeson()
+        .register(globalTypeson.types)
+        .register({
+            CustomDate: [
+                x => x instanceof CustomDate,
+                cd => ({_date: cd.getRealDate(), name: cd.name}),
+                obj => new CustomDate(obj._date, obj.name)
+            ]
+        });
     var tson = typeson.stringify(input,null, 2);
     console.log(tson);
     var result = typeson.parse(tson);
@@ -199,4 +222,6 @@ run ([function shouldSupportBasicTypes () {
     assert (x instanceof Custom, "Should get a Custom back");
     assert (x.val === "bar", "Should have correct val value");
     assert (x.$types === 'foo', "Should have correct $types value");
+}, function shouldLeaveLeftOutType() {
+    // Uint8Buffer is not registered. 
 }]);

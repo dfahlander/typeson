@@ -63,7 +63,7 @@ function Typeson (options) {
             ret.$types = types;
         }
         return ret;
-
+        
         function encapsulator (key, value, clone, $typeof) {
             if ($typeof in {string:1, boolean:1, undefined:1}) return value;
             if ($typeof === 'number') {
@@ -159,21 +159,6 @@ function Typeson (options) {
     revivers.Infinity = function () { return Infinity; };
     revivers["-Infinity"] = function () { return -Infinity; };
     revivers["[]"] = function(a) { return keys(a).map(function (i){return a[i]}); }; // If root obj is an array (special)
-    
-    // Register option.types, or if not specified, the built-in types.
-    this.register(options.types || {
-        Date: [
-            function (x) { return x instanceof Date; },
-            function (date) { return date.getTime(); },
-            function (time) { return new Date(time); }
-        ],
-    
-        Error: [
-            function (x) { return x instanceof Error; },
-            function (error) { return {name: error.name, message: error.message}; },
-            function (data) { var e = new Error (data.message); e.name = data.name; return e; }
-        ]
-    });
 }
 
 var refObjs, refKeys, target, replacer, types;
