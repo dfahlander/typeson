@@ -1,4 +1,5 @@
 var Typeson = require('./typeson');
+
 var typeson = new Typeson();
 
 // The test framework I need:
@@ -130,5 +131,72 @@ run ([function shouldSupportBasicTypes () {
     assert (result.date.getName() == "Otto", "prototype method works and properties seems to be in place");
     assert (result.date.getRealDate().getTime() === date.getTime(), "The correct time is there");
     
-}]);
+}, function shouldBeAbleToStringifyComplexObjectsAtRoot() {
+    var x = roundtrip(new Date(3));
+    assert (x instanceof Date, "x should be a Date");
+    assert (x.getTime() === 3, "Time should be 3");
+    var y = roundtrip([new Date(3)]);    
+    assert (y[0] instanceof Date, "y[0] should be a Date");
+    assert (y[0].getTime() === 3, "Time should be 3");
+    
+    function Custom () {
+        this.x = "oops";
+    }
+    
+    var TSON = new Typeson().register({
+        Custom: [
+            x => x instanceof Custom,
+            s => false,
+            f => new Custom()
+        ]
+    });
+    var tson = TSON.stringify(new Custom());
+    console.log(tson);
+    var z = TSON.parse(tson);
+    assert (z instanceof Custom && z.x === "oops", "Custom type encapsulated in bool should work");
 
+    TSON = new Typeson().register({
+        Custom: [
+            x => x instanceof Custom,
+            s => 42,
+            f => new Custom()
+        ]
+    });
+    tson = TSON.stringify(new Custom());
+    console.log(tson);
+    z = TSON.parse(tson);
+    assert (z instanceof Custom && z.x === "oops", "Custom type encapsulated in bool should work");
+
+    TSON = new Typeson().register({
+        Custom: [
+            x => x instanceof Custom,
+            s => "foo",
+            f => new Custom()
+        ]
+    });
+    tson = TSON.stringify(new Custom());
+    console.log(tson);
+    z = TSON.parse(tson);
+    assert (z instanceof Custom && z.x === "oops", "Custom type encapsulated in bool should work");
+    
+}, function shouldBePossibleToEncapsulateObjectWithReserved$typesProperty() {
+    function Custom (val, $types){
+        this.val = val;
+        this.$types = $types;
+    }
+    var typeson = new Typeson().register({
+        Custom: [
+            x => x instanceof Custom,
+            c => ({val: c.val, $types: c.$types}),
+            o => new Custom(o.val, o.$types)
+        ]
+    });
+    var input = new Custom("bar", "foo");
+    
+    var tson = typeson.stringify(input);
+    console.log(tson);
+    var x = typeson.parse(tson);
+    assert (x instanceof Custom, "Should get a Custom back");
+    assert (x.val === "bar", "Should have correct val value");
+    assert (x.$types === 'foo', "Should have correct $types value");
+}]);
