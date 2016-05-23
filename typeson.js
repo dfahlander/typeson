@@ -53,9 +53,11 @@ function Typeson (options) {
      * @param {Object} obj - Object to encapsulate.
      */
     var encapsulate = this.encapsulate = function (obj) {
-        var types = {};
+        var types = {},
+            refObjs=[],
+            refKeys=[];
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var ret = traverse (obj, encapsulator, 'cyclic' in options ? options.cyclic : true, types);
+        var ret = traverse ('', obj, 'cyclic' in options ? options.cyclic : true);
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
             // Special if array was serialized because JSON would ignore custom $types prop on an array.
@@ -64,34 +66,59 @@ function Typeson (options) {
         }
         return ret;
         
-        function encapsulator (key, value, clone, $typeof) {
-            if ($typeof in {string:1, boolean:1, undefined:1}) return value;
-            if ($typeof === 'number') {
-                if (isNaN(value)) {
-                    return types[key] = "NaN";
+        function traverse(keypath, value, cyclic) {
+            var $typeof = typeof value;
+            if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
+                return $typeof === 'number' ?
+                    isNaN(value) || value === -Infinity || value === Infinity ?
+                        replacer(keypath, value) :
+                        value :
+                    value;
+            if (value == null) return value;
+            if (cyclic) {
+                // Options set to detect cyclic references and be able to rewrite them.
+                var refIndex = refObjs.indexOf(value);
+                if (refIndex < 0) {
+                    refObjs.push(value);
+                    refKeys.push(keypath);
+                } else {
+                    types[keypath] = "#";
+                    return '#'+refKeys[refIndex];
                 }
-                if (value === Infinity) {
-                    return types[key] = "Infinity";
-                }
-                if (value === -Infinity) {
-                    return types[key] = "-Infinity";
-                }
-                return value;
             }
-            // Optimization: Never try finding a replacer when value is a plain object.
-            if (value.constructor === Object) return clone;
-            
+            var replaced = value.constructor === Object ?
+                value : // Optimization: if plain object, don't try finding a replacer
+                replacer(keypath, value);
+            if (replaced !== value) return replaced;
+            if (value == null) return value;
+            var clone;
+            if (value.constructor === Object)
+                clone = {};
+            else if (value.constructor === Array)
+                clone = new Array(value.length);
+            else return value; // Only clone vanilla objects and arrays.
+            // Iterate object or array
+            keys(value).forEach(function (key) {
+                var val = traverse(keypath + (keypath ? '.':'') + key, value[key], cyclic);
+                if (val !== undefined) clone[key] = val;
+            });
+            return clone;
+        }
+        
+        function replacer (key, value) {
             // Encapsulate registered types
             var i = replacers.length;
             while (i--) {
                 var replacement = replacers[i](value);
                 if (replacement) {
-                    types[key] = replacement[0];// replacement[0] = Type Identifyer
+                    var type = replacement[0],
+                        existing = types[key];
+                    types[key] = existing ? [type].concat(existing) : type;
                     // Now, also traverse the result in case it contains it own types to replace
-                    return continueTraversing(replacement[1], key);
+                    return traverse(key, replacement[1], false);
                 }
             }
-            return clone;
+            return value;
         }
     };
 
@@ -103,11 +130,11 @@ function Typeson (options) {
         var types = obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
-        if (typeof types.$ === 'object') {
+        if (types.$ && types.$.constructor === Object) {
             // Special when root object is not a trivial Object, it will be encapsulated in $.
             obj = obj.$;
             types = types.$;
-            ignore$Types = false;            
+            ignore$Types = false;
         }
         return traverse (obj, function (key, value, clone, $typeof) {
             if (ignore$Types && key === '$types') return; // return undefined to tell traverse to ignore it.
