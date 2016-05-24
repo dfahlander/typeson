@@ -17,7 +17,15 @@ NOTE: Typeson by itself wont support Date or RegExp. You need to:
 ```js
 var typeson = new Typeson().register([
     require('typeson-registry/types/date'),
-    require('typeson-registry/types/regexp')
+    require('typeson-registry/types/set'),
+    require('typeson-registry/types/regexp'),
+    require('typeson-registry/types/typed-arrays')
+]);
+```
+or simply
+```js
+var typeson = new Typeson().register([
+    require('typeson-registry/presets/builtin')
 ]);
 ```
 
