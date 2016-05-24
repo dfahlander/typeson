@@ -155,7 +155,7 @@ var myTypeson = new Typeson().register([
     commonTypeson.types, // Derive from commonTypeson
     myOwnSpecificTypes // Add your extra types
 ]);
-
+```
 
 # Methods
 
