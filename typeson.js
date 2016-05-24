@@ -165,24 +165,25 @@ function Typeson (options) {
      * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
      */
     var register = this.register = function (typeSpecSets) {
-        [].concat(typeSpecSets).forEach(function (typeSpec) { 
-            keys(typeSpec).forEach(function (typeIdentifyer) {
-                var spec = typeSpec[typeIdentifyer],
-                    existingReplacer = replacers.filter(function(r){ return r.type === typeIdentifyer; });
+        [].concat(typeSpecSets).forEach(function R (typeSpec) {
+            if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
+            typeSpec && keys(typeSpec).forEach(function (typeId) {
+                var spec = typeSpec[typeId],
+                    existingReplacer = replacers.filter(function(r){ return r.type === typeId; });
                 if (existingReplacer.length) {
                     // Remove existing spec and replace with this one.
                     replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
-                    delete revivers[typeIdentifyer];
-                    delete regTypes[typeIdentifyer];
+                    delete revivers[typeId];
+                    delete regTypes[typeId];
                 }
                 if (spec) {
                     replacers.push({
-                        type: typeIdentifyer,
+                        type: typeId,
                         test: spec[0],
                         replace: spec[1]
                     });
-                    if (spec[2]) revivers[typeIdentifyer] = spec[2];
-                    regTypes[typeIdentifyer] = spec; // Record to be retrieved via public types property.
+                    if (spec[2]) revivers[typeId] = spec[2];
+                    regTypes[typeId] = spec; // Record to be retrieved via public types property.
                 }
             });
         });
