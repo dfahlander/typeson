@@ -1,5 +1,5 @@
 # typeson.js
-Types for JSON
+Super-tiny library for using custom types with JSON
 
 *Only 3.4kb minified. ~1k when gzipped.*
 
@@ -18,9 +18,9 @@ JSON can only contain simple types: strings, numbers, booleans, arrays and objec
 # Features
 * Can stringify custom and standard ES5 / ES6 classes.
 * Produces standard JSON with an additional $types property in case it is needed.
+* Resolves cyclic references, such as lists of objects where each object has a reference to the list
 * Minimalistic: This library is a single ES5 compliant JS file of 11kb (1k minified and gzipped)
 * You can register any type to be stringifyable (serializable) with your typeson instance.
-* Resolves cyclic references, such as lists of objects where each object has a reference to the list
 * Minimalisticlt produced JSON with just a single "$types" property on the root containing type info related
   to each special property.
 * Will produce standard JSON identical to that of JSON.stringify() in case you object doesnt contain special types or cyclic references.
@@ -50,6 +50,10 @@ var typeson = new Typeson().register({
 var jsonFriendly = typeson.encapsulate({date: new Date(), e: new Error("Oops")});
 // Stringify using good old JSON.stringify()
 var json = JSON.stringify(jsonFriendly);
+console.log(json);
+/* output:
+{"date":1464049031538,e:{"name":"Error","message":"Oops"},"$types":{"date": "Date","e": "Error"}}
+*/
 // Parse using good old JSON.parse()
 var parsed = JSON.parse(json);
 // Revive back again:
