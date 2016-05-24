@@ -78,7 +78,7 @@ var data = {
 
 socket.emit('myEvent', TSON.encapsulate(data));
 ```
-The encapsulate() method will not stringify but just traverse the object and return a clone where certain properties are replaced with a substitue value as well as putting the $types property onto the result.
+The encapsulate() method will not stringify but just traverse the object and return a simpler structure where certain properties are replaced with a substitue. Resulting object will also have a $types property containing the type metadata.
 
 Packing it up at the other end:
 
