@@ -1,5 +1,6 @@
 # Typeson
 JSON with type info.
+
 *Only 3,4 k minified. 1k gzipped.*
 
 # Why?
