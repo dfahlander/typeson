@@ -186,4 +186,5 @@ typeson.register({
 });
 
 ```
-[typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types.
+[typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types to register with your Typeson instance.
+
