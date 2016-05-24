@@ -1,7 +1,7 @@
 # Typeson
 JSON with type info.
 
-*Only 3,4 k minified. 1k gzipped.*
+*Only 3.4kb minified. ~1k when gzipped.*
 
 # Why?
 JSON can only contain simple types: strings, numbers, booleans, arrays and objects. This module makes it possible to serialize any type over JSON or other media, such as Date, Error, ArrayBuffer, etc. Typeson is just JSON that complements non-trivial properties with types. It adds a  metadata property '$types' to the result that maps each non-trivial property to a type name. The type name is a reference to a registered type specification that you need to have the same on both the stringifying and the parsing side.
