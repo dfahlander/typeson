@@ -156,6 +156,9 @@ var myTypeson = new Typeson().register([
     myOwnSpecificTypes // Add your extra types
 ]);
 
+
+# Methods
+
 ## stringify (obj, [replacer], [space])
 
 Generates JSON based on given obj. If given obj has special types or cyclic references, the produce JSON will contain a $types property on the root where type info relies.
