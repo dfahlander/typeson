@@ -1,4 +1,4 @@
-# Typeson
+# typeson.js
 JSON with type info.
 
 *Only 3.4kb minified. ~1k when gzipped.*
