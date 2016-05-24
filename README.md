@@ -13,7 +13,7 @@ Preserves types over JSON, BSON or socket.io
 new Set(["foo"])                // {"$":["foo"], "$types":{"$":{"":"Set"}}}
 new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}}
 ```
-NOTE: Typeson by itself wont support Date or RegExp. You need to:
+NOTE: Typeson by itself wont support these types. You'd need to:
 ```js
 var typeson = new Typeson().register([
     require('typeson-registry/types/date'),
