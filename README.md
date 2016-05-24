@@ -103,6 +103,7 @@ socket.on('myEvent', function (data) {
     // Here we have a true Date, SyntaxError and Float64Array to play with.
 });
 ```
+*NOTE: Both peers must have the same types registered of course.*
 
 # Use with [BSON](https://www.npmjs.com/package/bson)
 The BSON format can serialize object over a binary channel. It supports just the standard JSON types plus Date, Error and optionally Function. You can use Typeson to encapsulate and revive other types as well with BSON as bearer. Use it the same way as shown above with socket.io.
