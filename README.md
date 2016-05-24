@@ -112,7 +112,7 @@ Web Workers have the `onmessage` and `postMessage()` communication channel that 
 
 # API
 
-## constructor ([options])
+# constructor ([options])
 Creates an instance of Typeson, on which you may configure additional types to support, or call encapsulate(), revive(), stringify() or parse() on.
 
 ### Arguments
@@ -139,6 +139,23 @@ var obj = typeson.parse(tson);
 
 ```
 
+# Properties
+
+## types
+A map between type identifyer and type-rules. Same structure as passed to register(). Use this property if you want to create a new Typeson containing all types from another Typeson.
+
+### Sample
+
+```js
+var commonTypeson = new Typeson().register([
+    require('typeson-registry/presets/builtin')
+]);
+
+var myTypeson = new Typeson().register([
+    commonTypeson.types, // Derive from commonTypeson
+    myOwnSpecificTypes // Add your extra types
+]);
+
 ## stringify (obj, [replacer], [space])
 
 Generates JSON based on given obj. If given obj has special types or cyclic references, the produce JSON will contain a $types property on the root where type info relies.
@@ -163,6 +180,20 @@ Parses Typeson genereted JSON back into the original complex structure again.
 var TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
+
+## encapsulate (obj)
+Encapsulates an object but leaves the stringification part to you. Pass your encapsulated object further to socket.io, postMessage(), BSON or indexedDB.
+
+### Sample
+
+```js
+var encapsulated = typeson.encapsulate(new Date());
+var revived = typeson.revive(encapsulated);
+assert (revived instanceof Date); 
+```
+
+## revive (obj)
+Revives an encapsulated object. See encapsulate().
 
 ## register (typeSpec)
 
