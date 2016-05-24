@@ -2,12 +2,16 @@
 Preserves types over JSON, BSON or socket.io
 
 *Only 3.4kb minified. ~1k when gzipped.*
-
+{
 ```js
-{foo: 1}                // {"foo":1}
-{foo: "bar"}            // {"foo":"bar"}
-{foo: new Date()}       // {"foo":1464049031538, $types:{"foo":"Date"}}
-{foo: {sub: /bar/i}}    // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
+{foo: 1}                        // {"foo":1}
+{foo: "bar"}                    // {"foo":"bar"}
+{foo: new Date()}               // {"foo":1464049031538, "$types":{"foo":"Date"}}
+{foo: new Set([new Date()])}    // {"foo":[1464127925971], "$types":{"foo":"Set","foo.0":"Date"}}
+{foo: {sub: /bar/i}}            // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
+{foo: new Int8Array(3)}         // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
+new Set(["foo"])                // {"$":["foo"], "$types":{"$":{"":"Set"}}}
+new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}}
 ```
 NOTE: Typeson by itself wont support Date or RegExp. You need to:
 ```js
