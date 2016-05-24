@@ -52,7 +52,7 @@ var typeson = new Typeson().register({
 var jsonFriendly = typeson.encapsulate({date: new Date(), e: new Error("Oops")});
 // Stringify using good old JSON.stringify()
 var json = JSON.stringify(jsonFriendly);
-// {"date":1464049031538,e:{"name":"Error","message":"Oops"},"$types":{"date": "Date","e": "Error"}}
+// {"date":1464049031538,e:{"name":"Error","message":"Oops"},"$types":{"date":"Date","e":"Error"}}
 
 // Parse using good old JSON.parse()
 var parsed = JSON.parse(json);
