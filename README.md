@@ -99,15 +99,24 @@ So to get the best of two worlds:
 var Typeson = require('typeson'),
     presetSocketIo = require('typeson-registry/presets/socketio.js');
     
-var TSON = new Typeson().register(presetSocketIo);
-    
+var TSON = new Typeson()
+    .register(presetSocketIo)
+    .register({
+        CustomClass: [
+            x => x instanceof CustomClass,
+            c => {foo: c.foo, bar: c.bar},
+            o => new CustomClass(o.foo, o.bar)
+        ]
+    });
+
 var array = new Float64Array(65536);
 array.fill(42, 0, 65536);
 
 var data = {
     date: new Date(),
     error: new SyntaxError("Ooops!"),
-    array: array
+    array: array,
+    custom: new CustomClass("foo", "bar")
 };
 
 socket.emit('myEvent', TSON.encapsulate(data));
@@ -119,10 +128,10 @@ Packing it up at the other end:
 ```js
 socket.on('myEvent', function (data) {
     var revived = TSON.revive(data);
-    // Here we have a true Date, SyntaxError and Float64Array to play with.
+    // Here we have a true Date, SyntaxError, Float64Array and Custom to play with.
 });
 ```
-*NOTE: Both peers must have the same types registered of course.*
+*NOTE: Both peers must have the same types registered.*
 
 # Use with [BSON](https://www.npmjs.com/package/bson)
 The BSON format can serialize object over a binary channel. It supports just the standard JSON types plus Date, Error and optionally Function. You can use Typeson to encapsulate and revive other types as well with BSON as bearer. Use it the same way as shown above with socket.io.
