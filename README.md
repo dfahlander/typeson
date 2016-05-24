@@ -153,11 +153,8 @@ TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ## register (typeSpec)
 
 ### typeSpec
-`{TypeName: [tester, encapsulator, reviver]}`
-or
-`[{TypeName: [tester, encapsulator, reviver]}]`
+`{TypeName: [tester, encapsulator, reviver]}` or an array of such.
 
-A map of TypeName:string to an array of three functions; tester, encapsulator and reviver `{TypeName: string => [tester, encapsulator, reviver]}`. The functions are described below.
 ##### tester (obj : any) : boolean
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
