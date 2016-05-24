@@ -1,5 +1,5 @@
 # typeson.js
-JSON with type info.
+Types for JSON
 
 *Only 3.4kb minified. ~1k when gzipped.*
 
