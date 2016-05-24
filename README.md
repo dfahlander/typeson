@@ -1,5 +1,5 @@
 # typeson.js
-Tiny library for encapsulating custom types with JSON
+A tiny type encapsuler for use with JSON, BSON or socket.io
 
 *Only 3.4kb minified. ~1k when gzipped.*
 
@@ -9,6 +9,7 @@ Tiny library for encapsulating custom types with JSON
 {foo: new Date()}       // {"foo":1464049031538, $types:{"foo":"Date"}}
 {foo: {sub: /bar/i}}    // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
 ```
+NOTE: Typeson does is bare-bone JSON unless you register types with it.
 
 # Why?
 JSON can only contain simple types: strings, numbers, booleans, arrays and objects. This module makes it possible to serialize any type over JSON or other media, such as Date, Error, ArrayBuffer, etc. Typeson is just JSON that complements non-trivial properties with types. It adds a  metadata property "$types" to the result that maps each non-trivial property to a type name. The type name is a reference to a registered type specification that you need to have the same on both the stringifying and the parsing side.
