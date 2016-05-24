@@ -177,10 +177,14 @@ typeson.register({
   ],
   RegExp: [
     x = x instanceof RegExp,
-    re => ({source: re.source, flags: re.flags}),
-    o => new RegExp (o.source, o.flags)
+    re => [re.source, re.flags],
+    a => new RegExp (a[0], a[1])
   ]
 });
+
+console.log(typeson.stringify({d: new Date(), r:/foo/gi }));
+// {"d":1464049031538,"r":["foo","gi"],$types:{"d":"Date","r":"RegExp"}}
+
 
 ```
 [typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types to register with your Typeson instance.
