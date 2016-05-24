@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "typeson.js",
   "scripts": {
@@ -25,5 +25,6 @@
   "homepage": "https://github.com/dfahlander/typeson#readme",
   "devDependencies": {
     "uglify-js": "^2.6.2"
-  }
+  },
+  "tonicExample": "var Typeson = require('typeson'),    TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: /bar/gi});"
 }
