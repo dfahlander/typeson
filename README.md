@@ -81,8 +81,8 @@ What socket.io doesn't do though, is preserving Dates, Errors or your custom typ
 So to get the best of two worlds:
 
 * Register preset 'typeson-registry/presets/socketio' as well as your custom types.
-* Use `Typeson.encapsulate()` instead of Typeson.stringify() to generate an object instead of a string.
-* Use `Typeson.revive()` instead of Typeson.parse() to revive an encapsulated object.
+* Use `Typeson.encapsulate()` to generate an object ready for socket-io emit()
+* Use `Typeson.revive()` to revive the encapsulated object at the other end.
 
 ```js
 var Typeson = require('typeson'),
