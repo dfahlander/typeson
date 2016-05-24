@@ -74,7 +74,14 @@ var revived = typeson.revive(parsed);
 ```
 
 # Use with socket.io
-Typeson can encapsulate types and leave the stringification / binarization to other libs. A good example is socket.io that can serialize binary data much more efficient than via a base64 string in a JSON property. What socket.io doesn't do though, is preserving Dates, Errors or your custom types.
+Socket.io can stream ArrayBuffers as real binary data. This is more efficient than encapsulating it in base64/JSON. Typeson can leave certain types, like ArrayBuffer, untouched, and leave the stringification / binarization part to other libs.
+
+What socket.io doesn't do though, is preserving Dates, Errors or your custom types.
+
+So to get the best of two worlds:
+
+* Typeson.encapsulate() instead of Typeson.stringify() to generate an object instead of a string.
+* Typeson.revive() instead of Typeson.parse() to revive an encapsulated object.
 
 ```js
 var Typeson = require('typeson'),
