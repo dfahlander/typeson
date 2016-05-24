@@ -7,7 +7,7 @@ Tiny library for encapsulating custom types with JSON
 {foo: 1}                // {"foo":1}
 {foo: "bar"}            // {"foo":"bar"}
 {foo: new Date()}       // {"foo":1464049031538, $types:{"foo":"Date"}}
-{foo: {sub: /bar/}}     // {"foo":{"sub":{"source":"bar","flags":""}}, "$types":{"foo.sub":"RegExp"}}
+{foo: {sub: /bar/i}}     // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
 ```
 
 # Why?
