@@ -1,5 +1,5 @@
 # typeson.js
-Preserves types over JSON, BSON and socket.io
+Preserves types over JSON, BSON or socket.io
 
 *Only 3.4kb minified. ~1k when gzipped.*
 
