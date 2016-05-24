@@ -21,7 +21,7 @@ var typeson = new Typeson().register([
     require('typeson-registry/types/typed-arrays')
 ]);
 ```
-or simply:
+or if you want support for all built-in javascript classes:
 ```js
 var typeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
