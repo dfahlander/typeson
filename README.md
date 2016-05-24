@@ -1,5 +1,5 @@
 # typeson.js
-A type encapsulator for use with JSON, BSON or socket.io
+Preserves types over JSON, BSON and socket.io
 
 *Only 3.4kb minified. ~1k when gzipped.*
 
