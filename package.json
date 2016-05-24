@@ -1,7 +1,7 @@
 {
   "name": "typeson",
-  "version": "2.1.1",
-  "description": "JSON with types",
+  "version": "2.1.2",
+  "description": "Preserves types over JSON, BSON or socket.io",
   "main": "typeson.js",
   "scripts": {
     "test": "node test.js",
