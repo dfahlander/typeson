@@ -11,9 +11,12 @@ JSON can only contain simple types: strings, numbers, booleans, arrays and objec
 
 # Compatibility
 * Node
-* Browser
-* Worker
+* Browser(*)
+* Worker(*)
 * ES5
+
+(*) Typeson is a CommonJS module so you must use a web bundler like browserify, webpack or systemjs to use it in the browser or in a web worker.
+
 
 # Features
 * Can stringify custom and standard ES5 / ES6 classes.
