@@ -13,7 +13,7 @@ Preserves types over JSON, BSON or socket.io
 new Set(["foo"])                // {"$":["foo"], "$types":{"$":{"":"Set"}}}
 new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}}
 ```
-NOTE: Typeson by itself wont support these types. You'd need to:
+NOTE: Typeson by itself wont support these types. Register the types you need:
 ```js
 var typeson = new Typeson().register([
     require('typeson-registry/types/date'),
@@ -22,7 +22,7 @@ var typeson = new Typeson().register([
     require('typeson-registry/types/typed-arrays')
 ]);
 ```
-or simply
+or simply:
 ```js
 var typeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
