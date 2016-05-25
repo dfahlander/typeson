@@ -1,11 +1,11 @@
 {
   "name": "typeson",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "typeson.js",
   "scripts": {
     "test": "node test.js",
-    "build": "node_modules/.bin/uglifyjs typeson.js -o typeson.min.js --source-map typeson.min.js.map"
+    "build": "node_modules/.bin/webpack --optimize-minimize"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/dfahlander/typeson#readme",
   "devDependencies": {
-    "uglify-js": "^2.6.2"
+    "uglify-js": "^2.6.2",
+    "webpack": "^1.13.1"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson()\n        .register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: /bar/gi});"
 }

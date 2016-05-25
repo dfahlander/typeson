@@ -164,7 +164,7 @@ function Typeson (options) {
      * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
      * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
      */
-    var register = this.register = function (typeSpecSets) {
+    this.register = function (typeSpecSets) {
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
             typeSpec && keys(typeSpec).forEach(function (typeId) {
