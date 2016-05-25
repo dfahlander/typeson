@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "typeson.js",
   "scripts": {

@@ -50,7 +50,8 @@ function Typeson (options) {
             refObjs=[], // For checking cyclic references
             refKeys=[]; // For checking cyclic references
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var ret = _encapsulate ('', obj, options && ('cyclic' in options) ? options.cyclic : true);
+        var cyclic = options && ('cyclic' in options) ? options.cyclic : true;
+        var ret = _encapsulate ('', obj, cyclic);
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
             // Special if array was serialized because JSON would ignore custom $types prop on an array.
@@ -116,7 +117,7 @@ function Typeson (options) {
                         types[key] = existing ? [type].concat(existing) : type;
                     }
                     // Now, also traverse the result in case it contains it own types to replace
-                    return _encapsulate(key, replacers[i].replace(value), "readonly");
+                    return _encapsulate(key, replacers[i].replace(value), cyclic && "readonly");
                 }
             }
             return value;
