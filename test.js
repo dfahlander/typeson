@@ -1,4 +1,5 @@
 var Typeson = require('./typeson');
+var B64 = require ('base64-arraybuffer');
 
 var typeson = new Typeson().register({
     Date: [
@@ -19,6 +20,16 @@ var typeson = new Typeson().register({
         function (x) { return typeof x === 'number' && isNaN(x) || x === Infinity || x === -Infinity; },
         function (n) { return isNaN(n) ? "NaN" : n > 0 ? "Infinity" : "-Infinity" },
         function (s) { return {NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity}[s];}
+    ],
+    ArrayBuffer: [
+        function test (x) { return x.constructor === ArrayBuffer;},
+        function encapsulate (b) { return B64.encode(b); },
+        function revive (b64) { return B64.decode(b64); }
+    ],
+    DataView: [
+        function (x) { return x instanceof DataView; },
+        function (dw) { return { buffer: dw.buffer, byteOffset: dw.byteOffset, byteLength: dw.byteLength }; },
+        function (obj) { return new DataView(obj.buffer, obj.byteOffset, obj.byteLength); }
     ]
 });
 
@@ -244,4 +255,16 @@ run ([function shouldSupportBasicTypes () {
     assert (x.$types === 'foo', "Should have correct $types value");
 }, function shouldLeaveLeftOutType() {
     // Uint8Buffer is not registered. 
+}, function shouldResolveCyclicsInEncapsulatedObjects() {
+    var buf = new ArrayBuffer(16); 
+    var data = {
+        buf: buf,
+        bar: {
+            data: new DataView(buf, 8, 8)
+        }
+    };
+    var tson = typeson.stringify(data, null, 2);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert (back.buf === back.bar.data.buffer);    
 }]);

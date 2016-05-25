@@ -72,8 +72,10 @@ function Typeson (options) {
                 // Options set to detect cyclic references and be able to rewrite them.
                 var refIndex = refObjs.indexOf(value);
                 if (refIndex < 0) {
-                    refObjs.push(value);
-                    refKeys.push(keypath);
+                    if (cyclic === true) {
+                        refObjs.push(value);
+                        refKeys.push(keypath);
+                    }
                 } else {
                     types[keypath] = "#";
                     return '#'+refKeys[refIndex];
@@ -114,7 +116,7 @@ function Typeson (options) {
                         types[key] = existing ? [type].concat(existing) : type;
                     }
                     // Now, also traverse the result in case it contains it own types to replace
-                    return _encapsulate(key, replacers[i].replace(value), false);
+                    return _encapsulate(key, replacers[i].replace(value), "readonly");
                 }
             }
             return value;
