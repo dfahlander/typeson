@@ -4,8 +4,7 @@ Preserves types over JSON, BSON or socket.io.
 **Only 1.1 kb minified and gzipped!**
 
 ```js
-{foo: 1}                        // {"foo":1}
-{foo: "bar"}                    // {"foo":"bar"}
+{foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
 {foo: new Date()}               // {"foo":1464049031538, "$types":{"foo":"Date"}}
 {foo: new Set([new Date()])}    // {"foo":[1464127925971], "$types":{"foo":"Set","foo.0":"Date"}}
 {foo: {sub: /bar/i}}            // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
