@@ -194,6 +194,8 @@ var myTypeson = new Typeson().register([
 
 ## stringify (obj, [replacer], [space])
 
+*Arguments identical to those of JSON.stringify()*
+
 Generates JSON based on given obj. If given obj has special types or cyclic references, the produce JSON will contain a $types property on the root where type info relies.
 
 ### Sample
@@ -207,6 +209,8 @@ Output:
 ```
 
 ## parse (obj, [reviver])
+
+*Arguments identical to those of JSON.parse()*
 
 Parses Typeson genereted JSON back into the original complex structure again.
 
