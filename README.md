@@ -11,7 +11,13 @@ Preserves types over JSON, BSON or socket.io.
 {foo: new Int8Array(3)}         // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
 new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format at root)
 ```
-NOTE: Typeson by itself wont support these types. Register the types you need:
+
+# Why?
+JSON can only contain strings, numbers, booleans, arrays and objects. If you want to serialize other types over HTTP, WebSocket, postMessage() or other channel, this module makes it possible to serialize any type over channels that normally only accepts vanilla objects. Typeson adds a metadata property "$types" to the result that maps each non-trivial property to a type name. The type name is a reference to a registered type specification that you need to have the same on both the stringifying and the parsing side.
+
+# Type Registry
+[typeson-registry](https://github.com/dfahlander/typeson-registry) contains encapsulation rules for standard javascript types such as Date, Error, ArrayBuffer, etc. Pick the types you need, use a preset or write your own.
+
 ```js
 var typeson = new Typeson().register([
     require('typeson-registry/types/date'),
@@ -26,13 +32,8 @@ var typeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
 ]);
 ```
-If you really need to support all built-in types, the module `typeson-registry/presets/builtin` is still **just 1.6 kb minizied and gzipped** and adds support 32 builtin javascript types: *Date, RegExp, NaN, Infinity, -Infinity, Set, Map, ArrayBuffer, DataView, Uint8Array, Int8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, Error, SyntaxError, TypeError, RangeError, ReferenceError, EvalError, URIError, InternalError, Intl.Collator, Intl.DateTimeFormat, Intl.NumberFormat, Object String, Object Number and Object Boolean*.
+The module `typeson-registry/presets/builtin` is 1.6 kb minizied and gzipped and adds support 32 builtin javascript types: *Date, RegExp, NaN, Infinity, -Infinity, Set, Map, ArrayBuffer, DataView, Uint8Array, Int8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, Error, SyntaxError, TypeError, RangeError, ReferenceError, EvalError, URIError, InternalError, Intl.Collator, Intl.DateTimeFormat, Intl.NumberFormat, Object String, Object Number and Object Boolean*.
 
-# Why?
-JSON can only contain strings, numbers, booleans, arrays and objects. If you want to serialize other types over HTTP, WebSocket, postMessage() or other channel, this module makes it possible to serialize any type over channels that normally only accepts vanilla objects. Typeson adds a metadata property "$types" to the result that maps each non-trivial property to a type name. The type name is a reference to a registered type specification that you need to have the same on both the stringifying and the parsing side.
-
-# Type Registry
-[typeson-registry](https://github.com/dfahlander/typeson-registry) contains encapsulation rules for standard javascript types such as Date, Error, ArrayBuffer, etc. Pick the types you need, use a preset or write your own.
 
 # Compatibility
 * Node
