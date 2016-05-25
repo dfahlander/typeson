@@ -46,9 +46,8 @@ JSON can only contain strings, numbers, booleans, arrays and objects. If you wan
 * Can stringify custom and standard ES5 / ES6 classes.
 * Produces standard JSON with an additional "$types" property in case it is needed.
 * Resolves cyclic references, such as lists of objects where each object has a reference to the list
-* Minimalistic: This library is a single ES5 compliant JS file of 11kb (1k minified and gzipped)
 * You can register any type to be stringifyable (serializable) with your typeson instance.
-* Will produce standard JSON identical to that of JSON.stringify() in case you object doesnt contain special types or cyclic references.
+* Output will be identical to that of JSON.stringif() in case your object doesnt contain special types or cyclic references.
 
 # Usage
 ```js
@@ -82,6 +81,7 @@ var parsed = JSON.parse(json);
 var revived = typeson.revive(parsed);
 
 ```
+*This sample separates Typeson.encapsulate() from JSON.stringify(). Could also have used Typeson.stringify().* 
 
 # Use with socket.io
 Socket.io can stream ArrayBuffers as real binary data. This is more efficient than encapsulating it in base64/JSON. Typeson can leave certain types, like ArrayBuffer, untouched, and leave the stringification / binarization part to other libs.
