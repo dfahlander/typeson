@@ -27,7 +27,7 @@ var typeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
 ]);
 ```
-*'typeson-registry/presets/builtin' contains all javascript built-in types and is is 1.6 kb minizied and gzipped*
+* 'typeson-registry/presets/builtin' adds support for all builtin javascript types and is is* **1.6 kb minizied and gzipped**
 
 # Why?
 JSON can only contain simple types: strings, numbers, booleans, arrays and objects. This module makes it possible to serialize any type over JSON or other media, such as Date, Error, ArrayBuffer, etc. Typeson is just JSON that complements non-trivial properties with types. It adds a  metadata property "$types" to the result that maps each non-trivial property to a type name. The type name is a reference to a registered type specification that you need to have the same on both the stringifying and the parsing side.
