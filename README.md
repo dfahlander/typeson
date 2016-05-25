@@ -1,7 +1,6 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io
-
-*Only 2.4kb minified*
+*Only 1.1 kb when minified and gzipped!*
 
 ```js
 {foo: 1}                        // {"foo":1}
