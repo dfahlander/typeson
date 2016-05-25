@@ -84,7 +84,7 @@ var revived = typeson.revive(parsed);
 *The above sample separates Typeson.encapsulate() from JSON.stringify(). Could also have used Typeson.stringify().* 
 
 # Use with socket.io
-Socket.io can stream ArrayBuffers as real binary data. This is more efficient than encapsulating it in base64/JSON. Typeson can leave certain types, like ArrayBuffer, untouched, and leave the stringification / binarization part to other libs.
+Socket.io can stream ArrayBuffers as real binary data. This is more efficient than encapsulating it in base64/JSON. Typeson can leave certain types, like ArrayBuffer, untouched, and leave the stringification / binarization part to other libs (emit() the output of Typeson.encapsulate() - don't use stringify()).
 
 What socket.io doesn't do though, is preserving Dates, Errors or your custom types.
 
