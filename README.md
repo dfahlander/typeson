@@ -9,7 +9,7 @@ Preserves types over JSON, BSON or socket.io.
 {foo: new Set([new Date()])}    // {"foo":[1464127925971], "$types":{"foo":"Set","foo.0":"Date"}}
 {foo: {sub: /bar/i}}            // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
 {foo: new Int8Array(3)}         // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
-new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}}
+new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format when root is special)
 ```
 NOTE: Typeson by itself wont support these types. Register the types you need:
 ```js
