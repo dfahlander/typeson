@@ -45,7 +45,7 @@ JSON can only contain strings, numbers, booleans, arrays and objects. If you wan
 * Can stringify custom and standard ES5 / ES6 classes.
 * Produces standard JSON with an additional "$types" property in case it is needed.
 * Resolves cyclic references, such as lists of objects where each object has a reference to the list
-* You can register any type to be stringifyable (serializable) with your typeson instance.
+* You can register (almost) any type to be stringifyable (serializable) with your typeson instance.
 * Output will be identical to that of JSON.stringif() in case your object doesnt contain special types or cyclic references.
 
 # Usage
