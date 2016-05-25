@@ -141,6 +141,11 @@ Web Workers have the `onmessage` and `postMessage()` communication channel that 
 # API
 
 # constructor ([options])
+
+```js
+new Typeson([options]);
+```
+
 Creates an instance of Typeson, on which you may configure additional types to support, or call encapsulate(), revive(), stringify() or parse() on.
 
 ### Arguments
