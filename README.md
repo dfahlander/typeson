@@ -136,7 +136,7 @@ socket.on('myEvent', function (data) {
 The BSON format can serialize object over a binary channel. It supports just the standard JSON types plus Date, Error and optionally Function. You can use Typeson to encapsulate and revive other types as well with BSON as bearer. Use it the same way as shown above with socket.io.
 
 # Use with Worker.postMessage()
-Web Workers have the `onmessage` and `postMessage()` communication channel that has built-in support for transferring structures using the structured clone algorithm. It supports Date and ArrayBuffer but not Errors or your own custom classes. To support Error and custom types over web worker channel, register just the types that are needed (Errors and your custom types), and then use Typeson.encapsulate() before posting message, and Typeson.revive() in the onmessage callback.
+Web Workers have the `onmessage` and `postMessage()` communication channel that has built-in support for transferring structures using the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm). It supports Date, ArrayBuffer and many other standard types, but not Errors or your own custom classes. To support Error and custom types over web worker channel, register just the types that are needed (Errors and your custom types), and then use Typeson.encapsulate() before posting message, and Typeson.revive() in the onmessage callback.
 
 # API
 
