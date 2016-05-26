@@ -266,5 +266,15 @@ run ([function shouldSupportBasicTypes () {
     var tson = typeson.stringify(data, null, 2);
     console.log(tson);
     var back = typeson.parse(tson);
-    assert (back.buf === back.bar.data.buffer);    
+    assert (back.buf === back.bar.data.buffer, "The buffers point to same object");    
+}, function shouldSupportRegisteringAClassWithoutReplacerOrReviver() {
+    function MyClass() {}
+    var TSON = new Typeson().register({MyClass: MyClass});
+    var x = new MyClass();
+    x.hello = "world";
+    var tson = TSON.stringify(x);
+    console.log(tson);
+    var back = TSON.parse(tson);
+    assert (back instanceof MyClass, "Should revive to a MyClass instance.");
+    assert (back.hello === "world", "Should have all properties there.");
 }]);

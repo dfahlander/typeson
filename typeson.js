@@ -180,6 +180,15 @@ function Typeson (options) {
                     delete regTypes[typeId];
                 }
                 if (spec) {
+                    if (typeof spec === 'function') {
+                        // Support registering just a class without replacer/reviver
+                        var Class = spec;
+                        spec = [
+                            function(x){return x.constructor === Class;},
+                            function(x){return assign({}, x)},
+                            function(x){return assign(Object.create(Class.prototype), x)}
+                        ];
+                    }
                     replacers.push({
                         type: typeId,
                         test: spec[0],
@@ -192,6 +201,11 @@ function Typeson (options) {
         });
         return this;
     };
+}
+
+function assign(t,s) {
+    keys(s).map(function(k){t[k]=s[k];});
+    return t;
 }
 
 /** getByKeyPath() utility */
