@@ -71,14 +71,19 @@ var typeson = new Typeson().register({
           e.name = data.name;
           return e;
         }
-    ]
+    ],
+    CustomClass: CustomClass
 });
 
+function CustomType (foo) {
+    this.foo = foo;
+}
+
 // Encapsulate to a JSON friendly format:
-var jsonFriendly = typeson.encapsulate({date: new Date(), e: new Error("Oops")});
+var jsonFriendly = typeson.encapsulate({date: new Date(), e: new Error("Oops"), c: new CustomType("bar")});
 // Stringify using good old JSON.stringify()
 var json = JSON.stringify(jsonFriendly);
-// {"date":1464049031538,e:{"name":"Error","message":"Oops"},"$types":{"date":"Date","e":"Error"}}
+// {"date":1464049031538,e:{"name":"Error","message":"Oops"},"c":{"foo":"bar"},"$types":{"date":"Date","e":"Error","c":"CustomType"}}
 
 // Parse using good old JSON.parse()
 var parsed = JSON.parse(json);
