@@ -72,7 +72,7 @@ var typeson = new Typeson().register({
           return e;
         }
     ],
-    SimpleClass: SimpleClass // Default rules apply (see register())
+    SimpleClass: SimpleClass // Default rules apply. See "register (typeSpec)"
 });
 
 function SimpleClass (foo) {
