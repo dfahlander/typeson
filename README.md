@@ -163,9 +163,8 @@ Whether or not to support cyclic references. Default true unless explicitely set
 ### Sample
 ```js
 var Typeson = require('typeson');
-var presetUniversal = require('typeson-registry/presets/universal');
 var typeson = new Typeson()
-    .register (presetUniversal);
+    .register (require('typeson-registry/presets/builtin'));
 
 var tson = typeson.stringify(complexObject);
 console.log(tson);
