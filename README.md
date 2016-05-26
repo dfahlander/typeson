@@ -48,7 +48,7 @@ The module `typeson-registry/presets/builtin` is 1.6 kb minizied and gzipped and
 * Resolves cyclic references, such as lists of objects where each object has a reference to the list
 * You can register (almost) any type to be stringifyable (serializable) with your typeson instance.
 * Output will be identical to that of JSON.stringify() in case your object doesnt contain special types or cyclic references.
-* Type specs may encapsulate its type in other registered types. For example, ImageData is encapsulated as `{array: Uint8ClampedArray, width: number, height: number}`, expecting another spec to convert the Uint8ClampedArray. With the builtin preset this means it's gonna be converted to base64, but with the `socketio` preset, its gonna be converted to an ArrayBuffer that is left as-is and streamed binary over the WebSocket channel!
+* Type specs may encapsulate its type in other registered types. For example, ImageData is encapsulated as `{array: Uint8ClampedArray, width: number, height: number}`, expecting another spec to convert the Uint8ClampedArray. With the [builtin](https://github.com/dfahlander/typeson-registry/blob/master/presets/builtin.js) preset this means it's gonna be converted to base64, but with the [socketio](https://github.com/dfahlander/typeson-registry/blob/master/presets/socketio.js) preset, its gonna be converted to an ArrayBuffer that is left as-is and streamed binary over the WebSocket channel!
 
 # Usage
 ```js
