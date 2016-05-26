@@ -1,7 +1,7 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io.
 
-**Only 1.2 kb minified and gzipped!** *plus ~ 10 - 200 bytes per supported type*
+**Only 1.2 kb minified and gzipped!** *plus between 10 - 200 bytes per supported type*
 
 ```js
 {foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
