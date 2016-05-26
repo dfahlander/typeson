@@ -75,15 +75,34 @@ var typeson = new Typeson().register({
     CustomClass: CustomClass
 });
 
-function CustomType (foo) {
+function CustomClass (foo) {
     this.foo = foo;
 }
 
 // Encapsulate to a JSON friendly format:
-var jsonFriendly = typeson.encapsulate({date: new Date(), e: new Error("Oops"), c: new CustomType("bar")});
+var jsonFriendly = typeson.encapsulate({
+    date: new Date(),
+    e: new Error("Oops"),
+    c: new CustomClass("bar")
+});
 // Stringify using good old JSON.stringify()
-var json = JSON.stringify(jsonFriendly);
-// {"date":1464049031538,e:{"name":"Error","message":"Oops"},"c":{"foo":"bar"},"$types":{"date":"Date","e":"Error","c":"CustomType"}}
+var json = JSON.stringify(jsonFriendly, null, 2);
+/*
+{
+  "date": 1464049031538,
+  "e": {
+    "name": "Error",
+    "message": "Oops"
+  },
+  "c": {
+    "foo": "bar"
+  },
+  "$types": {
+    "date": "Date",
+    "e": "Error",
+    "c": "CustomClass"
+  }
+}
 
 // Parse using good old JSON.parse()
 var parsed = JSON.parse(json);
