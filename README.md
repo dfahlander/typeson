@@ -273,9 +273,9 @@ An object that maps a type-name to a specification of how to test,encapsulate an
 ##### constructor-function
 A class (constructor function) that would use default test, encapsulation and revival rules, which is:
 
-test: check if x.constructor === constructor-function.
-encapsulate: copy all enumerable own props into a vanilla object
-revive: Use Object.create() to revive the correct type, and copy all props into it.
+* test: check if x.constructor === constructor-function.
+* encapsulate: copy all enumerable own props into a vanilla object
+* revive: Use Object.create() to revive the correct type, and copy all props into it.
 
 ##### tester (obj : any) : boolean
 Function that tests whether an instance is of your type and returns a truthy value if it is.
