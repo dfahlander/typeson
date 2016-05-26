@@ -1,7 +1,7 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io.
 
-**Only 1.1 kb minified and gzipped!** *plus ~100 bytes per supported type*
+**Only 1.2 kb minified and gzipped!** *plus ~25-200 bytes per supported type*
 
 ```js
 {foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
@@ -238,7 +238,13 @@ Revives an encapsulated object. See encapsulate().
 ## register (typeSpec)
 
 ### typeSpec
-`{TypeName: [tester, encapsulator, reviver]}` or an array of such.
+`{TypeName: string => constructor-function | [tester, encapsulator, reviver]}` or an array of such structure.
+
+##### constructor-function
+A class (constructor function) that would use default encapsulation and revival rules, which is:
+
+encapsulate: copy all enumerable own props into a vanilla object
+revive: Use Object.create() to revive the correct type, and copy all props into it.
 
 ##### tester (obj : any) : boolean
 Function that tests whether an instance is of your type and returns a truthy value if it is.
@@ -254,7 +260,12 @@ Function that maps you JSON-serializable object into a real instance of your typ
 ```js
 var typeson = new Typeson();
 
+function CustomType(foo) {
+    this.foo = foo;
+}
+
 typeson.register({
+  CustomType: CustomType,
   Date: [
     x => x instanceof Date, // tester
     date => date.getTime(), // encapsulator
@@ -267,8 +278,12 @@ typeson.register({
   ]
 });
 
-console.log(typeson.stringify({d: new Date(), r:/foo/gi }));
-// {"d":1464049031538,"r":["foo","gi"],$types:{"d":"Date","r":"RegExp"}}
+console.log(typeson.stringify({
+    ct: new CustomType("hello"),
+    d: new Date(),
+    r:/foo/gi
+}));
+// {"ct":{"foo":"hello"},"d":1464049031538,"r":["foo","gi"],$types:{"ct":"CustomType","d":"Date","r":"RegExp"}}
 
 
 ```
