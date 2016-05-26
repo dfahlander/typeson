@@ -72,10 +72,10 @@ var typeson = new Typeson().register({
           return e;
         }
     ],
-    CustomClass: CustomClass
+    SimpleClass: SimpleClass
 });
 
-function CustomClass (foo) {
+function SimpleClass (foo) {
     this.foo = foo;
 }
 
@@ -83,7 +83,7 @@ function CustomClass (foo) {
 var jsonFriendly = typeson.encapsulate({
     date: new Date(),
     e: new Error("Oops"),
-    c: new CustomClass("bar")
+    c: new SimpleClass("bar")
 });
 // Stringify using good old JSON.stringify()
 var json = JSON.stringify(jsonFriendly, null, 2);
@@ -100,7 +100,7 @@ var json = JSON.stringify(jsonFriendly, null, 2);
   "$types": {
     "date": "Date",
     "e": "Error",
-    "c": "CustomClass"
+    "c": "SimpleClass"
   }
 }
 
