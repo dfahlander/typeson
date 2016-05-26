@@ -1,6 +1,71 @@
 var keys = Object.keys,
     isArray = Array.isArray;
 
+/*
+ 
+Idea for a better typeson format (typeson 4.0):
+    
+new Date()
+{"$": {"Date":1192329383}}
+
+---
+
+{d: new Date()}
+{"d": 1192324434, "$d": "Date"}
+
+new RegExp("foo", "gi")
+{"source": "foo", "flags": "gi", "$":"RegExp"}
+
+---
+
+new RegExp("foo", "gi")
+{"$": {RegExp: ["foo","gi"]}
+
+{"re":/foo/gi}
+{"re": ["foo","gi"], "$re": "RegExp"}
+
+---
+
+Revive procedure:
+
+* {$+propname: "Class"} = the property has that class
+* {$: {"Class": replaced}} = this is of type Class with revival-source replaced.
+* {$: "Class"} = this is of type Class and revival source is included in this.
+* {$: ["Class1","Class2"]} = This will become Class2 but is encapsulated via Class1 and this comprises revival data for Class1.
+* Any occurance of $$: rewrite to removing first $.
+
+Encapsulation procedure:
+* Depending on type, call replace(path, key, value)
+* If no replacement and value is plain object, clone it and for each property, do the replace procedure
+* If no replacement and value is non-plain object, return it as is.
+* If replacement is plain Object, put prop $=Type into replacement and return.
+* If replacement is primitive, return {$: {<Type>: replacement}}. Special: If has parent, put $prop=Type on parent instead.
+* If replacement is array, same rule as primitive.
+* If replacement is non-plain Object, same rule as primitive
+* Any occurrance of $, prefix with yet another $.
+
+replace(path, key, value):
+* If should not replace, return value (iteration procedure will clone if plain object)
+* If should replace, do the replacement, and do encapsulation procedure on the replacement. 
+  Then, put the type $=Type onto the replacement  HMMM. need to think this through - what responsibility has
+  replace() versur encapsulation procedure?
+
+Disallow type identifiers prefixed with $.
+
+Cyclics
+
+Replace procedure:
+* Register all object instances on the road.
+* When detected a cyclic, resolve its absolute path to a relative path from this object. Type="#".
+
+Revive procedure
+* When type="#", resolve absolute path and getByKeyPath absolute path. Throw if not there!
+
+
+
+*/
+
+
 /* Typeson - JSON with types
     * License: The MIT License (MIT)
     * Copyright (c) 2016 David Fahlander 
@@ -206,6 +271,11 @@ function Typeson (options) {
 function assign(t,s) {
     keys(s).map(function(k){t[k]=s[k];});
     return t;
+}
+
+/** getRelativePath */
+function getRelativePath(root, path) {
+    
 }
 
 /** getByKeyPath() utility */
