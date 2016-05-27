@@ -1,8 +1,6 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io.
 
-*typeson.js is a tiny little js file of 2.6 kb minified and about one kilobyte gzipped*
-
 ```js
 {foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
 {foo: new Date()}               // {"foo":1464049031538, "$types":{"foo":"Date"}}
