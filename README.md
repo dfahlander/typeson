@@ -1,7 +1,7 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io.
 
-*typeson.js is a tiny - 2.6 kb minified and ~1 kb gzipped*
+*typeson.js is a tiny. 2.6 kb minified and ~1 kb gzipped*
 
 #### How a stringified object could look like
 
