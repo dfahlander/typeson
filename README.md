@@ -1,7 +1,7 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io.
 
-*It's a tiny one-file library (2.6 kb minified and 1.2 kb gzipped)*
+*typeson.js is a tiny little js file of 2.6 kb minified and about one kilobyte gzipped*
 
 ```js
 {foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
