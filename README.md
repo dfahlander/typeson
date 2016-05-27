@@ -305,14 +305,14 @@ typeson.register({
   // This style works for any trivial js class without hidden closures.
   CustomType: CustomType,
   
-  // For Date, we must define the rules explicitely
+  // Date is native and hides it's internal state.
+  // We must define encapsulator and reviver that always works.
   Date: [
     x => x instanceof Date, // tester
     date => date.getTime(), // encapsulator
     obj => new Date(obj)    // reviver
   ],
   
-  // For RegExp, we must also define rules explicitely
   RegExp: [
     x = x instanceof RegExp,
     re => [re.source, re.flags],
