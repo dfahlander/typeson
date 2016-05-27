@@ -301,7 +301,7 @@ function CustomType(foo) {
 }
 
 typeson.register({
-  CustomType: CustomType,
+  CustomType: CustomType,   // simple style - use default rules
   Date: [
     x => x instanceof Date, // tester
     date => date.getTime(), // encapsulator
