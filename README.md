@@ -301,12 +301,17 @@ function CustomType(foo) {
 }
 
 typeson.register({
-  CustomType: CustomType,   // simple style - use default rules
+  // simple style - use default rules
+  CustomType: CustomType,
+  
+  // advanced style - define rules explicitely
   Date: [
     x => x instanceof Date, // tester
     date => date.getTime(), // encapsulator
     obj => new Date(obj)    // reviver
   ],
+  
+  // another example of advaced style
   RegExp: [
     x = x instanceof RegExp,
     re => [re.source, re.flags],
