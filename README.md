@@ -301,17 +301,18 @@ function CustomType(foo) {
 }
 
 typeson.register({
-  // simple style - use default rules
+  // simple style - provide just a constructor function.
+  // This style works for any trivial js class without hidden closures.
   CustomType: CustomType,
   
-  // advanced style - define rules explicitely
+  // For Date, we must define the rules explicitely
   Date: [
     x => x instanceof Date, // tester
     date => date.getTime(), // encapsulator
     obj => new Date(obj)    // reviver
   ],
   
-  // another example of advaced style
+  // For RegExp, we must also define rules explicitely
   RegExp: [
     x = x instanceof RegExp,
     re => [re.source, re.flags],
