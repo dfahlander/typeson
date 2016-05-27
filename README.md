@@ -1,6 +1,10 @@
 # typeson.js
 Preserves types over JSON, BSON or socket.io.
 
+*typeson.js is a tiny - 2.6 kb minified and ~1 kb gzipped*
+
+#### How a stringified object could look like
+
 ```js
 {foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
 {foo: new Date()}               // {"foo":1464049031538, "$types":{"foo":"Date"}}
