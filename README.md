@@ -61,7 +61,9 @@ npm install typeson
 ```
 
 ```js
-var Typeson = require('typeson');
+// Require typeson. It's an UMD module so you could also use requirejs or plain script tags.
+var Typeson = require('typeson'); 
+
 var typeson = new Typeson().register({
     Date: [
         x => x instanceof Date, // test function
