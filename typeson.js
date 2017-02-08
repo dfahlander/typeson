@@ -3,14 +3,13 @@ var keys = Object.keys,
 
 /* Typeson - JSON with types
     * License: The MIT License (MIT)
-    * Copyright (c) 2016 David Fahlander 
+    * Copyright (c) 2016 David Fahlander
     */
 
 /** An instance of this class can be used to call stringify() and parse().
- * Supports built-in types such as Date, Error, Regexp etc by default but can
- * also be extended to support custom types using the register() method.
- * Typeson also resolves cyclic references.
- * 
+ * Typeson resolves cyclic references by default. Can also be extended to
+ * support custom types using the register() method.
+ *
  * @constructor
  * @param {{cyclic: boolean}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
  */
@@ -19,30 +18,30 @@ function Typeson (options) {
     var replacers = [];
     // Revivers: map {type => reviver}. Sample: {"Date": value => new Date(value)}
     var revivers = {};
-    
+
     /** Types registered via register() */
     var regTypes = this.types = {};
-    
+
     /** Seraialize given object to Typeson.
-     * 
+     *
      * Arguments works identical to those of JSON.stringify().
      */
     this.stringify = function (obj, replacer, space) { // replacer here has nothing to do with our replacers.
         return JSON.stringify (encapsulate(obj), replacer, space);
-    }
-    
+    };
+
     /** Parse Typeson back into an obejct.
-     * 
+     *
      * Arguments works identical to those of JSON.parse().
      */
     this.parse = function (text, reviver) {
         return revive (JSON.parse (text, reviver)); // This reviver has nothing to do with our revivers.
-    }
+    };
 
     /** Encapsulate a complex object into a plain Object by replacing regisered types with
      * plain objects representing the types data.
-     * 
-     * This method is used internally by Typeson.stringify().  
+     *
+     * This method is used internally by Typeson.stringify().
      * @param {Object} obj - Object to encapsulate.
      */
     var encapsulate = this.encapsulate = function (obj) {
@@ -59,15 +58,14 @@ function Typeson (options) {
             ret.$types = types;
         }
         return ret;
-        
+
         function _encapsulate (keypath, value, cyclic) {
             var $typeof = typeof value;
             if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
-                return $typeof === 'number' ?
-                    isNaN(value) || value === -Infinity || value === Infinity ?
+                return ($typeof === 'undefined' && value === undefined) || ($typeof === 'number' &&
+                    (isNaN(value) || value === -Infinity || value === Infinity)) ?
                         replace(keypath, value) :
-                        value :
-                    value;
+                        value;
             if (value == null) return value;
             if (cyclic) {
                 // Options set to detect cyclic references and be able to rewrite them.
@@ -86,7 +84,6 @@ function Typeson (options) {
                 value : // Optimization: if plain object, don't try finding a replacer
                 replace(keypath, value);
             if (replaced !== value) return replaced;
-            if (value == null) return value;
             var clone;
             if (value.constructor === Object)
                 clone = {};
@@ -100,7 +97,7 @@ function Typeson (options) {
             });
             return clone;
         }
-        
+
         function replace (key, value) {
             // Encapsulate registered types
             var i = replacers.length;
@@ -140,7 +137,7 @@ function Typeson (options) {
             ignore$Types = false;
         }
         return _revive ('', obj);
-                
+
         function _revive (keypath, value, target) {
             if (ignore$Types && keypath === '$types') return;
             var type = types[keypath];
@@ -151,7 +148,7 @@ function Typeson (options) {
                     var val = _revive(keypath + (keypath ? '.':'') + key, value[key], target || clone);
                     if (val !== undefined) clone[key] = val;
                 });
-                value = clone;            
+                value = clone;
             }
             if (!type) return value;
             if (type === '#') return getByKeyPath(target, value.substr(1));
@@ -162,7 +159,7 @@ function Typeson (options) {
             }, value);
         }
     };
-            
+
     /** Register types.
      * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
      * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];

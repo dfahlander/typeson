@@ -18,6 +18,7 @@
     "types"
   ],
   "author": "dfahlander",
+  "contributors": ["Brett Zamir"],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/dfahlander/typeson/issues"

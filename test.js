@@ -66,7 +66,7 @@ run ([function shouldSupportBasicTypes () {
     assert (!res.e, "Symbols should not follow by default");
     assert (Array.isArray(res.f) && res.f.length === 0, "Array value");
     assert (res.g instanceof Date && res.g.toString() == date.toString(), "Date value");
-    
+
 }, function shouldResolveCyclics() {
     //
     // shouldResolveCyclics
@@ -81,20 +81,20 @@ run ([function shouldSupportBasicTypes () {
         });
     }
     data.list[3].children = [data.list[0], data.list[1]];
-    
+
     var tson = typeson.stringify(data,null, 2);
     //console.log(tson);
     var result = typeson.parse(tson);
-    
+
     assert(data.list.length === 10, "Data.list.length should be 10");
     assert(data.list[3].children.length === 2, "data.list[3] should have 2 children");
     assert(data.list[3].children[0] === data.list[0], "First child of data.list[3] should be data.list[0]");
-    
+
 }, function shouldResolveCyclics2(){
     //
     // shouldResolveCyclics2
     //
-    
+
     var kalle = {name: "Kalle", age: 33};
     var input = [kalle, kalle, kalle];
     var tson = typeson.stringify(input);
@@ -103,7 +103,7 @@ run ([function shouldSupportBasicTypes () {
     assert (tson.match(/Kalle/g).length === 1, "TSON should only contain one 'Kalle'. The other should just reference the first");
     var result = typeson.parse(tson);
     assert (result[0] === result[1] && result[1] === result[2], "The resulting object should also just have references to the same object");
-    
+
 }, function shouldNotResolveCyclicsIfNotWanted(){
     //
     // shouldNotResolveCyclicsIfNotWanted
@@ -115,7 +115,7 @@ run ([function shouldSupportBasicTypes () {
     var tson = typeson.stringify(input);
     var json = JSON.stringify(input);
     assert (tson === json, "TSON should be identical to JSON because the input is simple and the cyclics of the input should be ignored");
-    
+
 }, function shouldSupportArrays(){
     //
     // shouldSupportArrays
@@ -124,7 +124,7 @@ run ([function shouldSupportBasicTypes () {
     assert (res instanceof Array, "Result should be an array");
     assert (res.length === 3, "Should have length 3");
     assert (res[2] === 3, "Third item should be 3");
-    
+
 }, function shouldSupportIntermedateTypes() {
     function CustomDate(date) {
         this._date = date;
@@ -160,14 +160,14 @@ run ([function shouldSupportBasicTypes () {
     CustomDate.prototype.getName = function () {
         return this.name;
     }
-    
+
     var date = new Date();
-    
+
     var input = {
         name: "Karl",
         date: new CustomDate(date, "Otto")
     }
-    
+
     var typeson = new Typeson()
         .register(globalTypeson.types)
         .register({
@@ -184,19 +184,19 @@ run ([function shouldSupportBasicTypes () {
     assert (result.date instanceof CustomDate, "Correct instance type of custom date");
     assert (result.date.getName() == "Otto", "prototype method works and properties seems to be in place");
     assert (result.date.getRealDate().getTime() === date.getTime(), "The correct time is there");
-    
+
 }, function shouldBeAbleToStringifyComplexObjectsAtRoot() {
     var x = roundtrip(new Date(3));
     assert (x instanceof Date, "x should be a Date");
     assert (x.getTime() === 3, "Time should be 3");
-    var y = roundtrip([new Date(3)]);    
+    var y = roundtrip([new Date(3)]);
     assert (y[0] instanceof Date, "y[0] should be a Date");
     assert (y[0].getTime() === 3, "Time should be 3");
-    
+
     function Custom () {
         this.x = "oops";
     }
-    
+
     var TSON = new Typeson().register({
         Custom: [
             x => x instanceof Custom,
@@ -232,7 +232,7 @@ run ([function shouldSupportBasicTypes () {
     console.log(tson);
     z = TSON.parse(tson);
     assert (z instanceof Custom && z.x === "oops", "Custom type encapsulated in bool should work");
-    
+
 }, function shouldBePossibleToEncapsulateObjectWithReserved$typesProperty() {
     function Custom (val, $types){
         this.val = val;
@@ -246,7 +246,7 @@ run ([function shouldSupportBasicTypes () {
         ]
     });
     var input = new Custom("bar", "foo");
-    
+
     var tson = typeson.stringify(input);
     console.log(tson);
     var x = typeson.parse(tson);
@@ -254,9 +254,9 @@ run ([function shouldSupportBasicTypes () {
     assert (x.val === "bar", "Should have correct val value");
     assert (x.$types === 'foo', "Should have correct $types value");
 }, function shouldLeaveLeftOutType() {
-    // Uint8Buffer is not registered. 
+    // Uint8Buffer is not registered.
 }, function shouldResolveCyclicsInEncapsulatedObjects() {
-    var buf = new ArrayBuffer(16); 
+    var buf = new ArrayBuffer(16);
     var data = {
         buf: buf,
         bar: {
@@ -266,7 +266,7 @@ run ([function shouldSupportBasicTypes () {
     var tson = typeson.stringify(data, null, 2);
     console.log(tson);
     var back = typeson.parse(tson);
-    assert (back.buf === back.bar.data.buffer, "The buffers point to same object");    
+    assert (back.buf === back.bar.data.buffer, "The buffers point to same object");
 }, function shouldSupportRegisteringAClassWithoutReplacerOrReviver() {
     function MyClass() {}
     var TSON = new Typeson().register({MyClass: MyClass});
