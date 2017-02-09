@@ -1,9 +1,10 @@
 # typeson.js
+
 Preserves types over JSON, BSON or socket.io.
 
 *typeson.js is tiny. 2.6 kb minified. ~1 kb gzipped.*
 
-#### How a stringified object could look like
+## Example of how a stringified object can look
 
 ```js
 {foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
@@ -14,10 +15,12 @@ Preserves types over JSON, BSON or socket.io.
 new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format at root)
 ```
 
-# Why?
+## Why?
+
 JSON can only contain strings, numbers, booleans, arrays and objects. If you want to serialize other types over HTTP, WebSocket, postMessage() or other channel, this module makes it possible to serialize any type over channels that normally only accepts vanilla objects. Typeson adds a metadata property "$types" to the result that maps each non-trivial property to a type name. The type name is a reference to a registered type specification that you need to have the same on both the stringifying and the parsing side.
 
-# Type Registry
+## Type Registry
+
 [typeson-registry](https://github.com/dfahlander/typeson-registry) contains encapsulation rules for standard javascript types such as Date, Error, ArrayBuffer, etc. Pick the types you need, use a preset or write your own.
 
 ```js
@@ -36,15 +39,15 @@ var typeson = new Typeson().register([
 ```
 The module `typeson-registry/presets/builtin` is 1.6 kb minizied and gzipped and adds support 32 builtin javascript types: *Date, RegExp, NaN, Infinity, -Infinity, Set, Map, ArrayBuffer, DataView, Uint8Array, Int8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, Error, SyntaxError, TypeError, RangeError, ReferenceError, EvalError, URIError, InternalError, Intl.Collator, Intl.DateTimeFormat, Intl.NumberFormat, Object String, Object Number and Object Boolean*.
 
+## Compatibility
 
-# Compatibility
 * Node
 * Browser
 * Worker
 * ES5
 
+## Features
 
-# Features
 * Can stringify custom and standard ES5 / ES6 classes.
 * Produces standard JSON with an additional "$types" property in case it is needed.
 * Resolves cyclic references, such as lists of objects where each object has a reference to the list
@@ -52,17 +55,19 @@ The module `typeson-registry/presets/builtin` is 1.6 kb minizied and gzipped and
 * Output will be identical to that of JSON.stringify() in case your object doesnt contain special types or cyclic references.
 * Type specs may encapsulate its type in other registered types. For example, ImageData is encapsulated as `{array: Uint8ClampedArray, width: number, height: number}`, expecting another spec to convert the Uint8ClampedArray. With the [builtin](https://github.com/dfahlander/typeson-registry/blob/master/presets/builtin.js) preset this means it's gonna be converted to base64, but with the [socketio](https://github.com/dfahlander/typeson-registry/blob/master/presets/socketio.js) preset, its gonna be converted to an ArrayBuffer that is left as-is and streamed binary over the WebSocket channel!
 
-# Limitations
+## Limitations
+
 Since typeson has a synchronous API, it cannot encapsulate and revive async types such as Blob, File or Observable. Encapsulating an async object requires to be able to emit streamed content asynchronically. Remoting libraries could however complement typeson with a streaming channel that handles the emitting of stream content. For example, a remoting library could define a typeson rule that encapsulates an [Observable](https://github.com/zenparsing/es-observable) to an id (string or number for example), then starts subscribing to it and emitting the chunks to the peer as they arrive. The peer could revive the id to an observable that when subscribed to, will listen to the channel for chunks destinated to the encapsulated ID.
 
-# Usage
+## Usage
+
 ```
 npm install typeson
 ```
 
 ```js
 // Require typeson. It's an UMD module so you could also use requirejs or plain script tags.
-var Typeson = require('typeson'); 
+var Typeson = require('typeson');
 
 var typeson = new Typeson().register({
     Date: [
@@ -111,6 +116,7 @@ var json = JSON.stringify(jsonFriendly, null, 2);
     "c": "SimpleClass"
   }
 }
+*/
 
 // Parse using good old JSON.parse()
 var parsed = JSON.parse(json);
@@ -118,9 +124,12 @@ var parsed = JSON.parse(json);
 var revived = typeson.revive(parsed);
 
 ```
-*The above sample separates Typeson.encapsulate() from JSON.stringify(). Could also have used Typeson.stringify().* 
+*The above sample separates Typeson.encapsulate() from JSON.stringify(). Could also have used Typeson.stringify().*
 
-# Use with socket.io
+## Environment/Format support
+
+### Use with socket.io
+
 Socket.io can stream ArrayBuffers as real binary data. This is more efficient than encapsulating it in base64/JSON. Typeson can leave certain types, like ArrayBuffer, untouched, and leave the stringification / binarization part to other libs (use Typeson.encapsulate() and not Typeson.stringify()).
 
 What socket.io doesn't do though, is preserving Dates, Errors or your custom types.
@@ -134,7 +143,7 @@ So to get the best of two worlds:
 ```js
 var Typeson = require('typeson'),
     presetSocketIo = require('typeson-registry/presets/socketio.js');
-    
+
 var TSON = new Typeson()
     .register(presetSocketIo)
     .register({
@@ -169,15 +178,17 @@ socket.on('myEvent', function (data) {
 ```
 *NOTE: Both peers must have the same types registered.*
 
-# Use with [BSON](https://www.npmjs.com/package/bson)
+### Use with [BSON](https://www.npmjs.com/package/bson)
+
 The BSON format can serialize object over a binary channel. It supports just the standard JSON types plus Date, Error and optionally Function. You can use Typeson to encapsulate and revive other types as well with BSON as bearer. Use it the same way as shown above with socket.io.
 
-# Use with Worker.postMessage()
+### Use with Worker.postMessage()
+
 Web Workers have the `onmessage` and `postMessage()` communication channel that has built-in support for transferring structures using the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm). It supports Date, ArrayBuffer and many other standard types, but not Errors or your own custom classes. To support Error and custom types over web worker channel, register just the types that are needed (Errors and your custom types), and then use Typeson.encapsulate() before posting message, and Typeson.revive() in the onmessage callback.
 
-# API
+## API
 
-# constructor ([options])
+### constructor ([options])
 
 ```js
 new Typeson([options]);
@@ -185,7 +196,7 @@ new Typeson([options]);
 
 Creates an instance of Typeson, on which you may configure additional types to support, or call encapsulate(), revive(), stringify() or parse() on.
 
-### Arguments
+#### Arguments
 ##### options (optional):
 ```
 {
@@ -193,10 +204,10 @@ Creates an instance of Typeson, on which you may configure additional types to s
 }
 ```
 
-##### cyclic
+###### cyclic
 Whether or not to support cyclic references. Default true unless explicitely set to false. If this property is false, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as JSON.stringify() would do). If this property is true, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
-### Sample
+#### Sample
 ```js
 var Typeson = require('typeson');
 var typeson = new Typeson()
@@ -208,12 +219,13 @@ var obj = typeson.parse(tson);
 
 ```
 
-# Properties
+### Properties
 
-## types
+#### types
+
 A map between type identifyer and type-rules. Same structure as passed to register(). Use this property if you want to create a new Typeson containing all types from another Typeson.
 
-### Sample
+##### Sample
 
 ```js
 var commonTypeson = new Typeson().register([
@@ -226,15 +238,15 @@ var myTypeson = new Typeson().register([
 ]);
 ```
 
-# Methods
+### Methods
 
-## stringify (obj, [replacer], [space])
+#### stringify (obj, [replacer], [space])
 
 *Arguments identical to those of JSON.stringify()*
 
 Generates JSON based on given obj. If given obj has special types or cyclic references, the produce JSON will contain a $types property on the root where type info relies.
 
-### Sample
+##### Sample
 ```js
 var TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.stringify ({date: new Date()});
@@ -244,57 +256,60 @@ Output:
 {"date": 1463667643065, "$types": {"date": "Date"}}
 ```
 
-## parse (obj, [reviver])
+#### parse (obj, [reviver])
 
 *Arguments identical to those of JSON.parse()*
 
 Parses Typeson genereted JSON back into the original complex structure again.
 
-### Sample
+##### Sample
 
 ```js
 var TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
-## encapsulate (obj)
+#### encapsulate (obj)
 Encapsulates an object but leaves the stringification part to you. Pass your encapsulated object further to socket.io, postMessage(), BSON or indexedDB.
 
-### Sample
+##### Sample
 
 ```js
 var encapsulated = typeson.encapsulate(new Date());
 var revived = typeson.revive(encapsulated);
-assert (revived instanceof Date); 
+assert (revived instanceof Date);
 ```
 
-## revive (obj)
+#### revive (obj)
 Revives an encapsulated object. See encapsulate().
 
-## register (typeSpec)
+#### register (typeSpec)
 
-### typeSpec
+##### typeSpec
+
 An object that maps a type-name to a specification of how to test,encapsulate and revive that type.
 
 `{TypeName => constructor-function | [tester, encapsulator, reviver]}` or an array of such structure.
 
-##### constructor-function
+###### constructor-function
+
 A class (constructor function) that would use default test, encapsulation and revival rules, which is:
 
 * test: check if x.constructor === constructor-function.
 * encapsulate: copy all enumerable own props into a vanilla object
 * revive: Use Object.create() to revive the correct type, and copy all props into it.
 
-##### tester (obj : any) : boolean
+###### tester (obj : any) : boolean
+
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
-##### encapsulator (obj: YourType) : Object
+###### encapsulator (obj: YourType) : Object
 Function that maps you instance to a JSON-serializable object.
 
-##### reviver (obj: Object) : YourType
+###### reviver (obj: Object) : YourType
 Function that maps you JSON-serializable object into a real instance of your type.
 
-### Sample
+##### Sample
 
 ```js
 var typeson = new Typeson();
@@ -307,7 +322,7 @@ typeson.register({
   // simple style - provide just a constructor function.
   // This style works for any trivial js class without hidden closures.
   CustomType: CustomType,
-  
+
   // Date is native and hides it's internal state.
   // We must define encapsulator and reviver that always works.
   Date: [
@@ -315,7 +330,7 @@ typeson.register({
     date => date.getTime(), // encapsulator
     obj => new Date(obj)    // reviver
   ],
-  
+
   RegExp: [
     x = x instanceof RegExp,
     re => [re.source, re.flags],
@@ -329,8 +344,6 @@ console.log(typeson.stringify({
     r:/foo/gi
 }));
 // {"ct":{"foo":"hello"},"d":1464049031538,"r":["foo","gi"],$types:{"ct":"CustomType","d":"Date","r":"RegExp"}}
-
-
 ```
-[typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types to register with your Typeson instance.
 
+[typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types to register with your Typeson instance.

@@ -44,13 +44,13 @@ function Typeson (options) {
      * This method is used internally by Typeson.stringify().
      * @param {Object} obj - Object to encapsulate.
      */
-    var encapsulate = this.encapsulate = function (obj) {
+    var encapsulate = this.encapsulate = function (obj, stateObj) {
         var types = {},
             refObjs=[], // For checking cyclic references
             refKeys=[]; // For checking cyclic references
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
         var cyclic = options && ('cyclic' in options) ? options.cyclic : true;
-        var ret = _encapsulate ('', obj, cyclic);
+        var ret = _encapsulate ('', obj, cyclic, stateObj || {});
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
             // Special if array was serialized because JSON would ignore custom $types prop on an array.
@@ -59,12 +59,12 @@ function Typeson (options) {
         }
         return ret;
 
-        function _encapsulate (keypath, value, cyclic) {
+        function _encapsulate (keypath, value, cyclic, stateObj) {
             var $typeof = typeof value;
             if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
                 return ($typeof === 'undefined' && value === undefined) || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity)) ?
-                        replace(keypath, value) :
+                        replace(keypath, value, stateObj) :
                         value;
             if (value == null) return value;
             if (cyclic) {
@@ -82,27 +82,37 @@ function Typeson (options) {
             }
             var replaced = value.constructor === Object ?
                 value : // Optimization: if plain object, don't try finding a replacer
-                replace(keypath, value);
+                replace(keypath, value, stateObj);
             if (replaced !== value) return replaced;
             var clone;
+            var isArr = value.constructor === Array;
             if (value.constructor === Object)
                 clone = {};
-            else if (value.constructor === Array)
+            else if (isArr)
                 clone = new Array(value.length);
             else return value; // Only clone vanilla objects and arrays.
             // Iterate object or array
             keys(value).forEach(function (key) {
-                var val = _encapsulate(keypath + (keypath ? '.':'') + key, value[key], cyclic);
+                var val = _encapsulate(keypath + (keypath ? '.':'') + key, value[key], cyclic, {ownKeys: true});
                 if (val !== undefined) clone[key] = val;
             });
+            // Iterate array for non-own properties (we can't replace the prior loop though as it iterates non-integer keys)
+            if (isArr) {
+                for (var i = 0, vl = value.length; i < vl; i++) {
+                    if (!(i in value)) {
+                        var val = _encapsulate(keypath + (keypath ? '.':'') + i, value[i], cyclic, {ownKeys: false});
+                        if (val !== undefined) clone[i] = val;
+                    }
+                }
+            }
             return clone;
         }
 
-        function replace (key, value) {
+        function replace (key, value, stateObj) {
             // Encapsulate registered types
             var i = replacers.length;
             while (i--) {
-                if (replacers[i].test(value)) {
+                if (replacers[i].test(value, stateObj)) {
                     var type = replacers[i].type;
                     if (revivers[type]) {
                         // Record the type only if a corresponding reviver exists.
@@ -114,7 +124,7 @@ function Typeson (options) {
                         types[key] = existing ? [type].concat(existing) : type;
                     }
                     // Now, also traverse the result in case it contains it own types to replace
-                    return _encapsulate(key, replacers[i].replace(value), cyclic && "readonly");
+                    return _encapsulate(key, replacers[i].replace(value, stateObj), cyclic && "readonly", stateObj);
                 }
             }
             return value;
@@ -146,7 +156,8 @@ function Typeson (options) {
                 // Iterate object or array
                 keys(value).forEach(function (key) {
                     var val = _revive(keypath + (keypath ? '.':'') + key, value[key], target || clone);
-                    if (val !== undefined) clone[key] = val;
+                    if (val instanceof Undefined) clone[key] = undefined;
+                    else if (val !== undefined) clone[key] = val;
                 });
                 value = clone;
             }
@@ -215,5 +226,8 @@ function getByKeyPath (obj, keyPath) {
     }
     return obj[keyPath];
 }
+
+function Undefined () {}
+Typeson.Undefined = Undefined;
 
 module.exports = Typeson;
