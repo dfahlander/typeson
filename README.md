@@ -41,19 +41,19 @@ The module `typeson-registry/presets/builtin` is 1.6 kb minizied and gzipped and
 
 ## Compatibility
 
-* Node
-* Browser
-* Worker
-* ES5
+- Node
+- Browser
+- Worker
+- ES5
 
 ## Features
 
-* Can stringify custom and standard ES5 / ES6 classes.
-* Produces standard JSON with an additional "$types" property in case it is needed.
-* Resolves cyclic references, such as lists of objects where each object has a reference to the list
-* You can register (almost) any type to be stringifyable (serializable) with your typeson instance.
-* Output will be identical to that of JSON.stringify() in case your object doesnt contain special types or cyclic references.
-* Type specs may encapsulate its type in other registered types. For example, ImageData is encapsulated as `{array: Uint8ClampedArray, width: number, height: number}`, expecting another spec to convert the Uint8ClampedArray. With the [builtin](https://github.com/dfahlander/typeson-registry/blob/master/presets/builtin.js) preset this means it's gonna be converted to base64, but with the [socketio](https://github.com/dfahlander/typeson-registry/blob/master/presets/socketio.js) preset, its gonna be converted to an ArrayBuffer that is left as-is and streamed binary over the WebSocket channel!
+- Can stringify custom and standard ES5 / ES6 classes.
+- Produces standard JSON with an additional "$types" property in case it is needed.
+- Resolves cyclic references, such as lists of objects where each object has a reference to the list
+- You can register (almost) any type to be stringifyable (serializable) with your typeson instance.
+- Output will be identical to that of JSON.stringify() in case your object doesnt contain special types or cyclic references.
+- Type specs may encapsulate its type in other registered types. For example, ImageData is encapsulated as `{array: Uint8ClampedArray, width: number, height: number}`, expecting another spec to convert the Uint8ClampedArray. With the [builtin](https://github.com/dfahlander/typeson-registry/blob/master/presets/builtin.js) preset this means it's gonna be converted to base64, but with the [socketio](https://github.com/dfahlander/typeson-registry/blob/master/presets/socketio.js) preset, its gonna be converted to an ArrayBuffer that is left as-is and streamed binary over the WebSocket channel!
 
 ## Limitations
 
@@ -136,9 +136,9 @@ What socket.io doesn't do though, is preserving Dates, Errors or your custom typ
 
 So to get the best of two worlds:
 
-* Register preset 'typeson-registry/presets/socketio' as well as your custom types.
-* Use `Typeson.encapsulate()` to generate an object ready for socket-io emit()
-* Use `Typeson.revive()` to revive the encapsulated object at the other end.
+- Register preset 'typeson-registry/presets/socketio' as well as your custom types.
+- Use `Typeson.encapsulate()` to generate an object ready for socket-io emit()
+- Use `Typeson.revive()` to revive the encapsulated object at the other end.
 
 ```js
 var Typeson = require('typeson'),
@@ -301,9 +301,9 @@ An object that maps a type-name to a specification of how to test,encapsulate an
 
 A class (constructor function) that would use default test, encapsulation and revival rules, which is:
 
-* test: check if x.constructor === constructor-function.
-* encapsulate: copy all enumerable own props into a vanilla object
-* revive: Use Object.create() to revive the correct type, and copy all props into it.
+- test: check if x.constructor === constructor-function.
+- encapsulate: copy all enumerable own props into a vanilla object
+- revive: Use Object.create() to revive the correct type, and copy all props into it.
 
 ###### tester (obj : any) : boolean
 
