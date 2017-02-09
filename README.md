@@ -305,17 +305,30 @@ A class (constructor function) that would use default test, encapsulation and re
 - encapsulate: copy all enumerable own props into a vanilla object
 - revive: Use Object.create() to revive the correct type, and copy all props into it.
 
-###### tester (obj : any) : boolean
+###### tester (obj : any, stateObj : {ownKeys: boolean}) : boolean
 
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
-###### encapsulator (obj: YourType) : Object
+If the context is iteration over non-"own" integer string properties of an array (i.e.,
+an absent (`undefined`) item in a sparse array), `ownKeys` will be set to `false`.
+Otherwise, when iterating an object or array, it will be set to `true`. The default
+for the `stateObj` is just an empty object.
 
-Function that maps you instance to a JSON-serializable object.
+If you wish to have exceptions thrown upon encountering a certain type of
+value, you may leverage the tester to do so.
+
+###### encapsulator (obj: YourType, stateObj : {ownKeys: boolean}) : Object
+
+Function that maps your instance to a JSON-serializable object. For the `stateObj`,
+see `tester`. In a property context (for arrays or objects), returning `undefined`
+will prevent the addition of the property.
 
 ###### reviver (obj: Object) : YourType
 
-Function that maps you JSON-serializable object into a real instance of your type.
+Function that maps your JSON-serializable object into a real instance of your type.
+In a property context (for arrays or objects), returning `undefined`
+will prevent the addition of the property. To explicitly add `undefined`, see
+`Typeson.Undefined`.
 
 ##### Sample
 
@@ -353,5 +366,21 @@ console.log(typeson.stringify({
 }));
 // {"ct":{"foo":"hello"},"d":1464049031538,"r":["foo","gi"],$types:{"ct":"CustomType","d":"Date","r":"RegExp"}}
 ```
+
+### `Typeson.Undefined` class
+
+During encapsulation, `undefined` will not be set for property values,
+of objects or arrays (including sparse ones and replaced values)
+(`undefined` will be converted to `null` if stringified
+anyways). During revival, however, since `undefined` is also used in
+this context to indicate a value will not be added, if you wish to
+have an explicit `undefined` added, you can return
+`new Typeson.Undefined()` to ensure a value is set explicitly to
+`undefined`.
+
+This distinction is used by the `undefined` type in `typeson-registry`
+to allow reconstruction of explicit `undefined` values (and its
+`sparseUndefined` type will ensure that sparse arrays can be
+reconstructed).
 
 [typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types to register with your Typeson instance.
