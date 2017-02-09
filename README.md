@@ -197,7 +197,9 @@ new Typeson([options]);
 Creates an instance of Typeson, on which you may configure additional types to support, or call encapsulate(), revive(), stringify() or parse() on.
 
 #### Arguments
+
 ##### options (optional):
+
 ```
 {
     cyclic?: boolean, // Default true
@@ -205,9 +207,11 @@ Creates an instance of Typeson, on which you may configure additional types to s
 ```
 
 ###### cyclic
+
 Whether or not to support cyclic references. Default true unless explicitely set to false. If this property is false, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as JSON.stringify() would do). If this property is true, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
 #### Sample
+
 ```js
 var Typeson = require('typeson');
 var typeson = new Typeson()
@@ -270,6 +274,7 @@ TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
 #### encapsulate (obj)
+
 Encapsulates an object but leaves the stringification part to you. Pass your encapsulated object further to socket.io, postMessage(), BSON or indexedDB.
 
 ##### Sample
@@ -281,6 +286,7 @@ assert (revived instanceof Date);
 ```
 
 #### revive (obj)
+
 Revives an encapsulated object. See encapsulate().
 
 #### register (typeSpec)
@@ -304,9 +310,11 @@ A class (constructor function) that would use default test, encapsulation and re
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
 ###### encapsulator (obj: YourType) : Object
+
 Function that maps you instance to a JSON-serializable object.
 
 ###### reviver (obj: Object) : YourType
+
 Function that maps you JSON-serializable object into a real instance of your type.
 
 ##### Sample
