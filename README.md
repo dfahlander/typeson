@@ -249,7 +249,11 @@ var myTypeson = new Typeson().register([
 
 *Arguments identical to those of JSON.stringify()*
 
-Generates JSON based on the given `obj`. If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies.
+Generates JSON based on the given `obj`. If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies (a map of keypath to type).
+
+The cyclic "type" will be represented as `#` and cyclic references will be encoded as `#` plus the path to the referenced object.
+
+If an array or primitive is encoded at root, an object will be created with a property `$` and a `$types` property that is an object with `$` as a key and instead of a type string as value, a keypath-type object will be its value (with the empty string indicating the root path).
 
 ##### Sample
 ```js

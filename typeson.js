@@ -146,7 +146,8 @@ function Typeson (options) {
             types = types.$;
             ignore$Types = false;
         }
-        return _revive ('', obj);
+        var ret = _revive ('', obj);
+        return (ret instanceof Undefined) ? undefined : ret;
 
         function _revive (keypath, value, target) {
             if (ignore$Types && keypath === '$types') return;
