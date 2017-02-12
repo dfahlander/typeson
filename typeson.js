@@ -38,7 +38,7 @@ function Typeson (options) {
         return revive (JSON.parse (text, reviver)); // This reviver has nothing to do with our revivers.
     };
 
-    /** Encapsulate a complex object into a plain Object by replacing regisered types with
+    /** Encapsulate a complex object into a plain Object by replacing registered types with
      * plain objects representing the types data.
      *
      * This method is used internally by Typeson.stringify().
@@ -53,8 +53,8 @@ function Typeson (options) {
         var ret = _encapsulate ('', obj, cyclic, stateObj || {});
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
-            // Special if array was serialized because JSON would ignore custom $types prop on an array.
-            if (ret.constructor !== Object || ret.$types) return {$:ret, $types: {$: types}};
+            // Special if array (or primitive) was serialized because JSON would ignore custom $types prop on it.
+            if (!ret || ret.constructor !== Object || ret.$types) return {$:ret, $types: {$: types}};
             ret.$types = types;
         }
         return ret;
@@ -137,7 +137,7 @@ function Typeson (options) {
      * will be replaced with its true type instead of just plain objects.
      */
     var revive = this.revive = function (obj) {
-        var types = obj.$types,
+        var types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
         if (types.$ && types.$.constructor === Object) {
