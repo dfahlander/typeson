@@ -390,11 +390,24 @@ reconstructed).
 
 ### `Typeson.toStringTag`
 
-A utility for getting the former ``[[Class]]`` internal slot
-(i.e., `Object.prototype.toString`). Since [`Symbol.toStringTag`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag)
-can set the value for other objects (and it can be used for detecting
-your objects cross-frame, though with the unavoidable possibility of
-forgery), we use that within the method name.
+A simple utility for getting the former ``[[Class]]`` internal slot of an object
+(i.e., The string between `[Object ` and `]` as returned from
+`Object.prototype.toString`) or what is known in HTML as the ["class string"](https://heycam.github.io/webidl/#dfn-class-string).
+
+Since [`Symbol.toStringTag`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag)
+can set the value for other objects and is defined by JavaScript itself, we
+use that within the method name.
+
+The method can be used for cross-frame detection of your objects as well
+as objects associated with all
+[platform objects](https://heycam.github.io/webidl/#idl-objects)
+(i.e., non-callback interfaces or `DOMException`s) tied to WebIDL
+(such as the interfaces in HTML). The platform object's [identifier](https://heycam.github.io/webidl/#es-platform-objects) (i.e., the
+interface name) is, per the WebIDL spec, the string to be returned.
+
+Although it is unfortunately not immune to forgery, it may in some
+cases be more appealing than (or usable in addition to) duck typing
+so this tiny utility is bundled for convenience.
 
 ## Finding types and groups of types
 
