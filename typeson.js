@@ -3,8 +3,7 @@ var keys = Object.keys,
     toString = ({}.toString),
     getProto = Object.getPrototypeOf,
     hasOwn = ({}.hasOwnProperty),
-    fnToString = hasOwn.toString,
-    ObjectFunctionString = fnToString.call(Object);
+    fnToString = hasOwn.toString;
 
 function toStringTag (val) {
     return toString.call(val).slice(8, -1);
