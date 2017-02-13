@@ -27,7 +27,7 @@
   "devDependencies": {
     "base64-arraybuffer": "^0.1.5",
     "uglify-js": "^2.6.2",
-    "webpack": "^1.13.1"
+    "webpack": "^2.2.1"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }
