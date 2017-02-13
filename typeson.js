@@ -1,5 +1,24 @@
 var keys = Object.keys,
-    isArray = Array.isArray;
+    isArray = Array.isArray,
+    getProto = Object.getPrototypeOf,
+    hasOwn = ({}.hasOwnProperty),
+    fnToString = hasOwn.toString,
+    ObjectFunctionString = fnToString.call(Object);
+
+function isPlainObject (val) { // Inspired by jQuery's
+    if (!val || toString.call(val) !== '[object Object]') {
+        return false;
+    }
+
+    var proto = getProto(val);
+
+    if (!proto) { // `Object.create(null)`
+        return true;
+    }
+
+    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
+    return typeof Ctor === 'function' && fnToString.call(Ctor) === ObjectFunctionString;
+}
 
 /* Typeson - JSON with types
     * License: The MIT License (MIT)
@@ -54,7 +73,7 @@ function Typeson (options) {
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
             // Special if array (or primitive) was serialized because JSON would ignore custom $types prop on it.
-            if (!ret || ret.constructor !== Object || ret.$types) return {$:ret, $types: {$: types}};
+            if (!ret || !isPlainObject(ret) || ret.$types) return {$:ret, $types: {$: types}};
             ret.$types = types;
         }
         return ret;
@@ -80,13 +99,14 @@ function Typeson (options) {
                     return '#'+refKeys[refIndex];
                 }
             }
-            var replaced = value.constructor === Object ?
+            var isPlainObj = isPlainObject(value);
+            var replaced = isPlainObj ?
                 value : // Optimization: if plain object, don't try finding a replacer
                 replace(keypath, value, stateObj);
             if (replaced !== value) return replaced;
             var clone;
-            var isArr = value.constructor === Array;
-            if (value.constructor === Object)
+            var isArr = isArray(value);
+            if (isPlainObj)
                 clone = {};
             else if (isArr)
                 clone = new Array(value.length);
@@ -140,7 +160,7 @@ function Typeson (options) {
         var types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
-        if (types.$ && types.$.constructor === Object) {
+        if (types.$ && isPlainObject(types.$)) {
             // Special when root object is not a trivial Object, it will be encapsulated in $.
             obj = obj.$;
             types = types.$;
@@ -152,7 +172,7 @@ function Typeson (options) {
         function _revive (keypath, value, target) {
             if (ignore$Types && keypath === '$types') return;
             var type = types[keypath];
-            if (value && (value.constructor === Object || value.constructor === Array)) {
+            if (value && (isPlainObject(value) || isArray(value))) {
                 var clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
