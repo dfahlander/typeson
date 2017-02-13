@@ -10,19 +10,26 @@ function toStringTag (val) {
     return toString.call(val).slice(8, -1);
 }
 
+function hasConstructorOf (a, b) {
+    var proto = getProto(a);
+    if (!proto) {
+        return false;
+    }
+    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
+    return typeof Ctor === 'function' && fnToString.call(Ctor) === fnToString.call(b);
+}
+
 function isPlainObject (val) { // Mirrors jQuery's
-    if (!val || toString.call(val) !== '[object Object]') {
+    if (!val || toStringTag(val) !== 'Object') {
         return false;
     }
 
     var proto = getProto(val);
-
     if (!proto) { // `Object.create(null)`
         return true;
     }
 
-    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
-    return typeof Ctor === 'function' && fnToString.call(Ctor) === ObjectFunctionString;
+    return hasConstructorOf(val, Object);
 }
 
 /* Typeson - JSON with types
@@ -256,5 +263,6 @@ function getByKeyPath (obj, keyPath) {
 function Undefined () {}
 Typeson.Undefined = Undefined;
 Typeson.toStringTag = toStringTag;
+Typeson.hasConstructorOf = hasConstructorOf;
 
 module.exports = Typeson;

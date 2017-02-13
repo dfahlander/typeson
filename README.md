@@ -388,7 +388,7 @@ to allow reconstruction of explicit `undefined` values (and its
 `sparseUndefined` type will ensure that sparse arrays can be
 reconstructed).
 
-### `Typeson.toStringTag`
+### Typeson.toStringTag
 
 A simple utility for getting the former ``[[Class]]`` internal slot of an object
 (i.e., The string between `[Object ` and `]` as returned from
@@ -408,6 +408,15 @@ interface name) is, per the WebIDL spec, the string to be returned.
 Although it is unfortunately not immune to forgery, it may in some
 cases be more appealing than (or usable in addition to) duck typing
 so this tiny utility is bundled for convenience.
+
+### Typeson.hasConstructorOf(objWithPrototypeConstructor, classToCompare) : boolean
+
+Another approach for class comparisons involves checking a `constructor`
+function and comparing its `toString`. This is required for some classes
+which otherwise do not define `toStringTag`s which differ from other
+objects. The first argument will be an object to check (whose prototoype
+will be searched for a `constructor` property) whereas the second is a
+class constructor to compare.
 
 ## Finding types and groups of types
 
