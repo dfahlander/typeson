@@ -10,6 +10,9 @@ function toStringTag (val) {
 }
 
 function hasConstructorOf (a, b) {
+    if (!a) {
+        return false;
+    }
     var proto = getProto(a);
     if (!proto) {
         return false;
@@ -178,7 +181,7 @@ function Typeson (options) {
             ignore$Types = false;
         }
         var ret = _revive ('', obj);
-        return (ret instanceof Undefined) ? undefined : ret;
+        return hasConstructorOf(ret, Undefined) ? undefined : ret;
 
         function _revive (keypath, value, target) {
             if (ignore$Types && keypath === '$types') return;
@@ -188,7 +191,7 @@ function Typeson (options) {
                 // Iterate object or array
                 keys(value).forEach(function (key) {
                     var val = _revive(keypath + (keypath ? '.':'') + key, value[key], target || clone);
-                    if (val instanceof Undefined) clone[key] = undefined;
+                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
                 value = clone;
