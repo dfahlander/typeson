@@ -1,11 +1,16 @@
 var keys = Object.keys,
     isArray = Array.isArray,
+    toString = ({}.toString),
     getProto = Object.getPrototypeOf,
     hasOwn = ({}.hasOwnProperty),
     fnToString = hasOwn.toString,
     ObjectFunctionString = fnToString.call(Object);
 
-function isPlainObject (val) { // Inspired by jQuery's
+function toStringTag (val) {
+    return toString.call(val).slice(8, -1);
+}
+
+function isPlainObject (val) { // Mirrors jQuery's
     if (!val || toString.call(val) !== '[object Object]') {
         return false;
     }
@@ -250,5 +255,6 @@ function getByKeyPath (obj, keyPath) {
 
 function Undefined () {}
 Typeson.Undefined = Undefined;
+Typeson.toStringTag = toStringTag;
 
 module.exports = Typeson;

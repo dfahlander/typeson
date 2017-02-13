@@ -388,4 +388,14 @@ to allow reconstruction of explicit `undefined` values (and its
 `sparseUndefined` type will ensure that sparse arrays can be
 reconstructed).
 
-[typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types to register with your Typeson instance.
+### `Typeson.toStringTag`
+
+A utility for getting the former ``[[Class]]`` internal slot
+(i.e., `Object.prototype.toString`). Since [`Symbol.toStringTag`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag)
+can set the value for other objects (and it can be used for detecting
+your objects cross-frame, though with the unavoidable possibility of
+forgery), we use that within the method name.
+
+## Finding types and groups of types
+
+[typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types and presets to register with your Typeson instances.
