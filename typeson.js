@@ -18,7 +18,10 @@ function hasConstructorOf (a, b) {
         return false;
     }
     var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
-    return typeof Ctor === 'function' && fnToString.call(Ctor) === fnToString.call(b);
+    if (typeof Ctor !== 'function') {
+        return b === null;
+    }
+    return typeof Ctor === 'function' && b !== null && fnToString.call(Ctor) === fnToString.call(b);
 }
 
 function isPlainObject (val) { // Mirrors jQuery's

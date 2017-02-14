@@ -409,7 +409,7 @@ Although it is unfortunately not immune to forgery, it may in some
 cases be more appealing than (or usable in addition to) duck typing
 so this tiny utility is bundled for convenience.
 
-### Typeson.hasConstructorOf(objWithPrototypeConstructor, classToCompare) : boolean
+### Typeson.hasConstructorOf(objWithPrototypeConstructor, classToCompare: constructor or null) : boolean
 
 Another approach for class comparisons involves checking a `constructor`
 function and comparing its `toString`. This is required for some classes
@@ -417,6 +417,10 @@ which otherwise do not define `toStringTag`s which differ from other
 objects. The first argument will be an object to check (whose prototoype
 will be searched for a `constructor` property) whereas the second is a
 class constructor to compare.
+
+If no valid `constructor` is found, `false` will be returned unless
+`null` was supplied as the `classToCompare` in which case `true` will
+be returned.
 
 ## Finding types and groups of types
 
