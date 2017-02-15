@@ -98,11 +98,11 @@ function Typeson (options) {
         function _encapsulate (keypath, value, cyclic, stateObj) {
             var $typeof = typeof value;
             if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
-                return ($typeof === 'undefined' && value === undefined) || ($typeof === 'number' &&
+                return value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity)) ?
                         replace(keypath, value, stateObj) :
                         value;
-            if (value == null) return value;
+            if (value === null) return value;
             if (cyclic) {
                 // Options set to detect cyclic references and be able to rewrite them.
                 var refIndex = refObjs.indexOf(value);
