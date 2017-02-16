@@ -302,8 +302,11 @@ An object that maps a type-name to a specification of how to test, encapsulate a
 
 `{TypeName => constructor-function | [tester, encapsulator, reviver]}` or an array of such structure.
 
-Please note that if an array is supplied, the tester (and upon matching, the encapsulator) currently
-execute in a last-in, first out order. This might be changed in the future.
+Please note that if an array is supplied, the tester (and upon matching, the encapsulator)
+execute in a last-in, first out order.
+
+Subsequent calls to `register` will similarly be given higher priority so be sure to add
+catch-all matchers *before* more precise ones.
 
 ###### constructor-function
 
