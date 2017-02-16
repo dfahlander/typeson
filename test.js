@@ -277,4 +277,14 @@ run ([function shouldSupportBasicTypes () {
     var back = TSON.parse(tson);
     assert (back instanceof MyClass, "Should revive to a MyClass instance.");
     assert (back.hello === "world", "Should have all properties there.");
+}, function shouldExecuteReplacersInProperOrder () {
+    function Person () {}
+    var john = new Person();
+    var typeson = new Typeson().register([
+        {specificClassFinder: [(x) => x instanceof Person, () => 'specific found']},
+        {genericClassFinder: [(x) => x && typeof x === 'object', () => 'general found']}
+    ]);
+    var clonedData = typeson.parse(typeson.stringify(john));
+    // Todo: Change the expected result to "specific found" if reimplementing in non-reverse order
+    assert(clonedData === "general found", "Should execute replacers in proper order");
 }]);
