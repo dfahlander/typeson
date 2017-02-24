@@ -40,11 +40,24 @@ function assert (x, msg) {
     if (!x) throw new Error(msg);
     console.log("  OK: " + msg);
 };
-function run(tests){tests.forEach(function(test){
+function run(tests){
+    if (!tests.length) {
+        return;
+    }
+    var test = tests.splice(0, 1)[0];
     console.log(" ");
     console.log("Running test: " + test.name);
-    test();
-})}
+    var ret = test();
+    if (Typeson.isThenable(ret)) {
+        ret.then(function () {
+            run(tests);
+        }).catch(function (err) {
+            console.log('Promise error in test ' + test.name + ': \n\t' + err);
+        });
+    } else {
+        run(tests);
+    }
+}
 function roundtrip(x) {
     var tson = typeson.stringify(x, null, 2);
     //console.log(tson);
@@ -287,4 +300,140 @@ run ([function shouldSupportBasicTypes () {
     var clonedData = typeson.parse(typeson.stringify(john));
     // Todo: Change the expected result to "specific found" if reimplementing in non-reverse order
     assert(clonedData === "general found", "Should execute replacers in proper order");
+}, function shouldAllowSinglePromiseResolution() {
+    var typeson = new Typeson();
+    var x = new Promise(function (res) {
+        setTimeout(function () {
+            res(25);
+        }, 500);
+    });
+    return typeson.stringify(x).then(function (tson) {
+        console.log(tson);
+        var back = typeson.parse(tson);
+        assert(back === 25, "Should have resolved the one promise value");
+    });
+}, function shouldAllowSingleNestedPromiseResolution() {
+    function APromiseUser (a) {this.a = a;}
+    var typeson = new Typeson().register({
+        Date: [
+            function (x) { return x instanceof Date; },
+            function (date) { return date.getTime(); },
+            function (time) { return new Date(time); }
+        ],
+        PromiseUser: [
+            function (x) { return x instanceof APromiseUser; },
+            function (o) { return new Promise(function (res) {
+                setTimeout(function () {
+                    res(o.a);
+                }, 300);
+            })},
+            function (val) { return new APromiseUser(val) }
+        ]
+    });
+    var x = new Promise (function (res) {
+        setTimeout(function () {
+            res(new APromiseUser(555));
+        }, 1200);
+    });
+    return typeson.stringify(x).then(function (tson) {
+        console.log(tson);
+        var back = typeson.parse(tson);
+        assert(
+            back instanceof APromiseUser &&
+                back.a === 555,
+            "Should have resolved the one nested promise value");
+    });
+}, function shouldAllowMultiplePromiseResolution() {
+    var typeson = new Typeson();
+    var x = [Promise.resolve(5), 100, new Promise(function (res) {
+        setTimeout(function () {
+            res(25);
+        }, 500);
+    })];
+    return typeson.stringify(x).then(function (tson) {
+        console.log(tson);
+        var back = typeson.parse(tson);
+        assert(back[0] === 5 && back[1] === 100 && back[2] === 25, "Should have resolved multiple promise values (and in the proper order)");
+    });
+}, function shouldAllowNestedPromiseResolution () {
+    function APromiseUser (a) {this.a = a;}
+    var typeson = new Typeson().register({
+        Date: [
+            function (x) { return x instanceof Date; },
+            function (date) { return date.getTime(); },
+            function (time) { return new Date(time); }
+        ],
+        PromiseUser: [
+            function (x) { return x instanceof APromiseUser; },
+            function (o) { return new Promise(function (res) {
+                setTimeout(function () {
+                    res(o.a);
+                }, 300);
+            })},
+            function (val) { return new APromiseUser(val) }
+        ]
+    });
+    var x = [
+        Promise.resolve(5),
+        100,
+        new Promise(function (res) {
+            setTimeout(function () {
+                res(25);
+            }, 500);
+        }),
+        new Promise(function (res) {
+                setTimeout(function () {
+                    res(Promise.resolve(5));
+                });
+            }).then(function (r) {
+                return new Promise(function (res) {
+                    setTimeout(function () {
+                        res(r + 90);
+                    }, 10);
+                });
+            }),
+        Promise.resolve(new Date()),
+        new Promise (function (res) {
+            setTimeout(function () {
+                res(new APromiseUser(555));
+            });
+        })
+    ];
+    return typeson.stringify(x).then(function (tson) {
+        console.log(tson);
+        var back = typeson.parse(tson);
+        assert(
+            back[0] === 5 &&
+                back[1] === 100 &&
+                back[2] === 25 &&
+                back[3] === 95 &&
+                back[4] instanceof Date &&
+                back[5] instanceof APromiseUser &&
+                back[5].a === 555,
+            "Should have resolved multiple nested promise values (and in the proper order)"
+        );
+    });
+}, function shouldIgnoreAsyncPromiseResolution () {
+    function test (optsInConstructor) {
+        var typeson = optsInConstructor ? new Typeson({ignorePromises: true}) : new Typeson();
+        var x = [Promise.resolve(5), 100, new Promise(function (res) {
+            setTimeout(function () {
+                res(25);
+            }, 500);
+        })];
+        var tson = optsInConstructor ? typeson.stringify(x) : typeson.stringify(x, null, null, {ignorePromises: true});
+        console.log(tson);
+        assert(tson === '[{},100,{}]', "Should have stringified without promise results");
+        var back = typeson.parse(tson);
+        assert(
+            Object.keys(back[0]).length === 0 &&
+                back[0] instanceof Object &&
+                back[1] === 100 &&
+                Object.keys(back[2]).length === 0 &&
+                back[2] instanceof Object,
+            "Should have parsed with promise results as mere empty objects"
+        );
+    }
+    test(true);
+    test(false);
 }]);

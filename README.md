@@ -428,6 +428,25 @@ If no valid `constructor` is found, `false` will be returned unless
 `null` was supplied as the `classToCompare` in which case `true` will
 be returned.
 
+### Typeson.isObject(val)
+
+Simple but frequently-needed type-checking utility for
+`val && typeof val === 'object'` to avoid `null` being treated as an object.
+
+### Typeson.isPlainObject(val)
+
+Checks for a simple non-inherited object. Adapted from jQuery's `isPlainObject`.
+
+### Typeson.isUserObject(val)
+
+Allows for inherited objects but ensures the prototype chain inherits from
+`Object` (or `null`).
+
+### Typeson.isThenable(val, catchCheck=boolean)
+
+Checks whether an object is "thenable" (usable as a promise). If the second
+argument is supplied as `true`, it will also ensure it has a `catch` method.
+
 ## Finding types and groups of types
 
 [typeson-registry](https://github.com/dfahlander/typeson-registry) contains ready-to-use types and presets to register with your Typeson instances.
