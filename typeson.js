@@ -53,10 +53,6 @@ function isObject (v) {
     return v && typeof v === 'object'
 }
 
-function isThenable (v, catchCheck) {
-    return isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
-}
-
 /* Typeson - JSON with types
     * License: The MIT License (MIT)
     * Copyright (c) 2016 David Fahlander
@@ -83,14 +79,14 @@ function Typeson (options) {
      * Arguments works identical to those of JSON.stringify().
      */
     this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
-        opts = Object.assign({}, options, opts);
+        opts = Object.assign({}, options, opts, {stringification: true});
         var encapsulated = encapsulate(obj, null, opts);
-        if (!opts.ignorePromises && isThenable(encapsulated)) {
-            return encapsulated.then(function (res) {
-                return JSON.stringify(res, replacer, space);
-            });
+        if (isArray(encapsulated)) {
+            return JSON.stringify(encapsulated[0], replacer, space);
         }
-        return JSON.stringify(encapsulated, replacer, space);
+        return encapsulated.then(function (res) {
+            return JSON.stringify(res, replacer, space);
+        });
     };
 
     /** Parse Typeson back into an obejct.
@@ -109,7 +105,7 @@ function Typeson (options) {
      */
     var encapsulate = this.encapsulate = function (obj, stateObj, opts) {
         opts = Object.assign({}, options, opts);
-        var ignorePromises = opts.ignorePromises;
+        var forceAsync = opts.forceAsync;
         var types = {},
             refObjs = [], // For checking cyclic references
             refKeys = [], // For checking cyclic references
@@ -117,7 +113,6 @@ function Typeson (options) {
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
         var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
         var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
-        var PromiseImpl = (opts.promiseImplementation || Promise);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type
             if (keys(types).length) {
@@ -128,10 +123,10 @@ function Typeson (options) {
             return ret;
         }
         function checkPromises (ret, promisesData) {
-            return PromiseImpl.all(
-                promisesData.map(function (pd) {return pd[1];})
+            return Promise.all(
+                promisesData.map(function (pd) {return pd[1].p;})
             ).then(function (promResults) {
-                return PromiseImpl.all(
+                return Promise.all(
                     promResults.map(function (promResult) {
                         var newPromisesData = [];
                         var prData = promisesData.splice(0, 1)[0];
@@ -142,14 +137,16 @@ function Typeson (options) {
                         var parentObj = prData[4];
                         var key = prData[5];
                         var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData);
-                        if (keyPath && isThenable(encaps)) { // Handle case where an embedded custom type itself returns a promise
-                            return encaps.then(function (encaps2) {
+                        var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
+                        if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
+                            return encaps.p.then(function (encaps2) {
                                 parentObj[key] = encaps2;
                                 return checkPromises(ret, newPromisesData);
                             });
                         }
                         if (keyPath) parentObj[key] = encaps;
-                        else ret = encaps; // If this is itself a promise (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
+                        else if (isTypesonPromise) { ret = encaps.p; }
+                        else ret = encaps; // If this is itself a `Typeson.Promise` (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
                         return checkPromises(ret, newPromisesData);
                     })
                 ).then(function () {
@@ -157,7 +154,14 @@ function Typeson (options) {
                 });
             });
         };
-        return !opts.ignorePromises && promisesDataRoot.length ? checkPromises(ret, promisesDataRoot).then(finish) : finish(ret);
+        return promisesDataRoot.length ?
+            Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
+            : (opts.stringification && !forceAsync // If this is a promise, we don't want to resolve as above, so we return an array
+                ? [finish(ret)]
+                : (forceAsync
+                    ? Promise.resolve(finish(ret))
+                    : finish(ret)
+                ));
 
         function _encapsulate (keypath, value, cyclic, stateObj, promisesData) {
             var $typeof = typeof value;
@@ -191,7 +195,7 @@ function Typeson (options) {
                 clone = {};
             else if (isArr)
                 clone = new Array(value.length);
-            else if (keypath === '' && isThenable(value)) {
+            else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
                 promisesData.push([keypath, value, cyclic, stateObj]);
                 return value;
             }
@@ -200,7 +204,7 @@ function Typeson (options) {
             keys(value).forEach(function (key, i) {
                 var kp = keypath + (keypath ? '.' : '') + key;
                 var val = _encapsulate(kp, value[key], cyclic, {ownKeys: true}, promisesData);
-                if (!ignorePromises && isThenable(val)) {
+                if (hasConstructorOf(val, TypesonPromise)) {
                     promisesData.push([kp, val, cyclic, {ownKeys: true}, clone, key]);
                 } else if (val !== undefined) clone[key] = val;
             });
@@ -210,7 +214,7 @@ function Typeson (options) {
                     if (!(i in value)) {
                         var kp = keypath + (keypath ? '.' : '') + i;
                         var val = _encapsulate(kp, value[i], cyclic, {ownKeys: false}, promisesData);
-                        if (!ignorePromises && isThenable(val)) {
+                        if (hasConstructorOf(val, TypesonPromise)) {
                             promisesData.push([kp, val, cyclic, {ownKeys: false}, clone, i]);
                         } else if (val !== undefined) clone[i] = val;
                     }
@@ -247,7 +251,7 @@ function Typeson (options) {
      * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
      * will be replaced with its true type instead of just plain objects.
      */
-    var revive = this.revive = function (obj, opts) {
+    var revive = this.revive = function (obj) {
         var types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
@@ -341,8 +345,54 @@ function getByKeyPath (obj, keyPath) {
 
 function Undefined () {}
 
-// To insist `undefined` should be added
-Typeson.Undefined = Undefined;
+// With ES6 classes, we may be able to simply use `class TypesonPromise extends Promise` and add a string tag for detection
+function TypesonPromise (f) {
+    if (!(this instanceof TypesonPromise)) {
+        return new TypesonPromise(f);
+    }
+    this.p = new Promise(f);
+};
+Object.defineProperties(TypesonPromise.prototype, {
+    'then': {
+        get: function () {
+            var then = this.p.then.bind(this.p);
+            return function (result) {
+                return new TypesonPromise(function (res) {
+                    res(then(result));
+                });
+            };
+        }
+    },
+    'catch': {
+        get: function () {
+            return this.p.then.bind(this.p);
+        }
+    }
+});
+TypesonPromise.all = function (promArr) {
+    return new TypesonPromise(function (res) {
+        Promise.all(promArr.map(function (prom) {return prom.p;})).then(res);
+    });
+};
+TypesonPromise.race = function (promArr) {
+    return new TypesonPromise(function (res) {
+        Promise.race(promArr.map(function (prom) {return prom.p;})).then(res);
+    });
+};
+TypesonPromise.resolve = function (v) {
+    return new TypesonPromise(function (res) {
+        res(v);
+    });
+};
+TypesonPromise.reject = function (v) {
+    return new TypesonPromise(function (res, rej) {
+        rej(v);
+    });
+};
+
+// The following provide classes meant to avoid clashes with other values
+Typeson.Undefined = Undefined; // To insist `undefined` should be added
+Typeson.Promise = TypesonPromise; // To support async encapsulation/stringification
 
 // Some fundamental type-checking utilities
 Typeson.toStringTag = toStringTag;
@@ -350,6 +400,5 @@ Typeson.hasConstructorOf = hasConstructorOf;
 Typeson.isObject = isObject;
 Typeson.isPlainObject = isPlainObject;
 Typeson.isUserObject = isUserObject;
-Typeson.isThenable = isThenable;
 
 module.exports = Typeson;

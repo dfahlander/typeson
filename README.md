@@ -211,6 +211,18 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitely set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
+###### forceAsync
+
+Types can utilize `Typeson.Promise` to allow asynchronous encapsulation and stringification.
+
+When such a type returns a `Typeson.Promise`, a regular `Promise` will be returned to the user.
+
+To ensure that a regular `Promise` is always returned and thereby to allow the same API to be
+used regardless of the types in effect, the `forceAsync` option can be set to `true`.
+
+Note that this has no bearing on `revive`/`parse` since they can construct any object they
+wish for a return value, including a `Promise`, a stream, etc.
+
 #### Sample
 
 ```js
@@ -245,17 +257,24 @@ var myTypeson = new Typeson().register([
 
 ### Methods
 
-#### stringify (obj, [replacer], [space])
+#### stringify (obj, [replacer], [space], [options])
 
-*Arguments identical to those of JSON.stringify()*
+*Initial arguments identical to those of JSON.stringify()*
 
 Generates JSON based on the given `obj`. If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies (a map of keypath to type).
 
-The cyclic "type" will be represented as `#` and cyclic references will be encoded as `#` plus the path to the referenced object.
+The `options` object argument can include a setting for `cyclic` which overrides the default or any behavior supplied for this option in the Typeson constructor.
+
+May also return a `Promise` if a type returns `Typeson.Promise` or if the option `forceAsync` is set to `true`. See the documentation under `Typeson.Promise`.
+
+##### Stringification format
+
+If enabled, the cyclic "type" will be represented as `#` and cyclic references will be encoded as `#` plus the path to the referenced object.
 
 If an array or primitive is encoded at root, an object will be created with a property `$` and a `$types` property that is an object with `$` as a key and instead of a type string as value, a keypath-type object will be its value (with the empty string indicating the root path).
 
 ##### Sample
+
 ```js
 var TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.stringify ({date: new Date()});
@@ -278,9 +297,11 @@ var TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
-#### encapsulate (obj)
+#### encapsulate (obj, [opts])
 
 Encapsulates an object but leaves the stringification part to you. Pass your encapsulated object further to socket.io, `postMessage()`, BSON or IndexedDB.
+
+The `options` object argument can include a setting for `cyclic` which overrides the default or any behavior supplied for this option in the Typeson constructor.
 
 ##### Sample
 
@@ -394,6 +415,47 @@ to allow reconstruction of explicit `undefined` values (and its
 `sparseUndefined` type will ensure that sparse arrays can be
 reconstructed).
 
+### `Typeson.Promise` class
+
+If you have a type which you wish to have resolved asynchronously, you
+can can return a `Typeson.Promise` (which works otherwise like a `Promise`)
+and call its first supplied argument (`resolve`) when ready.
+
+The reason we expect this class to be used here instead of regular `Promise`s
+as types might wish to serialize them in their own manner (or perhaps more
+likely, to be able to throw when encountering them if they
+are not expected).
+
+#### Sample
+
+```js
+function MyAsync (prop) {
+    this.prop = prop;
+}
+
+var typeson = new Typeson({forceAsync: true}).register({
+    myAsyncType: [
+        function (x) { return x instanceof MyAsync;},
+        function (o) {
+            return new Typeson.Promise(function (resolve, reject) {
+                setTimeout(function () { // Do something more useful in real code
+                    resolve(o.prop);
+                }, 800);
+            });
+        },
+        function (data) {
+            return new MyAsync(data);
+        }
+    ]
+});
+
+var mya = new MyAsync(500);
+return typeson.stringify(mya).then(function (result) {
+    var back = typeson.parse(result);
+    console.log(back.prop); // 500
+});
+```
+
 ### Typeson.toStringTag
 
 A simple utility for getting the former ``[[Class]]`` internal slot of an object
@@ -441,11 +503,6 @@ Checks for a simple non-inherited object. Adapted from jQuery's `isPlainObject`.
 
 Allows for inherited objects but ensures the prototype chain inherits from
 `Object` (or `null`).
-
-### Typeson.isThenable(val, catchCheck=boolean)
-
-Checks whether an object is "thenable" (usable as a promise). If the second
-argument is supplied as `true`, it will also ensure it has a `catch` method.
 
 ## Finding types and groups of types
 

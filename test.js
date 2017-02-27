@@ -1,6 +1,10 @@
 var Typeson = require('./typeson');
 var B64 = require ('base64-arraybuffer');
 
+function isThenable (v, catchCheck) {
+    return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
+}
+
 var typeson = new Typeson().register({
     Date: [
         function (x) { return x instanceof Date; },
@@ -48,7 +52,7 @@ function run(tests){
     console.log(" ");
     console.log("Running test: " + test.name);
     var ret = test();
-    if (Typeson.isThenable(ret)) {
+    if (isThenable(ret)) {
         ret.then(function () {
             run(tests);
         }).catch(function (err) {
@@ -64,7 +68,7 @@ function roundtrip(x) {
     return typeson.parse(tson);
 }
 
-run ([function shouldSupportBasicTypes () {
+run([function shouldSupportBasicTypes () {
     //
     // shouldSupportBasicTypes
     //
@@ -302,7 +306,7 @@ run ([function shouldSupportBasicTypes () {
     assert(clonedData === "general found", "Should execute replacers in proper order");
 }, function shouldAllowSinglePromiseResolution() {
     var typeson = new Typeson();
-    var x = new Promise(function (res) {
+    var x = new Typeson.Promise(function (res) {
         setTimeout(function () {
             res(25);
         }, 500);
@@ -322,7 +326,7 @@ run ([function shouldSupportBasicTypes () {
         ],
         PromiseUser: [
             function (x) { return x instanceof APromiseUser; },
-            function (o) { return new Promise(function (res) {
+            function (o) { return new Typeson.Promise(function (res) {
                 setTimeout(function () {
                     res(o.a);
                 }, 300);
@@ -330,7 +334,7 @@ run ([function shouldSupportBasicTypes () {
             function (val) { return new APromiseUser(val) }
         ]
     });
-    var x = new Promise (function (res) {
+    var x = new Typeson.Promise(function (res) {
         setTimeout(function () {
             res(new APromiseUser(555));
         }, 1200);
@@ -345,7 +349,7 @@ run ([function shouldSupportBasicTypes () {
     });
 }, function shouldAllowMultiplePromiseResolution() {
     var typeson = new Typeson();
-    var x = [Promise.resolve(5), 100, new Promise(function (res) {
+    var x = [Typeson.Promise.resolve(5), 100, new Typeson.Promise(function (res) {
         setTimeout(function () {
             res(25);
         }, 500);
@@ -365,7 +369,7 @@ run ([function shouldSupportBasicTypes () {
         ],
         PromiseUser: [
             function (x) { return x instanceof APromiseUser; },
-            function (o) { return new Promise(function (res) {
+            function (o) { return new Typeson.Promise(function (res) {
                 setTimeout(function () {
                     res(o.a);
                 }, 300);
@@ -374,26 +378,26 @@ run ([function shouldSupportBasicTypes () {
         ]
     });
     var x = [
-        Promise.resolve(5),
+        Typeson.Promise.resolve(5),
         100,
-        new Promise(function (res) {
+        new Typeson.Promise(function (res) {
             setTimeout(function () {
                 res(25);
             }, 500);
         }),
-        new Promise(function (res) {
+        new Typeson.Promise(function (res) {
                 setTimeout(function () {
-                    res(Promise.resolve(5));
+                    res(Typeson.Promise.resolve(5));
                 });
             }).then(function (r) {
-                return new Promise(function (res) {
+                return new Typeson.Promise(function (res) {
                     setTimeout(function () {
                         res(r + 90);
                     }, 10);
                 });
             }),
-        Promise.resolve(new Date()),
-        new Promise (function (res) {
+        Typeson.Promise.resolve(new Date()),
+        new Typeson.Promise (function (res) {
             setTimeout(function () {
                 res(new APromiseUser(555));
             });
@@ -413,27 +417,38 @@ run ([function shouldSupportBasicTypes () {
             "Should have resolved multiple nested promise values (and in the proper order)"
         );
     });
-}, function shouldIgnoreAsyncPromiseResolution () {
-    function test (optsInConstructor) {
-        var typeson = optsInConstructor ? new Typeson({ignorePromises: true}) : new Typeson();
-        var x = [Promise.resolve(5), 100, new Promise(function (res) {
-            setTimeout(function () {
-                res(25);
-            }, 500);
-        })];
-        var tson = optsInConstructor ? typeson.stringify(x) : typeson.stringify(x, null, null, {ignorePromises: true});
+}, function shouldAllowForcingOfAsyncReturn () {
+    var typeson = new Typeson({forceAsync: true});
+    var x = 5;
+    return typeson.stringify(x).then(function (tson) {
         console.log(tson);
-        assert(tson === '[{},100,{}]', "Should have stringified without promise results");
         var back = typeson.parse(tson);
-        assert(
-            Object.keys(back[0]).length === 0 &&
-                back[0] instanceof Object &&
-                back[1] === 100 &&
-                Object.keys(back[2]).length === 0 &&
-                back[2] instanceof Object,
-            "Should have parsed with promise results as mere empty objects"
-        );
+        assert(back === 5, "Should allow async to be forced even without async return values");
+    });
+}, function example () {
+    function MyAsync (prop) {
+        this.prop = prop;
     }
-    test(true);
-    test(false);
+
+    var typeson = new Typeson({forceAsync: true}).register({
+        myAsyncType: [
+            function (x) { return x instanceof MyAsync;},
+            function (o) {
+                return new Typeson.Promise(function (resolve, reject) {
+                    setTimeout(function () { // Do something more useful in real code
+                        resolve(o.prop);
+                    }, 800);
+                });
+            },
+            function (data) {
+                return new MyAsync(data);
+            }
+        ]
+    });
+
+    var mya = new MyAsync(500);
+    return typeson.stringify(mya).then(function (result) {
+        var back = typeson.parse(result);
+        assert(back.prop === 500, "Example of MyAsync should work"); // 500
+    });
 }]);
