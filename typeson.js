@@ -352,33 +352,24 @@ function TypesonPromise (f) {
     }
     this.p = new Promise(f);
 };
-Object.defineProperties(TypesonPromise.prototype, {
-    'then': {
-        get: function () {
-            var then = this.p.then.bind(this.p);
-            return function (onFulfilled, onRejected) {
-                return new TypesonPromise(function (res, rej) {
-                    var rejected = false;
-                    var result = then(onFulfilled, function (r) {
-                        rejected = true;
-                        return onRejected(r);
-                    });
-                    rejected ? rej(result) : res(result);
-                });
-            };
-        }
-    },
-    'catch': {
-        get: function () {
-            var ctch = this.p.ctch.bind(this.p);
-            return function (onRejected) {
-                return new TypesonPromise(function (res, rej) {
-                    rej(ctch(onRejected));
-                });
-            };
-        }
-    }
-});
+TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
+    var then = this.p.then.bind(this.p);
+    return new TypesonPromise(function (res, rej) {
+        var rejected = false;
+        var result = then(onFulfilled, function (r) {
+            rejected = true;
+            return onRejected(r);
+        });
+        rejected ? rej(result) : res(result);
+    });
+};
+TypesonPromise.prototype['catch'] = function (onRejected) {
+    var ctch = this.p.ctch.bind(this.p);
+    return new TypesonPromise(function (res, rej) {
+        rej(ctch(onRejected));
+    });
+};
+
 TypesonPromise.all = function (promArr) {
     return new TypesonPromise(function (res) {
         Promise.all(promArr.map(function (prom) {return prom.p;})).then(res);
