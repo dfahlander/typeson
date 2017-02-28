@@ -370,16 +370,14 @@ TypesonPromise.prototype['catch'] = function (onRejected) {
     });
 };
 
-TypesonPromise.all = function (promArr) {
-    return new TypesonPromise(function (res) {
-        Promise.all(promArr.map(function (prom) {return prom.p;})).then(res);
-    });
-};
-TypesonPromise.race = function (promArr) {
-    return new TypesonPromise(function (res) {
-        Promise.race(promArr.map(function (prom) {return prom.p;})).then(res);
-    });
-};
+['all', 'race'].map(function (meth) {
+    TypesonPromise[meth] = function (promArr) {
+        return new TypesonPromise(function (res, rej) {
+            Promise[meth](promArr.map(function (prom) {return prom.p;})).then(res, rej);
+        });
+    };
+});
+
 TypesonPromise.resolve = function (v) {
     return new TypesonPromise(function (res) {
         res(v);
