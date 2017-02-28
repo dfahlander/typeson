@@ -365,7 +365,12 @@ Object.defineProperties(TypesonPromise.prototype, {
     },
     'catch': {
         get: function () {
-            return this.p.then.bind(this.p);
+            var ctch = this.p.ctch.bind(this.p);
+            return function (result) {
+                return new TypesonPromise(function (res) {
+                    res(ctch(result));
+                });
+            };
         }
     }
 });
