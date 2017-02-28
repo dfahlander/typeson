@@ -356,9 +356,14 @@ Object.defineProperties(TypesonPromise.prototype, {
     'then': {
         get: function () {
             var then = this.p.then.bind(this.p);
-            return function (result) {
-                return new TypesonPromise(function (res) {
-                    res(then(result));
+            return function (onFulfilled, onRejected) {
+                return new TypesonPromise(function (res, rej) {
+                    var rejected = false;
+                    var result = then(onFulfilled, function (r) {
+                        rejected = true;
+                        return onRejected(r);
+                    });
+                    rejected ? rej(result) : res(result);
                 });
             };
         }
@@ -366,9 +371,9 @@ Object.defineProperties(TypesonPromise.prototype, {
     'catch': {
         get: function () {
             var ctch = this.p.ctch.bind(this.p);
-            return function (result) {
-                return new TypesonPromise(function (res) {
-                    res(ctch(result));
+            return function (onRejected) {
+                return new TypesonPromise(function (res, rej) {
+                    rej(ctch(onRejected));
                 });
             };
         }
