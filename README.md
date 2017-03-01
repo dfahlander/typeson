@@ -211,31 +211,18 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitely set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
-###### iterateAllIn
+###### testPlainObjects
 
-Normally, only the "own" keys of an object will be iterated. Setting this changes the behavior to iterate all
-properties "in" the object. Types have the ability to designate themselves with `iterateAllIn: true` on their
-spec object, but doing so will add a performance cost. Setting this option to `false` will avoid the performance
-penalty, but it may cause types that rely on it to behave unexpectedly. You should normally avoid using this
-option and leave it to types to decide since the default behavior will be to only iterate such non-"own" keys
-if at least one type is registered with this property.
-
-###### iterateUnsetNumeric
-
-Normally, only the "own" keys of an object will be iterated (unless `iteraAllIn` is set). One special case not
-covered by these cases is where one may wish to iterate the keys not "in" the object but still part of it, i.e.,
-the unset numeric indexes of a sparse array (e.g., for the sake of ensuring they are ignored entirely rather
-than converted to `null` by a `stringify` call). Thus types have the ability to designate themselves with
-`iterateUnsetNumeric: true` on their spec object, but doing so will add a performance cost. Setting this option
-to `false` will avoid the performance penalty, but it may cause types that rely on it to behave unexpectedly.
-You should normally avoid using this option and leave it to types to decide since the default behavior will be
-to only iterate such non-"in" numeric keys if at least one type is registered with this property.
+For optimization purposes, non-plain objects are not cloned.
 
 ###### forceAsync
 
 Types can utilize `Typeson.Promise` to allow asynchronous encapsulation and stringification.
 
 When such a type returns a `Typeson.Promise`, a regular `Promise` will be returned to the user.
+
+(This type is used internally for ensuring a regular Promise was not intended as the result.
+Note that its resolved value is also recursively checked for types.)
 
 To ensure that a regular `Promise` is always returned and thereby to allow the same API to be
 used regardless of the types in effect, the `forceAsync` option can be set to `true`.
@@ -334,7 +321,10 @@ assert (revived instanceof Date);
 
 Revives an encapsulated object. See `encapsulate()`.
 
-#### register (typeSpec)
+#### register (typeSpec, opts = {fallback: boolean|number})
+
+If `opts.fallback` is set, lower priority will be given (the default is that the last registered item
+has highest priority during match testing). If a number is given, it will be used as the index of the placement.
 
 ##### typeSpec
 
@@ -343,7 +333,8 @@ An object that maps a type-name to a specification of how to test, encapsulate a
 `{TypeName => constructor-function | [tester, encapsulator, reviver] | {test: function, replace: function, revive: function}}` or an array of such structures.
 
 Please note that if an array is supplied, the tester (and upon matching, the encapsulator)
-execute in a last-in, first out order.
+execute in a last-in, first out order. (Calls to `register` can set `fallback` to `true` to
+lower the priority of a recent addition.)
 
 Subsequent calls to `register` will similarly be given higher priority so be sure to add
 catch-all matchers *before* more precise ones.
@@ -356,7 +347,7 @@ A class (constructor function) that would use default test, encapsulation and re
 - `encapsulate`: copy all enumerable own props into a vanilla object
 - `revive`: Use `Object.create()` to revive the correct type, and copy all props into it.
 
-###### tester (obj : any, stateObj : {ownKeys: boolean}) : boolean
+###### tester (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'boolean'), iterateUnsetNumeric: boolean}) : boolean
 
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
@@ -368,11 +359,34 @@ for the `stateObj` is just an empty object.
 If you wish to have exceptions thrown upon encountering a certain type of
 value, you may leverage the tester to do so.
 
-###### encapsulator (obj: YourType, stateObj : {ownKeys: boolean}) : Object
+You may also set values on the state object.
 
-Function that maps your instance to a JSON-serializable object. For the `stateObj`,
-see `tester`. In a property context (for arrays or objects), returning `undefined`
-will prevent the addition of the property.
+Normally, only the "own" keys of an object will be iterated.
+Setting `iterateIn` changes the behavior to iterate all properties
+"in" the object for cloning (though note that doing so will add a
+performance cost). The value of `iterateIn` (as 'array' or 'object')
+determines what type of object will be created. Normally, 'object'
+will be more useful as non-array-index properties do not
+survive stringification on an array.
+
+One special case not covered by iterating all "own" keys or enabling "in"
+iteration is where one may wish to iterate the keys not "in" the object
+but still part of it, i.e., the unset numeric indexes of a sparse array
+(e.g., for the sake of ensuring they are ignored entirely rather than
+converted to `null` by a `stringify` call). Thus encapsulators have the
+ability to set `iterateUnsetNumeric: true` on their state object, but
+note that doing so will add a performance cost.
+
+###### encapsulator (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'boolean'), iterateUnsetNumeric: boolean}) : Object
+
+Function that maps your instance to a JSON-serializable object. Can also be called a
+`replacer`. For the `stateObj`, see `tester`. In a property context (for arrays
+or objects), returning `undefined` will prevent the addition of the property.
+
+See the `tester` for a discussion of the `stateObj`.
+
+Note that replacement results will themselves be recursed for state changes
+and type detection.
 
 ###### reviver (obj: Object) : YourType
 

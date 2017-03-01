@@ -317,27 +317,96 @@ run([function shouldSupportBasicTypes () {
     var clonedData = typeson.parse(typeson.stringify(john));
     // Todo: Change the expected result to "specific found" if reimplementing in non-reverse order
     assert(clonedData === "general found", "Should execute replacers in proper order");
-}, function shouldAllowIterateAllIn () {
+}, function shouldAllowIterateIn () {
     function A (a) {
         this.a = a;
     }
     function createExtendingClass (a) {
-        function B (b) {
+        function B (b, isArr) {
+            this[3] = 4;
             this.b = b;
+            this.isArr = isArr;
         }
         B.prototype = new A(a);
         return B;
     }
 
-    var typeson = new Typeson({iterateAllIn: true});
+    var typeson = new Typeson().register({
+        iterateIn: {
+            test: function (x, stateObj) {
+                if (x instanceof A) {
+                    stateObj.iterateIn = x.isArr ? 'array' : 'object';
+                    return true;
+                }
+                return false;
+            }
+        }
+    });
 
     var B = createExtendingClass(5);
+
     var b = new B(7);
     var tson = typeson.stringify(b);
     console.log(tson);
     var back = typeson.parse(tson);
+    assert(!Array.isArray(back), "Is not an array");
+    assert(back[3] === 4, "Has numeric property");
     assert(back.a === 5, "Got inherited 'a' property");
     assert(back.b === 7, "Got own 'b' property");
+
+    var b = new B(8, true);
+    var tson = typeson.stringify(b);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert(Array.isArray(back), "Is an array");
+    assert(back[3] === 4, "Has numeric property");
+    assert(!('a' in back), "'a' property won't survive array stringification");
+    assert(!('b' in back), "'b' property won't survive array stringification");
+}, function executingToJSON () {
+    function A () {}
+    A.prototype.toJSON = function () {return 'abcd';}
+    var typeson = new Typeson();
+    var a = new A(); // Encapsulated as is
+    var tson = typeson.stringify(a);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert(back === 'abcd', "Should have executed `toJSON`");
+
+    var typeson = new Typeson();
+    var a = { // Plain object rebuilt during encapsulation including with `toJSON`
+        toJSON: function () {return 'abcd';}
+    };
+    var tson = typeson.stringify(a);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert(back === 'abcd', "Should have executed `toJSON`");
+}, function shouldAllowPlainObjectReplacements () {
+    var typeson = new Typeson().register({
+        plainObj: {
+            testPlainObjects: true,
+            test: function (x) {
+                return 'nonenum' in x;
+            },
+            replace: function (o) {
+                return {
+                    b: o.b,
+                    nonenum: o.nonenum
+                };
+            }
+        }
+    });
+    var a = {b: 5};
+    Object.defineProperty(a, 'nonenum', {
+        enumerable: false,
+        value: 100
+    });
+
+    var tson = typeson.stringify(a);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert(back.b === 5, "Should have kept property");
+    assert(back.nonenum === 100, "Should have kept non-enumerable property");
+    assert(Object.keys(back).includes('nonenum'), "Non-enumerable property should now be enumerable");
 }, function shouldAllowSinglePromiseResolution() {
     var typeson = new Typeson();
     var x = new Typeson.Promise(function (res) {
@@ -459,7 +528,71 @@ run([function shouldSupportBasicTypes () {
         var back = typeson.parse(tson);
         assert(back === 5, "Should allow async to be forced even without async return values");
     });
-}, function example () {
+}, function shouldWorkWithPromiseUtilities () {
+    function makePromises () {
+        var x = new Typeson.Promise(function (res) {
+            setTimeout(function () {
+                res(30);
+            }, 50);
+        });
+        var y = Typeson.Promise.resolve(400);
+        return [x, y];
+    }
+    return new Promise(function (testRes, testRej) {
+        Typeson.Promise.all(makePromises()).then(function (results) {
+            assert(results[0] === 30 && results[1] === 400, "Should work with Promise.all");
+        }).then(function () {
+            return Typeson.Promise.race(makePromises()).then(function (results) {
+                assert(results === 400, "Should work with Promise.race");
+                testRes();
+            })
+        });
+    });
+}, function shouldProperlyHandlePromiseExceptions () {
+    function makeRejectedPromises () {
+        var x = new Typeson.Promise(function (res, rej) {
+            setTimeout(function () {
+                rej(30);
+            }, 50);
+        });
+        var y = new Typeson.Promise(function (res, rej) {
+            setTimeout(function () {
+                res(500);
+            }, 500);
+        });
+        return [x, y];
+    }
+    return new Promise(function (testRes, testRej) {
+        makeRejectedPromises()[0].then(null, function (errCode) {
+            assert(errCode === 30, "`Typeson.Promise` should work with `then(null, onRejected)`");
+            return Typeson.Promise.reject(400);
+        }).catch(function (errCode) {
+            assert(errCode === 400, "`Typeson.Promise` should work with `catch`");
+            return Typeson.Promise.all(makeRejectedPromises());
+        }).catch(function (errCode) {
+            assert(errCode === 30, "Promise.all should work with rejected promises");
+            return Typeson.Promise.race(makeRejectedPromises());
+        }).catch(function (errCode) {
+            assert(errCode === 30, "Promise.race should work with rejected promises");
+            return new Typeson.Promise(function () {
+                throw new Error('Sync throw');
+            });
+        }).catch(function (err) {
+            assert(err.message === 'Sync throw', "Typeson.Promise should work with synchronous throws");
+            return Typeson.Promise.resolve(55);
+        }).then(null, function () {
+            throw new Error('Should not reach here');
+        }).then(function (res) {
+            assert(res === 55, "Typeson.Promises should bypass `then` without `onResolved`");
+            return Typeson.Promise.reject(33);
+        }).then(function () {
+            throw new Error('Should not reach here');
+        }).catch(function (errCode) {
+            assert(errCode === 33, "Typeson.Promises should bypass `then` when rejecting");
+            testRes();
+        });
+    });
+}, function asyncREADMEExample () {
     function MyAsync (prop) {
         this.prop = prop;
     }
