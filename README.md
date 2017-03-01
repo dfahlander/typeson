@@ -211,6 +211,11 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitely set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
+###### iterateUnsetNumeric
+
+Normally, only the "own" keys of an object will be iterated. One special case in which one may wish to iterate
+the non-"own" keys is with a sparse array (e.g., to ensure they are ignored entirely rather than converted to `null` by a `stringify` call). Thus types have the ability to designate themselves with `iterateUnsetNumeric: true` on their spec object, but doing so will add a performance cost. Setting this option to `false` will avoid the performance penalty, but it may cause types that rely on it to behave unexpectedly. You should normally avoid using this option and leave it to types to decide since the default behavior will be to only iterate such non-"own" numeric keys if at least one type is registered with this property.
+
 ###### forceAsync
 
 Types can utilize `Typeson.Promise` to allow asynchronous encapsulation and stringification.

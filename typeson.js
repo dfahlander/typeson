@@ -70,6 +70,7 @@ function Typeson (options) {
     var replacers = [];
     // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
     var revivers = {};
+    var hasIterateUnsetNumericType = false;
 
     /** Types registered via register() */
     var regTypes = this.types = {};
@@ -208,8 +209,8 @@ function Typeson (options) {
                     promisesData.push([kp, val, cyclic, {ownKeys: true}, clone, key]);
                 } else if (val !== undefined) clone[key] = val;
             });
-            // Iterate array for non-own properties (we can't replace the prior loop though as it iterates non-integer keys)
-            if (isArr) {
+            // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
+            if (hasIterateUnsetNumericType && isArr && opts.iterateUnsetNumeric !== false) {
                 for (var i = 0, vl = value.length; i < vl; i++) {
                     if (!(i in value)) {
                         var kp = keypath + (keypath ? '.' : '') + i;
@@ -325,6 +326,9 @@ function Typeson (options) {
                         replace: spec.replace.bind(spec)
                     });
                     if (spec.revive) revivers[typeId] = spec.revive.bind(spec);
+                    if (spec.iterateUnsetNumeric) {
+                        hasIterateUnsetNumericType = true;
+                    }
                     regTypes[typeId] = spec; // Record to be retrieved via public types property.
                 }
             });
