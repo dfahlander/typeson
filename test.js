@@ -84,6 +84,19 @@ run([function shouldSupportBasicTypes () {
     assert (Array.isArray(res.f) && res.f.length === 0, "Array value");
     assert (res.g instanceof Date && res.g.toString() == date.toString(), "Date value");
 
+}, function shouldSupportObjectAPI () {
+    var typeson = new Typeson().register({
+        Date: {
+            test: function (x) { return x instanceof Date; },
+            replace: function (date) { return date.getTime(); },
+            revive: function (time) { return new Date(time); }
+        }
+    });
+    var date = new Date();
+    var tson = typeson.stringify(date, null, 2);
+    //console.log(tson);
+    var back = typeson.parse(tson);
+    assert (back instanceof Date && back.toString() == date.toString(), "Date value");
 }, function shouldResolveCyclics() {
     //
     // shouldResolveCyclics

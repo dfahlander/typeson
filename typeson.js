@@ -307,18 +307,24 @@ function Typeson (options) {
                     if (typeof spec === 'function') {
                         // Support registering just a class without replacer/reviver
                         var Class = spec;
-                        spec = [
-                            function (x) { return x.constructor === Class; },
-                            function (x) { return assign({}, x); },
-                            function (x) { return assign(Object.create(Class.prototype), x); }
-                        ];
+                        spec = {
+                            test: function (x) { return x.constructor === Class; },
+                            replace: function (x) { return assign({}, x); },
+                            revive: function (x) { return assign(Object.create(Class.prototype), x); }
+                        };
+                    } else if (isArray(spec)) {
+                        spec = {
+                            test: spec[0],
+                            replace: spec[1],
+                            revive: spec[2]
+                        };
                     }
                     replacers.push({
                         type: typeId,
-                        test: spec[0],
-                        replace: spec[1]
+                        test: spec.test.bind(spec),
+                        replace: spec.replace.bind(spec)
                     });
-                    if (spec[2]) revivers[typeId] = spec[2];
+                    if (spec.revive) revivers[typeId] = spec.revive.bind(spec);
                     regTypes[typeId] = spec; // Record to be retrieved via public types property.
                 }
             });

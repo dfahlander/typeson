@@ -233,14 +233,13 @@ var typeson = new Typeson()
 var tson = typeson.stringify(complexObject);
 console.log(tson);
 var obj = typeson.parse(tson);
-
 ```
 
 ### Properties
 
 #### types
 
-A map between type identifier and type-rules. Same structure as passed to `register()`. Use this property if you want to create a new Typeson containing all types from another Typeson.
+A map between type identifier and type-rules. Same (object-based) structure as passed to `register()`. Use this property if you want to create a new Typeson containing all types from another Typeson.
 
 ##### Sample
 
@@ -321,7 +320,7 @@ Revives an encapsulated object. See `encapsulate()`.
 
 An object that maps a type-name to a specification of how to test, encapsulate and revive that type.
 
-`{TypeName => constructor-function | [tester, encapsulator, reviver]}` or an array of such structure.
+`{TypeName => constructor-function | [tester, encapsulator, reviver] | {test: function, replace: function, revive: function}}` or an array of such structures.
 
 Please note that if an array is supplied, the tester (and upon matching, the encapsulator)
 execute in a last-in, first out order.
