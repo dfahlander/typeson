@@ -70,6 +70,7 @@ function Typeson (options) {
     var replacers = [];
     // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
     var revivers = {};
+    var hasIterateAllIn = false;
     var hasIterateUnsetNumericType = false;
 
     /** Types registered via register() */
@@ -185,6 +186,7 @@ function Typeson (options) {
                     return '#' + refKeys[refIndex];
                 }
             }
+            var iterateAllIn = opts.iterateAllIn || (hasIterateAllIn && opts.iterateAllIn !== false);
             var isPlainObj = isPlainObject(value);
             var replaced = isPlainObj ?
                 value : // Optimization: if plain object, don't try finding a replacer
@@ -192,7 +194,7 @@ function Typeson (options) {
             if (replaced !== value) return replaced;
             var clone;
             var isArr = isArray(value);
-            if (isPlainObj)
+            if (isPlainObj || iterateAllIn)
                 clone = {};
             else if (isArr)
                 clone = new Array(value.length);
@@ -200,17 +202,29 @@ function Typeson (options) {
                 promisesData.push([keypath, value, cyclic, stateObj]);
                 return value;
             }
-            else return value; // Only clone vanilla objects and arrays.
+            else if (!iterateAllIn) return value; // Only clone vanilla objects and arrays by default
+
             // Iterate object or array
-            keys(value).forEach(function (key, i) {
-                var kp = keypath + (keypath ? '.' : '') + key;
-                var val = _encapsulate(kp, value[key], cyclic, {ownKeys: true}, promisesData);
-                if (hasConstructorOf(val, TypesonPromise)) {
-                    promisesData.push([kp, val, cyclic, {ownKeys: true}, clone, key]);
-                } else if (val !== undefined) clone[key] = val;
-            });
+            if (iterateAllIn) {
+                for (var key in value) {
+                    var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
+                    var kp = keypath + (keypath ? '.' : '') + key;
+                    var val = _encapsulate(kp, value[key], cyclic, ownKeysObj, promisesData);
+                    if (hasConstructorOf(val, TypesonPromise)) {
+                        promisesData.push([kp, val, cyclic, ownKeysObj, clone, key]);
+                    } else if (val !== undefined) clone[key] = val;
+                }
+            } else {
+                keys(value).forEach(function (key) {
+                    var kp = keypath + (keypath ? '.' : '') + key;
+                    var val = _encapsulate(kp, value[key], cyclic, {ownKeys: true}, promisesData);
+                    if (hasConstructorOf(val, TypesonPromise)) {
+                        promisesData.push([kp, val, cyclic, {ownKeys: true}, clone, key]);
+                    } else if (val !== undefined) clone[key] = val;
+                });
+            }
             // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
-            if (hasIterateUnsetNumericType && isArr && opts.iterateUnsetNumeric !== false) {
+            if (isArr && (opts.iterateUnsetNumeric || (hasIterateUnsetNumericType && opts.iterateUnsetNumeric !== false))) {
                 for (var i = 0, vl = value.length; i < vl; i++) {
                     if (!(i in value)) {
                         var kp = keypath + (keypath ? '.' : '') + i;
@@ -326,6 +340,9 @@ function Typeson (options) {
                         replace: spec.replace.bind(spec)
                     });
                     if (spec.revive) revivers[typeId] = spec.revive.bind(spec);
+                    if (spec.iterateAllIn) {
+                        hasIterateAllIn = true;
+                    }
                     if (spec.iterateUnsetNumeric) {
                         hasIterateUnsetNumericType = true;
                     }

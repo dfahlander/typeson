@@ -317,6 +317,27 @@ run([function shouldSupportBasicTypes () {
     var clonedData = typeson.parse(typeson.stringify(john));
     // Todo: Change the expected result to "specific found" if reimplementing in non-reverse order
     assert(clonedData === "general found", "Should execute replacers in proper order");
+}, function shouldAllowIterateAllIn () {
+    function A (a) {
+        this.a = a;
+    }
+    function createExtendingClass (a) {
+        function B (b) {
+            this.b = b;
+        }
+        B.prototype = new A(a);
+        return B;
+    }
+
+    var typeson = new Typeson({iterateAllIn: true});
+
+    var B = createExtendingClass(5);
+    var b = new B(7);
+    var tson = typeson.stringify(b);
+    console.log(tson);
+    var back = typeson.parse(tson);
+    assert(back.a === 5, "Got inherited 'a' property");
+    assert(back.b === 7, "Got own 'b' property");
 }, function shouldAllowSinglePromiseResolution() {
     var typeson = new Typeson();
     var x = new Typeson.Promise(function (res) {
