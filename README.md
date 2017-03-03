@@ -215,20 +215,29 @@ Whether or not to support cyclic references. Defaults to `true` unless explicite
 
 For optimization purposes, non-plain objects are not cloned.
 
-###### forceAsync
+###### sync: boolean
 
 Types can utilize `Typeson.Promise` to allow asynchronous encapsulation and stringification.
 
 When such a type returns a `Typeson.Promise`, a regular `Promise` will be returned to the user.
 
-(This type is used internally for ensuring a regular Promise was not intended as the result.
+(This type is used internally for ensuring a regular `Promise` was not intended as the result.
 Note that its resolved value is also recursively checked for types.)
 
 To ensure that a regular `Promise` is always returned and thereby to allow the same API to be
-used regardless of the types in effect, the `forceAsync` option can be set to `true`.
+used regardless of the types in effect, the `sync` option can be set to `false` or use the
+`*Async` methods.
 
 Note that this has no bearing on `revive`/`parse` since they can construct any object they
 wish for a return value, including a `Promise`, a stream, etc.
+
+###### throwOnBadSyncType: boolean
+
+The default is to throw when an async result is received from a synchronous method or vice versa.
+This assures you that you are receiving the intended result type.
+
+This option can be set to `false`, however, to return the raw synchronous result or the promise, allowing you the least unambiguous results (since you can discern whether a returned `Promise` was
+the actual result of a revival/parsing or just the inevitable return of using an async method).
 
 #### Sample
 
@@ -271,7 +280,7 @@ Generates JSON based on the given `obj`. If the supplied `obj` has special types
 
 The `options` object argument can include a setting for `cyclic` which overrides the default or any behavior supplied for this option in the Typeson constructor.
 
-May also return a `Promise` if a type returns `Typeson.Promise` or if the option `forceAsync` is set to `true`. See the documentation under `Typeson.Promise`.
+May also return a `Promise` if a type returns `Typeson.Promise` or if the option `sync` is set to `false`. See the documentation under `Typeson.Promise`.
 
 ##### Stringification format
 
@@ -466,7 +475,7 @@ function MyAsync (prop) {
     this.prop = prop;
 }
 
-var typeson = new Typeson({forceAsync: true}).register({
+var typeson = new Typeson({sync: false}).register({
     myAsyncType: [
         function (x) { return x instanceof MyAsync;},
         function (o) {
@@ -484,7 +493,7 @@ var typeson = new Typeson({forceAsync: true}).register({
 
 var mya = new MyAsync(500);
 return typeson.stringify(mya).then(function (result) {
-    var back = typeson.parse(result);
+    var back = typeson.parse(result, null, {sync: true});
     console.log(back.prop); // 500
 });
 ```
@@ -536,6 +545,12 @@ Checks for a simple non-inherited object. Adapted from jQuery's `isPlainObject`.
 
 Allows for inherited objects but ensures the prototype chain inherits from
 `Object` (or `null`).
+
+### Typeson.isThenable(val, catchCheck=boolean)
+
+Checks whether an object is "thenable" (usable as a promise). If the second
+argument is supplied as `true`, it will also ensure it has a `catch` method.
+A regular `Promise` or `Typeson.Promise` will return `true`.
 
 ## Finding types and groups of types
 

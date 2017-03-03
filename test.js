@@ -1,10 +1,6 @@
 var Typeson = require('./typeson');
 var B64 = require ('base64-arraybuffer');
 
-function isThenable (v, catchCheck) {
-    return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
-}
-
 var typeson = new Typeson().register({
     Date: [
         function (x) { return x instanceof Date; },
@@ -52,7 +48,7 @@ function run(tests){
     console.log(" ");
     console.log("Running test: " + test.name);
     var ret = test();
-    if (isThenable(ret)) {
+    if (Typeson.isThenable(ret)) {
         ret.then(function () {
             run(tests);
         }).catch(function (err) {
@@ -414,7 +410,7 @@ run([function shouldSupportBasicTypes () {
             res(25);
         }, 500);
     });
-    return typeson.stringify(x).then(function (tson) {
+    return typeson.stringifyAsync(x).then(function (tson) {
         console.log(tson);
         var back = typeson.parse(tson);
         assert(back === 25, "Should have resolved the one promise value");
@@ -442,7 +438,7 @@ run([function shouldSupportBasicTypes () {
             res(new APromiseUser(555));
         }, 1200);
     });
-    return typeson.stringify(x).then(function (tson) {
+    return typeson.stringifyAsync(x).then(function (tson) {
         console.log(tson);
         var back = typeson.parse(tson);
         assert(
@@ -457,7 +453,7 @@ run([function shouldSupportBasicTypes () {
             res(25);
         }, 500);
     })];
-    return typeson.stringify(x).then(function (tson) {
+    return typeson.stringifyAsync(x).then(function (tson) {
         console.log(tson);
         var back = typeson.parse(tson);
         assert(back[0] === 5 && back[1] === 100 && back[2] === 25, "Should have resolved multiple promise values (and in the proper order)");
@@ -506,7 +502,7 @@ run([function shouldSupportBasicTypes () {
             });
         })
     ];
-    return typeson.stringify(x).then(function (tson) {
+    return typeson.stringifyAsync(x).then(function (tson) {
         console.log(tson);
         var back = typeson.parse(tson);
         assert(
@@ -521,7 +517,7 @@ run([function shouldSupportBasicTypes () {
         );
     });
 }, function shouldAllowForcingOfAsyncReturn () {
-    var typeson = new Typeson({forceAsync: true});
+    var typeson = new Typeson({sync: false, throwOnBadSyncType: false});
     var x = 5;
     return typeson.stringify(x).then(function (tson) {
         console.log(tson);
@@ -597,7 +593,7 @@ run([function shouldSupportBasicTypes () {
         this.prop = prop;
     }
 
-    var typeson = new Typeson({forceAsync: true}).register({
+    var typeson = new Typeson({sync: false}).register({
         myAsyncType: [
             function (x) { return x instanceof MyAsync;},
             function (o) {
@@ -615,7 +611,65 @@ run([function shouldSupportBasicTypes () {
 
     var mya = new MyAsync(500);
     return typeson.stringify(mya).then(function (result) {
+        var back = typeson.parse(result, null, {sync: true});
+        assert(back.prop === 500, "Example of MyAsync should work"); // 500
+    });
+}, function shouldWorkWithAsyncStringify () {
+    function MyAsync (prop) {
+        this.prop = prop;
+    }
+
+    var typeson = new Typeson().register({
+        myAsyncType: [
+            function (x) { return x instanceof MyAsync;},
+            function (o) {
+                return new Typeson.Promise(function (resolve, reject) {
+                    setTimeout(function () { // Do something more useful in real code
+                        resolve(o.prop);
+                    }, 800);
+                });
+            },
+            function (data) {
+                return new MyAsync(data);
+            }
+        ]
+    });
+
+    var mya = new MyAsync(500);
+    return typeson.stringifyAsync(mya).then(function (result) {
         var back = typeson.parse(result);
         assert(back.prop === 500, "Example of MyAsync should work"); // 500
+        return typeson.stringifyAsync({prop: 5}, null, null, {throwOnBadSyncType: false});
+    }).then(function (result) {
+        var back = typeson.parse(result);
+        assert(back.prop === 5, "Example of synchronously-resolved simple object should work with async API");
+    });
+}, function shouldWorkWithAsyncEncapsulate () {
+    function MyAsync (prop) {
+        this.prop = prop;
+    }
+
+    var typeson = new Typeson().register({
+        myAsyncType: [
+            function (x) { return x instanceof MyAsync;},
+            function (o) {
+                return new Typeson.Promise(function (resolve, reject) {
+                    setTimeout(function () { // Do something more useful in real code
+                        resolve(o.prop);
+                    }, 800);
+                });
+            },
+            function (data) {
+                return new MyAsync(data);
+            }
+        ]
+    });
+
+    var mya = new MyAsync(500);
+    return typeson.encapsulateAsync(mya).then(function (result) {
+        assert(result.$ === 500 && result.$types.$[''] === 'myAsyncType', "Example of MyAsync should work");
+        return typeson.encapsulateAsync({prop: 5}, null, {throwOnBadSyncType: false});
+    }).then(function (result) {
+        assert(result.prop === 5, "Example of synchronously-resolved simple object should work with async API");
     });
 }]);

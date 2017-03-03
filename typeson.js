@@ -5,6 +5,10 @@ var keys = Object.keys,
     hasOwn = ({}.hasOwnProperty),
     fnToString = hasOwn.toString;
 
+function isThenable (v, catchCheck) {
+    return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
+}
+
 function toStringTag (val) {
     return toString.call(val).slice(8, -1);
 }
@@ -79,7 +83,7 @@ function Typeson (options) {
      *
      * Arguments works identical to those of JSON.stringify().
      */
-    this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
+    var stringify = this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
         opts = Object.assign({}, options, opts, {stringification: true});
         var encapsulated = encapsulate(obj, null, opts);
         if (isArray(encapsulated)) {
@@ -90,12 +94,29 @@ function Typeson (options) {
         });
     };
 
+    // Also sync but throws on non-sync result
+    this.stringifySync = function (obj, replacer, space, opts) {
+        return stringify(obj, replacer, space, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
+    };
+    this.stringifyAsync = function (obj, replacer, space, opts) {
+        return stringify(obj, replacer, space, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
+    };
+
     /** Parse Typeson back into an obejct.
      *
      * Arguments works identical to those of JSON.parse().
      */
-    this.parse = function (text, reviver, opts) {
+    var parse = this.parse = function (text, reviver, opts) {
+        opts = Object.assign({}, options, opts, {parse: true});
         return revive(JSON.parse(text, reviver), opts); // This reviver has nothing to do with our revivers.
+    };
+
+    // Also sync but throws on non-sync result
+    this.parseSync = function (text, reviver, opts) {
+        return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true})); // This reviver has nothing to do with our revivers.
+    };
+    this.parseAsync = function (text, reviver, opts) {
+        return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false})); // This reviver has nothing to do with our revivers.
     };
 
     /** Encapsulate a complex object into a plain Object by replacing registered types with
@@ -105,8 +126,8 @@ function Typeson (options) {
      * @param {Object} obj - Object to encapsulate.
      */
     var encapsulate = this.encapsulate = function (obj, stateObj, opts) {
-        opts = Object.assign({}, options, opts);
-        var forceAsync = opts.forceAsync;
+        opts = Object.assign({sync: true}, options, opts);
+        var sync = opts.sync;
         var types = {},
             refObjs = [], // For checking cyclic references
             refKeys = [], // For checking cyclic references
@@ -150,19 +171,27 @@ function Typeson (options) {
                         else ret = encaps; // If this is itself a `Typeson.Promise` (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
                         return checkPromises(ret, newPromisesData);
                     })
-                ).then(function () {
-                    return ret;
-                });
+                );
+            }).then(function () {
+                return ret;
             });
         };
-        return promisesDataRoot.length ?
-            Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
-            : (opts.stringification && !forceAsync // If this is a promise, we don't want to resolve as above, so we return an array
-                ? [finish(ret)]
-                : (forceAsync
-                    ? Promise.resolve(finish(ret))
-                    : finish(ret)
-                ));
+        return promisesDataRoot.length
+            ? sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Sync method requested but async result obtained");
+                }())
+                : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
+            : !sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Async method requested but sync result obtained");
+                }())
+                : (opts.stringification && sync // If this is a synchronous request for stringification, yet a promise is the result, we don't want to resolve leading to an async result, so we return an array to avoid ambiguity
+                    ? [finish(ret)]
+                    : (sync
+                        ? finish(ret)
+                        : Promise.resolve(finish(ret))
+                    ));
 
         function _encapsulate (keypath, value, cyclic, stateObj, promisesData) {
             var $typeof = typeof value;
@@ -258,14 +287,24 @@ function Typeson (options) {
                     }
                     // Now, also traverse the result in case it contains it own types to replace
                     stateObj = Object.assign(stateObj, {replaced: true});
-                    if (!replacers[i].replace) {
+                    if ((sync || !replacers[i].replaceAsync) && !replacers[i].replace) {
                         return _encapsulate(key, value, cyclic && 'readonly', stateObj, promisesData);
                     }
-                    return _encapsulate(key, replacers[i].replace(value, stateObj), cyclic && 'readonly', stateObj, promisesData);
+
+                    var replaceMethod = sync || !replacers[i].replaceAsync ? 'replace' : 'replaceAsync';
+                    return _encapsulate(key, replacers[i][replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData);
                 }
             }
             return value;
         }
+    };
+
+    // Also sync but throws on non-sync result
+    this.encapsulateSync = function (obj, stateObj, opts) {
+        return encapsulate(obj, stateObj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
+    };
+    this.encapsulateAsync = function (obj, stateObj, opts) {
+        return encapsulate(obj, stateObj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
     };
 
     /** Revive an encapsulated object.
@@ -273,7 +312,9 @@ function Typeson (options) {
      * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
      * will be replaced with its true type instead of just plain objects.
      */
-    var revive = this.revive = function (obj) {
+    var revive = this.revive = function (obj, opts) {
+        opts = Object.assign({sync: true}, options, opts);
+        var sync = opts.sync;
         var types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
@@ -283,17 +324,30 @@ function Typeson (options) {
             types = types.$;
             ignore$Types = false;
         }
-        var ret = _revive('', obj);
-        return hasConstructorOf(ret, Undefined) ? undefined : ret;
+        var ret = _revive('', obj, null, opts);
+        ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
+        return isThenable(ret)
+            ? sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Sync method requested but async result obtained");
+                }())
+                : ret
+            : !sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Async method requested but sync result obtained");
+                }())
+                : sync
+                    ? ret
+                    : Promise.resolve(ret);
 
-        function _revive (keypath, value, target) {
+        function _revive (keypath, value, target, opts) {
             if (ignore$Types && keypath === '$types') return;
             var type = types[keypath];
             if (value && (isPlainObject(value) || isArray(value))) {
                 var clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone);
+                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone, opts);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
@@ -301,12 +355,27 @@ function Typeson (options) {
             }
             if (!type) return value;
             if (type === '#') return getByKeyPath(target, value.substr(1));
+            var sync = opts.sync;
             return [].concat(type).reduce(function (val, type) {
                 var reviver = revivers[type];
                 if (!reviver) throw new Error ('Unregistered type: ' + type);
-                return reviver(val);
+                return reviver[
+                    sync && reviver.revive
+                        ? 'revive'
+                        : !sync && reviver.reviveAsync
+                            ? 'reviveAsync'
+                            : 'revive'
+                ](val);
             }, value);
         }
+    };
+
+    // Also sync but throws on non-sync result
+    this.reviveSync = function (obj, opts) {
+        return revive(obj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
+    };
+    this.reviveAsync = function (obj, opts) {
+        return revive(obj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
     };
 
     /** Register types.
@@ -348,7 +417,10 @@ function Typeson (options) {
                         test: spec.test.bind(spec)
                     };
                     if (spec.replace) {
-                        replacerObj.replace = spec.replace && spec.replace.bind(spec);
+                        replacerObj.replace = spec.replace.bind(spec);
+                    }
+                    if (spec.replaceAsync) {
+                        replacerObj.replaceAsync = spec.replaceAsync.bind(spec);
                     }
                     var start = typeof opts.fallback === 'number' ? opts.fallback : (opts.fallback ? 0 : Infinity);
                     if (spec.testPlainObjects) {
@@ -356,7 +428,14 @@ function Typeson (options) {
                     } else {
                         nonplainObjectReplacers.splice(start, 0, replacerObj);
                     }
-                    if (spec.revive) revivers[typeId] = spec.revive.bind(spec);
+                    // Todo: We might consider a testAsync type
+                    if (spec.revive || spec.reviveAsync) {
+                        var reviverObj = {};
+                        if (spec.revive) reviverObj.revive = spec.revive.bind(spec);
+                        if (spec.reviveAsync) reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
+                        revivers[typeId] = reviverObj;
+                    }
+
                     regTypes[typeId] = spec; // Record to be retrieved via public types property.
                 }
             });
@@ -385,9 +464,6 @@ function Undefined () {}
 
 // With ES6 classes, we may be able to simply use `class TypesonPromise extends Promise` and add a string tag for detection
 function TypesonPromise (f) {
-    if (!(this instanceof TypesonPromise)) {
-        return new TypesonPromise(f);
-    }
     this.p = new Promise(f);
 };
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
@@ -405,15 +481,6 @@ TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
 TypesonPromise.prototype['catch'] = function (onRejected) {
     return this.then(null, onRejected);
 };
-
-['all', 'race'].map(function (meth) {
-    TypesonPromise[meth] = function (promArr) {
-        return new TypesonPromise(function (typesonResolve, typesonReject) {
-            Promise[meth](promArr.map(function (prom) {return prom.p;})).then(typesonResolve, typesonReject);
-        });
-    };
-});
-
 TypesonPromise.resolve = function (v) {
     return new TypesonPromise(function (typesonResolve) {
         typesonResolve(v);
@@ -424,12 +491,20 @@ TypesonPromise.reject = function (v) {
         typesonReject(v);
     });
 };
+['all', 'race'].map(function (meth) {
+    TypesonPromise[meth] = function (promArr) {
+        return new TypesonPromise(function (typesonResolve, typesonReject) {
+            Promise[meth](promArr.map(function (prom) {return prom.p;})).then(typesonResolve, typesonReject);
+        });
+    };
+});
 
 // The following provide classes meant to avoid clashes with other values
 Typeson.Undefined = Undefined; // To insist `undefined` should be added
 Typeson.Promise = TypesonPromise; // To support async encapsulation/stringification
 
 // Some fundamental type-checking utilities
+Typeson.isThenable = isThenable;
 Typeson.toStringTag = toStringTag;
 Typeson.hasConstructorOf = hasConstructorOf;
 Typeson.isObject = isObject;
