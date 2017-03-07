@@ -136,11 +136,14 @@ function Typeson (options) {
         var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
         var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
-            // Add $types to result only if we ever bumped into a special type
+            // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
             if (keys(types).length) {
-                // Special if array (or primitive) was serialized because JSON would ignore custom $types prop on it.
-                if (!ret || !isPlainObject(ret) || ret.$types) ret = {$:ret, $types: {$: types}};
+                if (!ret || !isPlainObject(ret) || // Special if array (or a primitive) was serialized because JSON would ignore custom `$types` prop on it
+                    ret.hasOwnProperty('$types') // Also need to handle if this is an object with its own `$types` property (to avoid ambiguity)
+                ) ret = {$: ret, $types: {$: types}};
                 else ret.$types = types;
+            } else if (ret.hasOwnProperty('$types')) {
+                ret = {$: ret, $types: true};
             }
             return ret;
         }
@@ -318,8 +321,9 @@ function Typeson (options) {
         var types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
+        if (types === true) return obj.$; // Object happened to have own `$types` property but with no actual types, so we unescape and return that object
         if (types.$ && isPlainObject(types.$)) {
-            // Special when root object is not a trivial Object, it will be encapsulated in $.
+            // Special when root object is not a trivial Object, it will be encapsulated in $. It will also be encapsulated in $ if it has its own `$` property to avoid ambiguity
             obj = obj.$;
             types = types.$;
             ignore$Types = false;
@@ -387,6 +391,9 @@ function Typeson (options) {
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
             typeSpec && keys(typeSpec).forEach(function (typeId) {
+                if (typeId === '#') {
+                    throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
+                }
                 var spec = typeSpec[typeId];
                 var replacers = spec.testPlainObjects ? plainObjectReplacers : nonplainObjectReplacers;
                 var existingReplacer = replacers.filter(function(r){ return r.type === typeId; });

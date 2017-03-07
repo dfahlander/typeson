@@ -93,6 +93,62 @@ run([function shouldSupportBasicTypes () {
     //console.log(tson);
     var back = typeson.parse(tson);
     assert (back instanceof Date && back.toString() == date.toString(), "Date value");
+}, function shouldSupportObjectsContainingInternallyUsedProperties () {
+    function test (data, cb) {
+        var tson = typeson.stringify(data, null, 2);
+        console.log(tson);
+        var result = typeson.parse(tson);
+        cb(result);
+    }
+    function valSwitch (val) {
+        test({$types: val}, function (result) {
+            assert(result.$types === val && Object.keys(result).length === 1, "Preserves $types on original object without additions");
+        });
+        test({$: val}, function (result) {
+            assert(result.$ === val && Object.keys(result).length === 1, "Preserves $ on original object without additions");
+        });
+        test({$: val, $types: val}, function (result) {
+            assert(result.$ === val && result.$types === val && Object.keys(result).length === 2, "Preserves $ and $types on original object without additions");
+        });
+    }
+    valSwitch(true);
+    valSwitch(false);
+    test({$: {}, $types: {$: {'': 'val', 'cyc': '#'}, '#': 'a1', '': 'b1'}}, function (result) {
+        assert(typeof result.$ === 'object' && !Object.keys(result.$).length && result.$types.$[''] === 'val' && result.$types.$.cyc === '#' && result.$types['#'] === 'a1' && result.$types[''] === 'b1' && Object.keys(result.$types).length === 3, "Preserves $ and $types on original object without additions");
+    });
+    test({a: new Date(), $types: {}}, function (result) {
+        assert(result.a instanceof Date && !('$' in result) && typeof result.$types === 'object' && !Object.keys(result.$types).length);
+    });
+    test({a: new Date(), $: {}}, function (result) {
+        assert(result.a instanceof Date && !('$types' in result) && typeof result.$ === 'object' && !Object.keys(result.$).length);
+    });
+    test({a: new Date(), $types: {}, $: {}}, function (result) {
+        assert(result.a instanceof Date && typeof result.$types === 'object' && !Object.keys(result.$types).length && typeof result.$ === 'object' && !Object.keys(result.$).length);
+    });
+    function valSwitch2 (val) {
+        test({a: new Date(), $types: val}, function (result) {
+            assert(result.a instanceof Date && !('$' in result) && result.$types === val);
+        });
+        test({a: new Date(), $: val}, function (result) {
+            assert(result.a instanceof Date && !('$types' in result) && result.$ === val);
+        });
+        test({a: new Date(), $types: val, $: val}, function (result) {
+            assert(result.a instanceof Date && result.$types === val && result.$ === val);
+        });
+    }
+    valSwitch2(true);
+    valSwitch2(false);
+    test({a: new Date(), $: {}}, function (result) {
+        assert(result.a instanceof Date && !('$types' in result) && typeof result.$ === 'object' && !Object.keys(result.$).length);
+    });
+}, function disallowsHashType () {
+    var caught = false;
+    try {
+        var typeson = new Typeson().register({'#': [function () {}, function () {}, function () {}]})
+    } catch (err) {
+        caught = true;
+    }
+    assert(caught, "Should throw on attempting to register the reserved 'type', '#'");
 }, function shouldResolveCyclics() {
     //
     // shouldResolveCyclics
@@ -108,7 +164,7 @@ run([function shouldSupportBasicTypes () {
     }
     data.list[3].children = [data.list[0], data.list[1]];
 
-    var tson = typeson.stringify(data,null, 2);
+    var tson = typeson.stringify(data, null, 2);
     //console.log(tson);
     var result = typeson.parse(tson);
 
@@ -126,7 +182,7 @@ run([function shouldSupportBasicTypes () {
     var tson = typeson.stringify(input);
     //console.log (tson.match(/Kalle/g).length);
     console.log(tson);
-    assert (tson.match(/Kalle/g).length === 1, "TSON should only contain one 'Kalle'. The other should just reference the first");
+    assert (tson.match(/Kalle/g).length === 1, "TSON should only contain one 'Kalle'. The others should just reference the first");
     var result = typeson.parse(tson);
     assert (result[0] === result[1] && result[1] === result[2], "The resulting object should also just have references to the same object");
 
