@@ -142,7 +142,7 @@ function Typeson (options) {
                     ret.hasOwnProperty('$types') // Also need to handle if this is an object with its own `$types` property (to avoid ambiguity)
                 ) ret = {$: ret, $types: {$: types}};
                 else ret.$types = types;
-            } else if (ret.hasOwnProperty('$types')) {
+            } else if (isObject(ret) && ret.hasOwnProperty('$types')) {
                 ret = {$: ret, $types: true};
             }
             return ret;
