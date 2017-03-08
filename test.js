@@ -186,6 +186,26 @@ run([function shouldSupportBasicTypes () {
     var result = typeson.parse(tson);
     assert (result[0] === result[1] && result[1] === result[2], "The resulting object should also just have references to the same object");
 
+}, function shouldResolveCyclicsArrays () {
+    var recursive = [];
+    recursive.push(recursive);
+    var tson = typeson.stringify(recursive);
+    var result = typeson.parse(tson);
+    assert(result === result[0], "array directly contains self");
+
+    var recursive2 = [];
+    recursive2.push([recursive2]);
+    tson = typeson.stringify(recursive2);
+    result = typeson.parse(tson);
+    assert(result !== result[0] && result === result[0][0], "array indirectly contains self");
+
+    var recursive3 = [recursive];
+    tson = typeson.stringify(recursive3);
+    console.log(tson);
+console.log(recursive3);
+    result = typeson.parse(tson);
+console.log(result);
+    assert(result !== result[0] && result !== result[0][0] && result[0] === result[0][0], "array member contains self");
 }, function shouldNotResolveCyclicsIfNotWanted(){
     //
     // shouldNotResolveCyclicsIfNotWanted
