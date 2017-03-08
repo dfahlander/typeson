@@ -328,6 +328,7 @@ function Typeson (options) {
             types = types.$;
             ignore$Types = false;
         }
+        var keyPathResolutions = [];
         var ret = _revive('', obj, null, opts);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
         return isThenable(ret)
@@ -344,21 +345,39 @@ function Typeson (options) {
                     ? ret
                     : Promise.resolve(ret);
 
-        function _revive (keypath, value, target, opts) {
+        function _revive (keypath, value, target, opts, clone, key) {
             if (ignore$Types && keypath === '$types') return;
             var type = types[keypath];
-            if (value && (isPlainObject(value) || isArray(value))) {
+            if (isArray(value) || isPlainObject(value)) {
                 var clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone, opts);
+                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone, opts, clone, key);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
                 value = clone;
+                while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
+                    var kpr = keyPathResolutions[0];
+                    var target = kpr[0];
+                    var keyPath = kpr[1];
+                    var clone = kpr[2];
+                    var key = kpr[3];
+                    var val = getByKeyPath(target, keyPath);
+                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
+                    else if (val !== undefined) clone[key] = val;
+                    else break;
+                    keyPathResolutions.splice(0, 1);
+                }
             }
             if (!type) return value;
-            if (type === '#') return getByKeyPath(target, value.substr(1));
+            if (type === '#') {
+                var ret = getByKeyPath(target, value.substr(1));
+                if (ret === undefined) { // Cyclic reference not yet available
+                    keyPathResolutions.push([target, value.substr(1), clone, key]);
+                }
+                return ret;
+            }
             var sync = opts.sync;
             return [].concat(type).reduce(function (val, type) {
                 var reviver = revivers[type];
