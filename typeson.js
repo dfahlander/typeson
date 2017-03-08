@@ -14,7 +14,7 @@ function toStringTag (val) {
 }
 
 function hasConstructorOf (a, b) {
-    if (!a) {
+    if (!a || typeof a !== 'object') {
         return false;
     }
     var proto = getProto(a);
