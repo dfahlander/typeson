@@ -209,7 +209,7 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 ###### cyclic
 
-Whether or not to support cyclic references. Defaults to `true` unless explicitely set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
+Whether or not to support cyclic references. Defaults to `true` unless explicitly set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
 ###### testPlainObjects
 
@@ -356,7 +356,7 @@ A class (constructor function) that would use default test, encapsulation and re
 - `encapsulate`: copy all enumerable own props into a vanilla object
 - `revive`: Use `Object.create()` to revive the correct type, and copy all props into it.
 
-###### tester (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'boolean'), iterateUnsetNumeric: boolean}) : boolean
+###### tester (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : boolean
 
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
@@ -386,7 +386,7 @@ converted to `null` by a `stringify` call). Thus encapsulators have the
 ability to set `iterateUnsetNumeric: true` on their state object, but
 note that doing so will add a performance cost.
 
-###### encapsulator (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'boolean'), iterateUnsetNumeric: boolean}) : Object
+###### encapsulator (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : Object
 
 Function that maps your instance to a JSON-serializable object. Can also be called a
 `replacer`. For the `stateObj`, see `tester`. In a property context (for arrays

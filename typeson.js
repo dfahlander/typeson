@@ -204,7 +204,7 @@ function Typeson (options) {
                         replace(keypath, value, stateObj, promisesData) :
                         value;
             if (value === null) return value;
-            if (cyclic && !stateObj.replaced) {
+            if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
                 // Options set to detect cyclic references and be able to rewrite them.
                 var refIndex = refObjs.indexOf(value);
                 if (refIndex < 0) {
@@ -243,17 +243,17 @@ function Typeson (options) {
                 for (var key in value) {
                     var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
                     var kp = keypath + (keypath ? '.' : '') + key;
-                    var val = _encapsulate(kp, value[key], cyclic, ownKeysObj, promisesData);
+                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, cyclic, ownKeysObj, clone, key]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key]);
                     } else if (val !== undefined) clone[key] = val;
                 }
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     var kp = keypath + (keypath ? '.' : '') + key;
-                    var val = _encapsulate(kp, value[key], cyclic, {ownKeys: true}, promisesData);
+                    var val = _encapsulate(kp, value[key], !!cyclic, {ownKeys: true}, promisesData);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, cyclic, {ownKeys: true}, clone, key]);
+                        promisesData.push([kp, val, !!cyclic, {ownKeys: true}, clone, key]);
                     } else if (val !== undefined) clone[key] = val;
                 });
             }
@@ -262,9 +262,9 @@ function Typeson (options) {
                 for (var i = 0, vl = value.length; i < vl; i++) {
                     if (!(i in value)) {
                         var kp = keypath + (keypath ? '.' : '') + i;
-                        var val = _encapsulate(kp, undefined, cyclic, {ownKeys: false}, promisesData);
+                        var val = _encapsulate(kp, undefined, !!cyclic, {ownKeys: false}, promisesData);
                         if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, cyclic, {ownKeys: false}, clone, i]);
+                            promisesData.push([kp, val, !!cyclic, {ownKeys: false}, clone, i]);
                         } else if (val !== undefined) clone[i] = val;
                     }
                 }
