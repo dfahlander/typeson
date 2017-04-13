@@ -427,7 +427,7 @@ function Typeson (options) {
                         // Support registering just a class without replacer/reviver
                         var Class = spec;
                         spec = {
-                            test: function (x) { return x.constructor === Class; },
+                            test: function (x) { return x && x.constructor === Class; },
                             replace: function (x) { return assign({}, x); },
                             revive: function (x) { return assign(Object.create(Class.prototype), x); }
                         };
