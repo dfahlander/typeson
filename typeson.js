@@ -134,6 +134,7 @@ function Typeson (options) {
             promisesDataRoot = [];
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
         var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
+        var encapsulateObserver = opts.encapsulateObserver;
         var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
@@ -161,7 +162,7 @@ function Typeson (options) {
                         var stateObj = prData[3];
                         var parentObj = prData[4];
                         var key = prData[5];
-                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData);
+                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true);
                         var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
                         if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
                             return encaps.p.then(function (encaps2) {
@@ -196,14 +197,40 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
-        function _encapsulate (keypath, value, cyclic, stateObj, promisesData) {
+        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingPromise) {
+            var ret, observerData = {};
+            var runObserver = encapsulateObserver ? function (obj) {
+                if (!encapsulateObserver) {
+                    return;
+                }
+                encapsulateObserver(Object.assign(obj || observerData, {
+                    keypath: keypath,
+                    value: value,
+                    cyclic: cyclic,
+                    stateObj: stateObj,
+                    promisesData: promisesData,
+                    resolvingPromise: resolvingPromise,
+                    awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
+                }));
+            } : null;
             var $typeof = typeof value;
-            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 })
-                return value === undefined || ($typeof === 'number' &&
-                    (isNaN(value) || value === -Infinity || value === Infinity)) ?
-                        replace(keypath, value, stateObj, promisesData) :
-                        value;
-            if (value === null) return value;
+            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 }) {
+                if (value === undefined || ($typeof === 'number' &&
+                    (isNaN(value) || value === -Infinity || value === Infinity))) {
+                    ret = replace(keypath, value, stateObj, promisesData);
+                    if (ret !== value) {
+                        observerData = {replaced: ret};
+                    }
+                } else {
+                    ret = value;
+                }
+                if (runObserver) runObserver();
+                return ret;
+            }
+            if (value === null) {
+                if (runObserver) runObserver();
+                return value;
+            }
             if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
                 // Options set to detect cyclic references and be able to rewrite them.
                 var refIndex = refObjs.indexOf(value);
@@ -214,6 +241,9 @@ function Typeson (options) {
                     }
                 } else {
                     types[keypath] = '#';
+                    if (runObserver) runObserver({
+                        cyclicKeypath: refKeys[refIndex]
+                    });
                     return '#' + refKeys[refIndex];
                 }
             }
@@ -226,17 +256,28 @@ function Typeson (options) {
                 // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
                 ? value
                 : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
-            if (replaced !== value) return replaced;
             var clone;
-            if (isArr || stateObj.iterateIn === 'array')
-                clone = new Array(value.length);
-            else if (isPlainObj || stateObj.iterateIn === 'object')
-                clone = {};
-            else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-                promisesData.push([keypath, value, cyclic, stateObj]);
-                return value;
+            if (replaced !== value) {
+                ret = replaced;
+                observerData = {replaced: replaced};
+            } else {
+                if (isArr || stateObj.iterateIn === 'array') {
+                    clone = new Array(value.length);
+                    observerData = {clone: clone};
+                } else if (isPlainObj || stateObj.iterateIn === 'object') {
+                    clone = {};
+                    observerData = {clone: clone};
+                } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
+                    promisesData.push([keypath, value, cyclic, stateObj]);
+                    ret = value;
+                } else {
+                    ret = value; // Only clone vanilla objects and arrays
+                }
             }
-            else return value; // Only clone vanilla objects and arrays
+            if (runObserver) runObserver();
+            if (!clone) {
+                return ret;
+            }
 
             // Iterate object or array
             if (stateObj.iterateIn) {
@@ -248,6 +289,7 @@ function Typeson (options) {
                         promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key]);
                     } else if (val !== undefined) clone[key] = val;
                 }
+                if (runObserver) runObserver({endIterateIn: true, end: true});
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     var kp = keypath + (keypath ? '.' : '') + key;
@@ -256,6 +298,7 @@ function Typeson (options) {
                         promisesData.push([kp, val, !!cyclic, {ownKeys: true}, clone, key]);
                     } else if (val !== undefined) clone[key] = val;
                 });
+                if (runObserver) runObserver({endIterateOwn: true, end: true});
             }
             // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
             if (stateObj.iterateUnsetNumeric) {
@@ -268,6 +311,7 @@ function Typeson (options) {
                         } else if (val !== undefined) clone[i] = val;
                     }
                 }
+                if (runObserver) runObserver({endIterateUnsetNumeric: true, end: true});
             }
             return clone;
         }

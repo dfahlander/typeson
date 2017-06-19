@@ -204,12 +204,36 @@ Creates an instance of Typeson, on which you may configure additional types to s
 ```
 {
     cyclic?: boolean, // Default true
+    encapsulateObserver?: function, // Default no-op
 }
 ```
 
 ###### cyclic
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitly set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
+
+###### encapsulateObserver
+
+For encapsulations/stringifications, this callback will be executed as objects are iterated and types are detected. An observer might be used to build an interface based on the original object taking advantage of serialized values (the `replaced` property) passed to the observer along the way, even potentially without concern to the actual encapsulated result.
+
+`encapsulateObserver` is passed an object with the following properties:
+
+- `keypath` - The keypath at which the observer is reporting.
+- `value` - The original value found at this stage by the observer. (`replaced`, on the other hand, can be consulted to obtain any type replacement value.)
+- `cyclic` - A boolean indicating whether the current state is expecting cyclics. Will be `"readonly"` if this iteration is due to a recursive replacement.
+- `stateObj` - The state object at the time of observation.
+- `promisesData` - The promises array.
+- `resolvingPromise` - A boolean indicating whether or not this observation is occurring at the (Typeson) promise stage.
+- `awaitingTypesonPromise` - Will be `true` if still awaiting the full resolution; this could be ignored or used to set a placeholder.
+
+The following properties are also present in particular cases:
+- `clone` - If a plain object or array is found or if `iterateIn` is set, this property holds the clone of that object or array.
+- `replaced` - This property will be set when a type was detected. This value is useful for obtaining the serialization of types.
+- `cyclicKeypath` - Will be present if a cyclic object (including array) were detected; refers to the key path of the prior detected object.
+- `endIterateIn` - Will be `true` if finishing iteration of `in` properties.
+- `endIterateOwn` - Will be `true` if finishing iteration of "own" properties.
+- `endIterateUnsetNumeric` - Will be `true` if finishing iteration of unset numeric properties.
+- `end` - Convenience property that will be `true` if `endIterateIn`, `endIterateOwn`, or `endIterateUnsetNumeric` is `true`.
 
 ###### testPlainObjects
 

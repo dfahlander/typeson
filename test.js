@@ -22,7 +22,7 @@ var typeson = new Typeson().register({
         function (s) { return {NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity}[s];}
     ],
     ArrayBuffer: [
-        function test (x) { return x.constructor === ArrayBuffer;},
+        function test (x) { return Typeson.toStringTag(x) === 'ArrayBuffer'; },
         function encapsulate (b) { return B64.encode(b); },
         function revive (b64) { return B64.decode(b64); }
     ],
@@ -291,7 +291,7 @@ run([function shouldSupportBasicTypes () {
                 obj => new CustomDate(obj._date, obj.name)
             ]
         });
-    var tson = typeson.stringify(input,null, 2);
+    var tson = typeson.stringify(input, null, 2);
     console.log(tson);
     var result = typeson.parse(tson);
     assert (result.name == "Karl", "Basic prop");
@@ -401,6 +401,126 @@ run([function shouldSupportBasicTypes () {
     var clonedData = typeson.parse(typeson.stringify(john));
     // Todo: Change the expected result to "specific found" if reimplementing in non-reverse order
     assert(clonedData === "general found", "Should execute replacers in proper order");
+}, function shouldRunEncapsulateObserver () {
+    var expected = '{\n' +
+'    time: 959000000000\n' +
+'    vals: [\n' +
+'        0: null\n' +
+'        1: undefined\n' +
+'        2: 5\n' +
+'        3: str\n' +
+'    ]\n' +
+'    cyclicInput: #\n' +
+'}\n';
+    var str = '';
+    var indentFactor = 0;
+    var indent = function () {
+        return new Array(indentFactor * 4 + 1).join(' ');
+    };
+    var typeson = new Typeson({
+        encapsulateObserver: function (o) {
+            const isObject = o.value && typeof o.value === 'object';
+            const isArray = Array.isArray(o.value);
+            if (o.end) {
+                indentFactor--;
+                str += indent() + (isArray ? ']' : '}') + '\n';
+                return;
+            }
+            if (!('replaced' in o)) {
+                if (isArray) {
+                    if (!('clone' in o)) {
+                        return;
+                    }
+                    str += indent() + (o.keypath ? o.keypath + ': ' : '') + '[\n';
+                    indentFactor++;
+                    return;
+                }
+                if (isObject) {
+                    if ('cyclicKeypath' in o) {
+                        o.value = '#' + o.cyclicKeypath;
+                    } else {
+                        str += indent() + '{\n';
+                        indentFactor++;
+                        return;
+                    }
+                }
+            } else if (isObject) {
+                // Special type that hasn't been finally resolved yet
+                return;
+            }
+            var idx = o.keypath.lastIndexOf('.') + 1;
+            str += indent() + o.keypath.slice(idx) + ': ' +
+                ('replaced' in o ? o.replaced : o.value) + '\n';
+        }
+    })
+        .register(globalTypeson.types);
+    var input = {
+        time: new Date(959000000000),
+        vals: [null, undefined, 5, "str"]
+    };
+    input.cyclicInput = input;
+    var tson = typeson.encapsulate(input);
+    // console.log(str);
+    // console.log(expected);
+    assert (str === expected, "Observer able to reduce JSON to expected string");
+}, function shouldRunEncapsulateObserver () {
+    var expected = '';
+
+    var str = '';
+    var placeholderText = '(Please wait for the value...)';
+    function APromiseUser (a) {this.a = a;}
+    var typeson = new Typeson({
+        encapsulateObserver: function (o) {
+            const isObject = o.value && typeof o.value === 'object';
+            const isArray = Array.isArray(o.value);
+            if (o.resolvingPromise) {
+                var idx = str.indexOf(placeholderText);
+                var start = str.slice(0, idx);
+                var end = str.slice(idx + placeholderText.length);
+                str = start + o.value + end;
+            } else if (o.awaitingTypesonPromise) {
+                str += '<span>' + placeholderText + '</span>';
+            } else if (!isObject && !isArray) {
+                str += '<span>' + o.value + '</span>';
+            }
+        }
+    }).register({
+        Date: [
+            function (x) { return x instanceof Date; },
+            function (date) { return date.getTime(); },
+            function (time) { return new Date(time); }
+        ],
+        PromiseUser: [
+            function (x) { return x instanceof APromiseUser; },
+            function (o) { return new Typeson.Promise(function (res) {
+                setTimeout(function () {
+                    res(o.a);
+                }, 300);
+            })},
+            function (val) { return new APromiseUser(val) }
+        ]
+    });
+    var input = ['aaa', new APromiseUser(5), 'bbb'];
+
+    var prom = typeson.encapsulateAsync(input).then(function (encaps) {
+        var back = typeson.parse(JSON.stringify(encaps));
+        assert(
+            back[0] === input[0] &&
+            back[2] === input[2] &&
+            back[1] instanceof APromiseUser &&
+                back[1].a === 5,
+            "Should have resolved the one nested promise value");
+        // console.log(str);
+        assert(
+            str === '<span>aaa</span><span>5</span><span>bbb</span>',
+            "Should have allowed us to run the callback asynchronously (where we can substitute a placeholder)"
+        );
+    });
+    assert(
+        str === '<span>aaa</span><span>' + placeholderText + '</span><span>bbb</span>',
+        "Should have allowed us to run the callback synchronously (where we add a placeholder)"
+    );
+    return prom;
 }, function shouldAllowIterateIn () {
     function A (a) {
         this.a = a;
