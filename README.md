@@ -203,16 +203,18 @@ Creates an instance of Typeson, on which you may configure additional types to s
 
 ```
 {
-    cyclic?: boolean, // Default true
+    cyclic?: boolean, // Default true to allow cyclic objects
     encapsulateObserver?: function, // Default no-op
+    sync: true, // Don't force a promise response regardless of type
+    throwOnBadSyncType: true // Default to throw when mismatch with `Typeson.Promise` obtained for sync request or not returned for async
 }
 ```
 
-###### cyclic
+###### cyclic: boolean
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitly set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
-###### encapsulateObserver
+###### encapsulateObserver: object (see description)
 
 For encapsulations/stringifications, this callback will be executed as objects are iterated and types are detected. An observer might be used to build an interface based on the original object taking advantage of serialized values (the `replaced` property) passed to the observer along the way, even potentially without concern to the actual encapsulated result.
 
