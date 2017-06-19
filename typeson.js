@@ -162,7 +162,9 @@ function Typeson (options) {
                         var stateObj = prData[3];
                         var parentObj = prData[4];
                         var key = prData[5];
-                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true);
+                        var detectedType = prData[6];
+
+                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
                         var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
                         if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
                             return encaps.p.then(function (encaps2) {
@@ -197,7 +199,7 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
-        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise) {
+        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
             var ret, observerData = {};
             var runObserver = encapsulateObserver ? function (obj) {
                 if (!encapsulateObserver) {
@@ -211,13 +213,13 @@ function Typeson (options) {
                     promisesData: promisesData,
                     resolvingTypesonPromise: resolvingTypesonPromise,
                     awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
-                }));
+                }, detectedType !== undefined ? {type: detectedType} : {}));
             } : null;
             var $typeof = typeof value;
             if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 }) {
                 if (value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity))) {
-                    ret = replace(keypath, value, stateObj, promisesData);
+                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise);
                     if (ret !== value) {
                         observerData = {replaced: ret};
                     }
@@ -268,7 +270,7 @@ function Typeson (options) {
                     clone = {};
                     observerData = {clone: clone};
                 } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-                    promisesData.push([keypath, value, cyclic, stateObj]);
+                    promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type]);
                     ret = value;
                 } else {
                     ret = value; // Only clone vanilla objects and arrays
@@ -284,18 +286,19 @@ function Typeson (options) {
                 for (var key in value) {
                     var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
                     var kp = keypath + (keypath ? '.' : '') + key;
-                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData);
+                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
                     } else if (val !== undefined) clone[key] = val;
                 }
                 if (runObserver) runObserver({endIterateIn: true, end: true});
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     var kp = keypath + (keypath ? '.' : '') + key;
-                    var val = _encapsulate(kp, value[key], !!cyclic, {ownKeys: true}, promisesData);
+                    var ownKeysObj = {ownKeys: true};
+                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, {ownKeys: true}, clone, key]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
                     } else if (val !== undefined) clone[key] = val;
                 });
                 if (runObserver) runObserver({endIterateOwn: true, end: true});
@@ -305,9 +308,10 @@ function Typeson (options) {
                 for (var i = 0, vl = value.length; i < vl; i++) {
                     if (!(i in value)) {
                         var kp = keypath + (keypath ? '.' : '') + i;
-                        var val = _encapsulate(kp, undefined, !!cyclic, {ownKeys: false}, promisesData);
+                        var ownKeysObj = {ownKeys: false};
+                        var val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                         if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, !!cyclic, {ownKeys: false}, clone, i]);
+                            promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
                         } else if (val !== undefined) clone[i] = val;
                     }
                 }
@@ -316,7 +320,7 @@ function Typeson (options) {
             return clone;
         }
 
-        function replace (keypath, value, stateObj, promisesData, plainObject) {
+        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise) {
             // Encapsulate registered types
             var replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
             var i = replacers.length;
@@ -334,13 +338,13 @@ function Typeson (options) {
                         types[keypath] = existing ? [type].concat(existing) : type;
                     }
                     // Now, also traverse the result in case it contains its own types to replace
-                    stateObj = Object.assign(stateObj, {replaced: true});
+                    stateObj = Object.assign(stateObj, {replaced: true, type: type});
                     if ((sync || !replacer.replaceAsync) && !replacer.replace) {
-                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData);
+                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                     }
 
                     var replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
-                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData);
+                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                 }
             }
             return value;
