@@ -235,10 +235,6 @@ The following properties are also present in particular cases:
 - `endIterateUnsetNumeric` - Will be `true` if finishing iteration of unset numeric properties.
 - `end` - Convenience property that will be `true` if `endIterateIn`, `endIterateOwn`, or `endIterateUnsetNumeric` is `true`.
 
-###### testPlainObjects
-
-For optimization purposes, non-plain objects are not cloned.
-
 ###### sync: boolean
 
 Types can utilize `Typeson.Promise` to allow asynchronous encapsulation and stringification.
@@ -363,7 +359,7 @@ has highest priority during match testing). If a number is given, it will be use
 
 An object that maps a type-name to a specification of how to test, encapsulate and revive that type.
 
-`{TypeName => constructor-function | [tester, encapsulator, reviver] | {test: function, replace: function, revive: function}}` or an array of such structures.
+`{TypeName => constructor-function | [tester, encapsulator, reviver] | {test: function, replace: function, revive: function, testPlainObjects: boolean=false}}` or an array of such structures.
 
 Please note that if an array is supplied, the tester (and upon matching, the encapsulator)
 execute in a last-in, first out order. (Calls to `register` can set `fallback` to `true` to
@@ -372,6 +368,9 @@ lower the priority of a recent addition.)
 Subsequent calls to `register` will similarly be given higher priority so be sure to add
 catch-all matchers *before* more precise ones.
 
+If `testPlainObjects` is set to `true`, a tester will be checked against plain objects and
+allow replacements without recursion.
+
 ###### constructor-function
 
 A class (constructor function) that would use default test, encapsulation and revival rules, which is:
@@ -379,6 +378,7 @@ A class (constructor function) that would use default test, encapsulation and re
 - `test`: check if x.constructor === constructor-function.
 - `encapsulate`: copy all enumerable own props into a vanilla object
 - `revive`: Use `Object.create()` to revive the correct type, and copy all props into it.
+- `testPlainObjects`: `false`
 
 ###### tester (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : boolean
 
