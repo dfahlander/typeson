@@ -473,7 +473,7 @@ run([function shouldSupportBasicTypes () {
         encapsulateObserver: function (o) {
             const isObject = o.value && typeof o.value === 'object';
             const isArray = Array.isArray(o.value);
-            if (o.resolvingPromise) {
+            if (o.resolvingTypesonPromise) {
                 var idx = str.indexOf(placeholderText);
                 var start = str.slice(0, idx);
                 var end = str.slice(idx + placeholderText.length);

@@ -197,7 +197,7 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
-        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingPromise) {
+        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise) {
             var ret, observerData = {};
             var runObserver = encapsulateObserver ? function (obj) {
                 if (!encapsulateObserver) {
@@ -209,7 +209,7 @@ function Typeson (options) {
                     cyclic: cyclic,
                     stateObj: stateObj,
                     promisesData: promisesData,
-                    resolvingPromise: resolvingPromise,
+                    resolvingTypesonPromise: resolvingTypesonPromise,
                     awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
                 }));
             } : null;

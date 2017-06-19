@@ -225,7 +225,7 @@ For encapsulations/stringifications, this callback will be executed as objects a
 - `cyclic` - A boolean indicating whether the current state is expecting cyclics. Will be `"readonly"` if this iteration is due to a recursive replacement.
 - `stateObj` - The state object at the time of observation.
 - `promisesData` - The promises array.
-- `resolvingPromise` - A boolean indicating whether or not this observation is occurring at the (Typeson) promise stage.
+- `resolvingTypesonPromise` - A boolean indicating whether or not this observation is occurring at the (Typeson) promise stage.
 - `awaitingTypesonPromise` - Will be `true` if still awaiting the full resolution; this could be ignored or used to set a placeholder.
 
 The following properties are also present in particular cases:
