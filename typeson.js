@@ -205,6 +205,7 @@ function Typeson (options) {
                 if (!encapsulateObserver) {
                     return;
                 }
+                var type = detectedType || stateObj.type;
                 encapsulateObserver(Object.assign(obj || observerData, {
                     keypath: keypath,
                     value: value,
@@ -213,7 +214,7 @@ function Typeson (options) {
                     promisesData: promisesData,
                     resolvingTypesonPromise: resolvingTypesonPromise,
                     awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
-                }, detectedType !== undefined ? {type: detectedType} : {}));
+                }, type !== undefined ? {type: type} : {}));
             } : null;
             var $typeof = typeof value;
             if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 }) {
