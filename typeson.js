@@ -272,30 +272,31 @@ function Typeson (options) {
             return clone;
         }
 
-        function replace (key, value, stateObj, promisesData, plainObject) {
+        function replace (keypath, value, stateObj, promisesData, plainObject) {
             // Encapsulate registered types
             var replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
             var i = replacers.length;
             while (i--) {
-                if (replacers[i].test(value, stateObj)) {
-                    var type = replacers[i].type;
+                var replacer = replacers[i];
+                if (replacer.test(value, stateObj)) {
+                    var type = replacer.type;
                     if (revivers[type]) {
                         // Record the type only if a corresponding reviver exists.
                         // This is to support specs where only replacement is done.
                         // For example ensuring deep cloning of the object, or
                         // replacing a type to its equivalent without the need to revive it.
-                        var existing = types[key];
+                        var existing = types[keypath];
                         // type can comprise an array of types (see test shouldSupportIntermediateTypes)
-                        types[key] = existing ? [type].concat(existing) : type;
+                        types[keypath] = existing ? [type].concat(existing) : type;
                     }
-                    // Now, also traverse the result in case it contains it own types to replace
+                    // Now, also traverse the result in case it contains its own types to replace
                     stateObj = Object.assign(stateObj, {replaced: true});
-                    if ((sync || !replacers[i].replaceAsync) && !replacers[i].replace) {
-                        return _encapsulate(key, value, cyclic && 'readonly', stateObj, promisesData);
+                    if ((sync || !replacer.replaceAsync) && !replacer.replace) {
+                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData);
                     }
 
-                    var replaceMethod = sync || !replacers[i].replaceAsync ? 'replace' : 'replaceAsync';
-                    return _encapsulate(key, replacers[i][replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData);
+                    var replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
+                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData);
                 }
             }
             return value;
