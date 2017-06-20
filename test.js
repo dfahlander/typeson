@@ -149,6 +149,110 @@ run([function shouldSupportBasicTypes () {
         caught = true;
     }
     assert(caught, "Should throw on attempting to register the reserved 'type', '#'");
+}, function shouldHandlePathSeparatorsInObjects () {
+    var input = {
+        'aaa': {
+            bbb: new Date(91000000000)
+        },
+        'aaa.bbb': 2,
+
+        'lll': {
+            mmm: 3
+        },
+        'lll.mmm': new Date(92000000000),
+
+        'qqq.rrr': 4,
+        'qqq': {
+            rrr: new Date(93000000000)
+        },
+
+        'yyy': {
+            zzz: 5
+        },
+        'yyy.zzz': new Date(94000000000),
+
+        'allNormal1': {
+            a: 100
+        },
+        'allNormal1.a': 200,
+
+        'allTyped1': {
+            a: new Date(95000000000)
+        },
+        'allTyped1.a': new Date(96000000000),
+
+        'allNormal2.b': 400,
+        'allNormal2': {
+            b: 500
+        },
+
+        'allTyped2': {
+            b: new Date(97000000000)
+        },
+        'allTyped2.b': new Date(98000000000),
+
+        'A~': 'abc',
+        'A~1': 'ghi',
+        'A~0': 'def',
+        'A.': 'jkl',
+        'B~': new Date(99100000000),
+        'B~0': new Date(99200000000),
+        'B~1': new Date(99300000000),
+        'B.': new Date(99400000000),
+    };
+    var res = roundtrip(input);
+    assert(
+        res.aaa.bbb instanceof Date && res['aaa.bbb'] === 2 &&
+        res.aaa.bbb.getTime() === 91000000000,
+        "Properties with periods (with type) after normal properties (without type)"
+    );
+    assert(
+         res['lll.mmm'] instanceof Date && res.lll.mmm === 3 &&
+         res['lll.mmm'].getTime() === 92000000000,
+        "Properties with periods (without type) after normal properties (with type)"
+    );
+    assert(
+        res.qqq.rrr instanceof Date && res['qqq.rrr'] === 4 &&
+        res.qqq.rrr.getTime() === 93000000000,
+        "Properties with periods (without type) before normal properties (with type)"
+    );
+    assert(
+        res['yyy.zzz'] instanceof Date && res.yyy.zzz === 5 &&
+        res['yyy.zzz'].getTime() === 94000000000,
+        "Properties with periods (with type) before normal properties (without type)"
+    );
+    assert(
+        res.allNormal1.a === 100 && res['allNormal1.a'] === 200,
+        "Properties with periods (without type) after normal properties (without type)"
+    );
+    assert(
+        res.allTyped1.a instanceof Date && res['allTyped1.a'] instanceof Date &&
+            res.allTyped1.a.getTime() === 95000000000 &&
+                res['allTyped1.a'].getTime() === 96000000000,
+        "Properties with periods (with type) after normal properties (with type)"
+    );
+    assert(
+        res.allNormal2.b === 500 && res['allNormal2.b'] === 400,
+        "Properties with periods (without type) before normal properties (without type)"
+    );
+
+    assert(
+        res.allTyped2.b instanceof Date && res['allTyped2.b'] instanceof Date &&
+            res.allTyped2.b.getTime() === 97000000000 &&
+                res['allTyped2.b'].getTime() === 98000000000,
+        "Properties with periods (with type) after normal properties (with type)"
+    );
+    assert(
+        res['A~'] === 'abc' &&
+        res['A~0'] === 'def' &&
+        res['A~1'] === 'ghi' &&
+        res['A.'] === 'jkl' &&
+        res['B~'] instanceof Date && res['B~'].getTime() === 99100000000 &&
+        res['B~0'] instanceof Date && res['B~0'].getTime() === 99200000000 &&
+        res['B~1'] instanceof Date && res['B~1'].getTime() === 99300000000 &&
+        res['B.'] instanceof Date && res['B.'].getTime() === 99400000000,
+        "Find properties with escaped and unescaped characters"
+    );
 }, function shouldResolveCyclics() {
     //
     // shouldResolveCyclics

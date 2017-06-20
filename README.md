@@ -299,7 +299,7 @@ var myTypeson = new Typeson().register([
 
 *Initial arguments identical to those of JSON.stringify()*
 
-Generates JSON based on the given `obj`. If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies (a map of keypath to type).
+Generates JSON based on the given `obj`. If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies (a map of keypath to type where the keypath is dot-separated; see `Typeson.escapeKeyPathComponent` on escaping).
 
 The `options` object argument can include a setting for `cyclic` which overrides the default or any behavior supplied for this option in the Typeson constructor.
 
@@ -578,6 +578,21 @@ Allows for inherited objects but ensures the prototype chain inherits from
 Checks whether an object is "thenable" (usable as a promise). If the second
 argument is supplied as `true`, it will also ensure it has a `catch` method.
 A regular `Promise` or `Typeson.Promise` will return `true`.
+
+## Typeson.escapeKeyPathComponent(unescapedKeyPathComponent)
+
+Escapes a component of a key path.
+
+Dots in property names are escaped as `~1`, and the tilde escape character is
+itself escaped as `~0`.
+
+## Typeson.unescapeKeyPathComponent(escapedKeyPathComponent)
+
+Unescapes a key path component. See `Typeson.escapeKeyPathComponent`.
+
+## Typeson.getByKeyPath(obj, keyPath)
+
+Retrieves a value pointed to by a key path on an object.
 
 ## Finding types and groups of types
 

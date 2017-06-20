@@ -286,7 +286,7 @@ function Typeson (options) {
             if (stateObj.iterateIn) {
                 for (var key in value) {
                     var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
-                    var kp = keypath + (keypath ? '.' : '') + key;
+                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
                     var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
                         promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
@@ -295,7 +295,7 @@ function Typeson (options) {
                 if (runObserver) runObserver({endIterateIn: true, end: true});
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
-                    var kp = keypath + (keypath ? '.' : '') + key;
+                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
                     var ownKeysObj = {ownKeys: true};
                     var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
@@ -308,7 +308,7 @@ function Typeson (options) {
             if (stateObj.iterateUnsetNumeric) {
                 for (var i = 0, vl = value.length; i < vl; i++) {
                     if (!(i in value)) {
-                        var kp = keypath + (keypath ? '.' : '') + i;
+                        var kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
                         var ownKeysObj = {ownKeys: false};
                         var val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                         if (hasConstructorOf(val, TypesonPromise)) {
@@ -402,7 +402,7 @@ function Typeson (options) {
                 var clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone, opts, clone, key);
+                    var val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key], target || clone, opts, clone, key);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
@@ -525,15 +525,25 @@ function assign(t,s) {
     return t;
 }
 
+/** escapeKeyPathComponent() utility */
+function escapeKeyPathComponent (keyPathComponent) {
+    return keyPathComponent.replace(/~/g, '~0').replace(/\./g, '~1');
+}
+
+/** unescapeKeyPathComponent() utility */
+function unescapeKeyPathComponent (keyPathComponent) {
+    return keyPathComponent.replace(/~1/g, '.').replace(/~0/g, '~');
+}
+
 /** getByKeyPath() utility */
 function getByKeyPath (obj, keyPath) {
     if (keyPath === '') return obj;
     var period = keyPath.indexOf('.');
-    if (period !== -1) {
-        var innerObj = obj[keyPath.substr(0, period)];
+    if (period > -1) {
+        var innerObj = obj[unescapeKeyPathComponent(keyPath.substr(0, period))];
         return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
     }
-    return obj[keyPath];
+    return obj[unescapeKeyPathComponent(keyPath)];
 }
 
 function Undefined () {}
@@ -586,5 +596,9 @@ Typeson.hasConstructorOf = hasConstructorOf;
 Typeson.isObject = isObject;
 Typeson.isPlainObject = isPlainObject;
 Typeson.isUserObject = isUserObject;
+
+Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
+Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
+Typeson.getByKeyPath = getByKeyPath;
 
 module.exports = Typeson;
