@@ -328,8 +328,9 @@ function Typeson (options) {
             types = types.$;
             ignore$Types = false;
         }
-        var keyPathResolutions = [];
+        var lazyResolvedRefs = [];
         var ret = _revive('', obj, null, opts);
+        resolveRefs(ret, lazyResolvedRefs);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
         return isThenable(ret)
             ? sync && opts.throwOnBadSyncType
@@ -345,6 +346,14 @@ function Typeson (options) {
                     ? ret
                     : Promise.resolve(ret);
 
+        function resolveRefs (target, refs) {
+            refs.forEach(function (refTuple) {
+                var keyPath = refTuple[0],
+                    ref = refTuple[1];
+                getByKeyPath
+            });
+        }
+
         function _revive (keypath, value, target, opts, clone, key) {
             if (ignore$Types && keypath === '$types') return;
             var type = types[keypath];
@@ -357,26 +366,11 @@ function Typeson (options) {
                     else if (val !== undefined) clone[key] = val;
                 });
                 value = clone;
-                while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
-                    var kpr = keyPathResolutions[0];
-                    var target = kpr[0];
-                    var keyPath = kpr[1];
-                    var clone = kpr[2];
-                    var key = kpr[3];
-                    var val = getByKeyPath(target, keyPath);
-                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
-                    else if (val !== undefined) clone[key] = val;
-                    else break;
-                    keyPathResolutions.splice(0, 1);
-                }
             }
             if (!type) return value;
             if (type === '#') {
-                var ret = getByKeyPath(target, value.substr(1));
-                if (ret === undefined) { // Cyclic reference not yet available
-                    keyPathResolutions.push([target, value.substr(1), clone, key]);
-                }
-                return ret;
+                lazyResolvedRefs.push([keyPath, value]);
+                return value;
             }
             var sync = opts.sync;
             return [].concat(type).reduce(function (val, type) {
