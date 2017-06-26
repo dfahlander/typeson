@@ -210,11 +210,11 @@ Creates an instance of Typeson, on which you may configure additional types to s
 }
 ```
 
-###### cyclic: boolean
+###### `cyclic`: boolean
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitly set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
 
-###### encapsulateObserver: object (see description)
+###### `encapsulateObserver`: object (see description)
 
 For encapsulations/stringifications, this callback will be executed as objects are iterated and types are detected. An observer might be used to build an interface based on the original object taking advantage of serialized values (the `replaced` property) passed to the observer along the way, even potentially without concern to the actual encapsulated result.
 
@@ -238,23 +238,23 @@ The following properties are also present in particular cases:
 - `endIterateUnsetNumeric` - Will be `true` if finishing iteration of unset numeric properties.
 - `end` - Convenience property that will be `true` if `endIterateIn`, `endIterateOwn`, or `endIterateUnsetNumeric` is `true`.
 
-###### sync: boolean
+###### `sync`: boolean (Internal property)
 
 Types can utilize `Typeson.Promise` to allow asynchronous encapsulation and stringification.
 
 When such a type returns a `Typeson.Promise`, a regular `Promise` will be returned to the user.
 
-(This type is used internally for ensuring a regular `Promise` was not intended as the result.
+(This property is used internally for ensuring a regular `Promise` was not intended as the result.
 Note that its resolved value is also recursively checked for types.)
 
 To ensure that a regular `Promise` is always returned and thereby to allow the same API to be
-used regardless of the types in effect, the `sync` option can be set to `false` or use the
+used regardless of the types in effect, the `sync` option is set to `false` by the
 `*Async` methods.
 
 Note that this has no bearing on `revive`/`parse` since they can construct any object they
 wish for a return value, including a `Promise`, a stream, etc.
 
-###### throwOnBadSyncType: boolean
+###### `throwOnBadSyncType`: boolean
 
 The default is to throw when an async result is received from a synchronous method or vice versa.
 This assures you that you are receiving the intended result type.
@@ -276,7 +276,7 @@ var obj = typeson.parse(tson);
 
 ### Properties
 
-#### types
+#### `types`
 
 A map between type identifier and type-rules. Same (object-based) structure as passed to `register()`. Use this property if you want to create a new Typeson containing all types from another Typeson.
 
@@ -293,17 +293,19 @@ var myTypeson = new Typeson().register([
 ]);
 ```
 
-### Methods
+### Instace methods
 
-#### stringify (obj, [replacer], [space], [options])
+#### `stringify` (obj, [replacer], [space], [options])
 
 *Initial arguments identical to those of JSON.stringify()*
 
-Generates JSON based on the given `obj`. If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies (a map of keypath to type where the keypath is dot-separated; see `Typeson.escapeKeyPathComponent` on escaping).
+Generates JSON based on the given `obj`. Applies `JSON.stringify()` on the result of any relevant `replace` encapsulators.
+
+If the supplied `obj` has special types or cyclic references, the produced JSON will contain a `$types` property on the root upon which type info relies (a map of keypath to type where the keypath is dot-separated; see `Typeson.escapeKeyPathComponent` on escaping).
 
 The `options` object argument can include a setting for `cyclic` which overrides the default or any behavior supplied for this option in the Typeson constructor.
 
-May also return a `Promise` if a type returns `Typeson.Promise` or if the option `sync` is set to `false`. See the documentation under `Typeson.Promise`.
+May also return a `Promise` if a type's `replace` encapsulator returns `Typeson.Promise`. See the documentation under `Typeson.Promise`.
 
 ##### Stringification format
 
@@ -322,11 +324,24 @@ Output:
 {"date": 1463667643065, "$types": {"date": "Date"}}
 ```
 
-#### parse (obj, [reviver])
+#### `stringifySync` (obj, [replacer], [space], [options])
+
+As with `stringify` but automatically throws upon obtaining a `Typeson.Promise` return result from a `replace` encapsulator (as that is expected for asynchronous types).
+
+#### `stringifyAsync` (obj, [replacer], [space], [options])
+
+As with `stringify` but automatically throws upon obtaining a non-`Typeson.Promise` return result from a `replace` encapsulator (as only a `Typeson.Promise` is expected for asynchronous types).
+
+#### `parse` (obj, [reviver])
 
 *Arguments identical to those of JSON.parse()*
 
-Parses Typeson-genereted JSON back into the original complex structure again.
+Parses Typeson-generated JSON back into the original complex structure again.
+
+Applies `JSON.parse()` and then any relevant `revive` methods that are detected.
+
+May also return a `Promise` if a type's reviver returns `Typeson.Promise`. See
+the documentation under `Typeson.Promise`.
 
 ##### Sample
 
@@ -335,11 +350,30 @@ var TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
-#### encapsulate (obj, [opts])
+#### `parseSync` (obj, [reviver])
+
+As with `parse` but automatically throws upon obtaining a `Typeson.Promise` return result from the reviver (as that is expected for asynchronous types).
+
+#### `parseAsync` (obj, [reviver])
+
+As with `parse` but automatically throws upon obtaining a non-`Typeson.Promise` return result from the reviver (as only a `Typeson.Promise` is expected for asynchronous types).
+
+#### `encapsulate` (obj, [stateObj], [opts])
 
 Encapsulates an object but leaves the stringification part to you. Pass your encapsulated object further to socket.io, `postMessage()`, BSON or IndexedDB.
 
+Applies the `replace` method on `test`-matching spec objects. Will return the result regardless
+of whether it is an asynchronous (indicated by a `Typeson.Promise`) or synchronous result.
+
 The `options` object argument can include a setting for `cyclic` which overrides the default or any behavior supplied for this option in the Typeson constructor.
+
+#### `encapsulateSync` (obj, [opts])
+
+As with `encapsulate` but automatically throws upon obtaining a `Typeson.Promise` return result from the replacer (as that is expected for asynchronous types).
+
+#### `encapsulateAsync` (obj, [opts])
+
+As with `encapsulate` but automatically throws upon obtaining a non-`Typeson.Promise` return result from the replacer (as only a `Typeson-Promise` is expected for asynchronous types).
 
 ##### Sample
 
@@ -349,11 +383,11 @@ var revived = typeson.revive(encapsulated);
 assert (revived instanceof Date);
 ```
 
-#### revive (obj)
+#### `revive` / `reviveSync` / `reviveAsync` (obj)
 
 Revives an encapsulated object. See `encapsulate()`.
 
-#### register (typeSpec, opts = {fallback: boolean|number})
+#### `register` (typeSpec, opts = {fallback: boolean|number})
 
 If `opts.fallback` is set, lower priority will be given (the default is that the last registered item
 has highest priority during match testing). If a number is given, it will be used as the index of the placement.
@@ -362,11 +396,13 @@ has highest priority during match testing). If a number is given, it will be use
 
 An object that maps a type-name to a specification of how to test, encapsulate and revive that type.
 
-`{TypeName => constructor-function | [tester, encapsulator, reviver] | {test: function, replace: function, revive: function, testPlainObjects: boolean=false}}` or an array of such structures.
+`{TypeName => constructor-function | [tester, encapsulator, reviver] | specObject = {test: function, replace: function, revive: function, testPlainObjects: boolean=false}}` or an array of such structures.
 
 Please note that if an array is supplied, the tester (and upon matching, the encapsulator)
 execute in a last-in, first out order. (Calls to `register` can set `fallback` to `true` to
 lower the priority of a recent addition.)
+
+`this` will refer to the specification object.
 
 Subsequent calls to `register` will similarly be given higher priority so be sure to add
 catch-all matchers *before* more precise ones.
@@ -379,11 +415,11 @@ allow replacements without recursion.
 A class (constructor function) that would use default test, encapsulation and revival rules, which is:
 
 - `test`: check if x.constructor === constructor-function.
-- `encapsulate`: copy all enumerable own props into a vanilla object
-- `revive`: Use `Object.create()` to revive the correct type, and copy all props into it.
-- `testPlainObjects`: `false`
+- `replace`: copy all enumerable own props into a vanilla object
+- `revive`: Uses `Object.create()` to revive the correct type and copies all properties into it.
+- `testPlainObjects`: `false`: Tests non-plain objects only.
 
-###### tester (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : boolean
+###### `test` (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : boolean
 
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
@@ -413,10 +449,10 @@ converted to `null` by a `stringify` call). Thus encapsulators have the
 ability to set `iterateUnsetNumeric: true` on their state object, but
 note that doing so will add a performance cost.
 
-###### encapsulator (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : Object
+###### `replace` (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : Object
 
-Function that maps your instance to a JSON-serializable object. Can also be called a
-`replacer`. For the `stateObj`, see `tester`. In a property context (for arrays
+Function that maps your instance to a JSON-serializable object. Can also be called an
+`encapsulator`. For the `stateObj`, see `tester`. In a property context (for arrays
 or objects), returning `undefined` will prevent the addition of the property.
 
 See the `tester` for a discussion of the `stateObj`.
@@ -424,7 +460,12 @@ See the `tester` for a discussion of the `stateObj`.
 Note that replacement results will themselves be recursed for state changes
 and type detection.
 
-###### reviver (obj: Object) : YourType
+###### `replaceAsync` (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : `Typeson.Promise`
+
+Expected to return a `Typeson.Promise` which resolves to the replaced value.
+See `replace`.
+
+###### `revive` (obj: Object) : YourType
 
 Function that maps your JSON-serializable object into a real instance of your type.
 In a property context (for arrays or objects), returning `undefined`
@@ -468,7 +509,14 @@ console.log(typeson.stringify({
 // {"ct":{"foo":"hello"},"d":1464049031538,"r":["foo","gi"],$types:{"ct":"CustomType","d":"Date","r":"RegExp"}}
 ```
 
-### `Typeson.Undefined` class
+###### `reviveAsync` (obj: Object) : YourType
+
+Expected to return a `Typeson.Promise` which resolves to the revived value.
+See `revive`.
+
+### Class methods
+
+#### `Typeson.Undefined` class
 
 During encapsulation, `undefined` will not be set for property values,
 of objects or arrays (including sparse ones and replaced values)
@@ -484,7 +532,7 @@ to allow reconstruction of explicit `undefined` values (and its
 `sparseUndefined` type will ensure that sparse arrays can be
 reconstructed).
 
-### `Typeson.Promise` class
+#### `Typeson.Promise` class
 
 If you have a type which you wish to have resolved asynchronously, you
 can can return a `Typeson.Promise` (which works otherwise like a `Promise`)
@@ -495,7 +543,7 @@ as types might wish to serialize them in their own manner (or perhaps more
 likely, to be able to throw when encountering them if they
 are not expected).
 
-#### Sample
+##### Sample
 
 ```js
 function MyAsync (prop) {
@@ -525,7 +573,7 @@ return typeson.stringify(mya).then(function (result) {
 });
 ```
 
-### Typeson.toStringTag
+#### `Typeson.toStringTag`
 
 A simple utility for getting the former ``[[Class]]`` internal slot of an object
 (i.e., The string between `[Object ` and `]` as returned from
@@ -546,7 +594,7 @@ Although it is unfortunately not immune to forgery, it may in some
 cases be more appealing than (or usable in addition to) duck typing
 so this tiny utility is bundled for convenience.
 
-### Typeson.hasConstructorOf(objWithPrototypeConstructor, classToCompare: constructor or null) : boolean
+#### `Typeson.hasConstructorOf` (objWithPrototypeConstructor, classToCompare: constructor or null) : boolean
 
 Another approach for class comparisons involves checking a `constructor`
 function and comparing its `toString`. This is required for some classes
@@ -559,38 +607,38 @@ If no valid `constructor` is found, `false` will be returned unless
 `null` was supplied as the `classToCompare` in which case `true` will
 be returned.
 
-### Typeson.isObject(val)
+#### `Typeson.isObject` (val)
 
 Simple but frequently-needed type-checking utility for
 `val && typeof val === 'object'` to avoid `null` being treated as an object.
 
-### Typeson.isPlainObject(val)
+#### `Typeson.isPlainObject` (val)
 
 Checks for a simple non-inherited object. Adapted from jQuery's `isPlainObject`.
 
-### Typeson.isUserObject(val)
+#### `Typeson.isUserObject` (val)
 
 Allows for inherited objects but ensures the prototype chain inherits from
 `Object` (or `null`).
 
-### Typeson.isThenable(val, catchCheck=boolean)
+#### `Typeson.isThenable` (val, catchCheck=boolean)
 
 Checks whether an object is "thenable" (usable as a promise). If the second
 argument is supplied as `true`, it will also ensure it has a `catch` method.
 A regular `Promise` or `Typeson.Promise` will return `true`.
 
-## Typeson.escapeKeyPathComponent(unescapedKeyPathComponent)
+#### `Typeson.escapeKeyPathComponent` (unescapedKeyPathComponent)
 
 Escapes a component of a key path.
 
 Dots in property names are escaped as `~1`, and the tilde escape character is
 itself escaped as `~0`.
 
-## Typeson.unescapeKeyPathComponent(escapedKeyPathComponent)
+#### `Typeson.unescapeKeyPathComponent` (escapedKeyPathComponent)
 
 Unescapes a key path component. See `Typeson.escapeKeyPathComponent`.
 
-## Typeson.getByKeyPath(obj, keyPath)
+#### `Typeson.getByKeyPath` (obj, keyPath)
 
 Retrieves a value pointed to by a key path on an object.
 
