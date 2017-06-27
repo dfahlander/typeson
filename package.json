@@ -26,8 +26,8 @@
   "homepage": "https://github.com/dfahlander/typeson#readme",
   "devDependencies": {
     "base64-arraybuffer": "^0.1.5",
-    "uglify-js": "^2.6.2",
-    "webpack": "^2.2.1"
+    "uglify-js": "^3.0.20",
+    "webpack": "^3.0.0"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }
