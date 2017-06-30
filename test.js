@@ -505,7 +505,7 @@ run([function shouldSupportBasicTypes () {
     var clonedData = typeson.parse(typeson.stringify(john));
     // Todo: Change the expected result to "specific found" if reimplementing in non-reverse order
     assert(clonedData === "general found", "Should execute replacers in proper order");
-}, function shouldRunEncapsulateObserver () {
+}, function shouldRunEncapsulateObserverSync () {
     var expected = '{\n' +
 '    time: 959000000000\n' +
 '    vals: [\n' +
@@ -567,7 +567,7 @@ run([function shouldSupportBasicTypes () {
     // console.log(str);
     // console.log(expected);
     assert (str === expected, "Observer able to reduce JSON to expected string");
-}, function shouldRunEncapsulateObserver () {
+}, function shouldRunEncapsulateObserverAsync () {
     var expected = '';
 
     var str = '';
