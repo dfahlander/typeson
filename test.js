@@ -71,15 +71,25 @@ run([function shouldSupportBasicTypes () {
     var res = roundtrip({});
     assert(Object.keys(res).length === 0, "Result should be empty");
     var date = new Date();
-    res = roundtrip({a: "a", b: 2, c: function(){}, d: false, e: Symbol(), f: [], g: date, h: /apa/gi });
+    var input = {a: "a", b: 2, c: function(){}, d: false, e: null, f: Symbol(), g: [], h: date, i: /apa/gi };
+    res = roundtrip(input);
+    assert (res !== input, "Object is a clone, not a reference");
     assert (res.a === "a", "String value");
     assert (res.b === 2, "Number value");
     assert (!res.c, "Functions should not follow by default");
     assert (res.d === false, "Boolean value");
-    assert (!res.e, "Symbols should not follow by default");
-    assert (Array.isArray(res.f) && res.f.length === 0, "Array value");
-    assert (res.g instanceof Date && res.g.toString() == date.toString(), "Date value");
-
+    assert (res.e === null, "Null value");
+    assert (!res.f, "Symbols should not follow by default");
+    assert (Array.isArray(res.g) && res.g.length === 0, "Array value");
+    assert (res.h instanceof Date && res.h.toString() == date.toString(), "Date value");
+    assert (Object.keys(res.i).length === 0, "regex only treated as empty object by default");
+}, function shouldResolveNestedObjects () {
+    var input = {a: [{subA: 5}, [6, 7]], b: {subB: {c: 8}} };
+    res = roundtrip(input);
+    assert (res.a[0].subA === 5, "Object within array");
+    assert (res.a[1][0] === 6, "Array within array");
+    assert (res.a[1][1] === 7, "Array within array");
+    assert (res.b.subB.c === 8, "Object within object");
 }, function shouldSupportObjectAPI () {
     var typeson = new Typeson().register({
         Date: {
