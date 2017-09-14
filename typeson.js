@@ -1,4 +1,4 @@
-var keys = Object.keys,
+const keys = Object.keys,
     isArray = Array.isArray,
     toString = ({}.toString),
     getProto = Object.getPrototypeOf,
@@ -17,11 +17,11 @@ function hasConstructorOf (a, b) {
     if (!a || typeof a !== 'object') {
         return false;
     }
-    var proto = getProto(a);
+    const proto = getProto(a);
     if (!proto) {
         return false;
     }
-    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
+    const Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
     if (typeof Ctor !== 'function') {
         return b === null;
     }
@@ -33,7 +33,7 @@ function isPlainObject (val) { // Mirrors jQuery's
         return false;
     }
 
-    var proto = getProto(val);
+    const proto = getProto(val);
     if (!proto) { // `Object.create(null)`
         return true;
     }
@@ -46,7 +46,7 @@ function isUserObject (val) {
         return false;
     }
 
-    var proto = getProto(val);
+    const proto = getProto(val);
     if (!proto) { // `Object.create(null)`
         return true;
     }
@@ -54,7 +54,7 @@ function isUserObject (val) {
 }
 
 function isObject (v) {
-    return v && typeof v === 'object'
+    return v && typeof v === 'object';
 }
 
 /* Typeson - JSON with types
@@ -71,21 +71,21 @@ function isObject (v) {
  */
 function Typeson (options) {
     // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ['Date', value.getTime()]
-    var plainObjectReplacers = [];
-    var nonplainObjectReplacers = [];
+    const plainObjectReplacers = [];
+    const nonplainObjectReplacers = [];
     // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
-    var revivers = {};
+    const revivers = {};
 
     /** Types registered via register() */
-    var regTypes = this.types = {};
+    const regTypes = this.types = {};
 
     /** Serialize given object to Typeson.
      *
      * Arguments works identical to those of JSON.stringify().
      */
-    var stringify = this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
+    const stringify = this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
         opts = Object.assign({}, options, opts, {stringification: true});
-        var encapsulated = encapsulate(obj, null, opts);
+        const encapsulated = encapsulate(obj, null, opts);
         if (isArray(encapsulated)) {
             return JSON.stringify(encapsulated[0], replacer, space);
         }
@@ -106,7 +106,7 @@ function Typeson (options) {
      *
      * Arguments works identical to those of JSON.parse().
      */
-    var parse = this.parse = function (text, reviver, opts) {
+    const parse = this.parse = function (text, reviver, opts) {
         opts = Object.assign({}, options, opts, {parse: true});
         return revive(JSON.parse(text, reviver), opts); // This reviver has nothing to do with our revivers.
     };
@@ -125,17 +125,17 @@ function Typeson (options) {
      * This method is used internally by Typeson.stringify().
      * @param {Object} obj - Object to encapsulate.
      */
-    var encapsulate = this.encapsulate = function (obj, stateObj, opts) {
+    const encapsulate = this.encapsulate = function (obj, stateObj, opts) {
         opts = Object.assign({sync: true}, options, opts);
-        var sync = opts.sync;
-        var types = {},
+        const sync = opts.sync;
+        const types = {},
             refObjs = [], // For checking cyclic references
             refKeys = [], // For checking cyclic references
             promisesDataRoot = [];
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
-        var encapsulateObserver = opts.encapsulateObserver;
-        var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
+        const cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
+        const encapsulateObserver = opts.encapsulateObserver;
+        const ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
             if (keys(types).length) {
@@ -150,22 +150,16 @@ function Typeson (options) {
         }
         function checkPromises (ret, promisesData) {
             return Promise.all(
-                promisesData.map(function (pd) {return pd[1].p;})
+                promisesData.map(function (pd) { return pd[1].p; })
             ).then(function (promResults) {
                 return Promise.all(
                     promResults.map(function (promResult) {
-                        var newPromisesData = [];
-                        var prData = promisesData.splice(0, 1)[0];
-                        // var [keypath, , cyclic, stateObj, parentObj, key] = prData;
-                        var keyPath = prData[0];
-                        var cyclic = prData[2];
-                        var stateObj = prData[3];
-                        var parentObj = prData[4];
-                        var key = prData[5];
-                        var detectedType = prData[6];
+                        const newPromisesData = [];
+                        const prData = promisesData.splice(0, 1)[0];
+                        const [keyPath, , cyclic, stateObj, parentObj, key, detectedType] = prData;
 
-                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
-                        var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
+                        const encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
+                        const isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
                         if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
                             return encaps.p.then(function (encaps2) {
                                 parentObj[key] = encaps2;
@@ -173,8 +167,9 @@ function Typeson (options) {
                             });
                         }
                         if (keyPath) parentObj[key] = encaps;
-                        else if (isTypesonPromise) { ret = encaps.p; }
-                        else ret = encaps; // If this is itself a `Typeson.Promise` (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
+                        else if (isTypesonPromise) {
+                            ret = encaps.p;
+                        } else ret = encaps; // If this is itself a `Typeson.Promise` (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
                         return checkPromises(ret, newPromisesData);
                     })
                 );
@@ -185,12 +180,12 @@ function Typeson (options) {
         return promisesDataRoot.length
             ? sync && opts.throwOnBadSyncType
                 ? (function () {
-                    throw new TypeError("Sync method requested but async result obtained");
+                    throw new TypeError('Sync method requested but async result obtained');
                 }())
                 : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
             : !sync && opts.throwOnBadSyncType
                 ? (function () {
-                    throw new TypeError("Async method requested but sync result obtained");
+                    throw new TypeError('Async method requested but sync result obtained');
                 }())
                 : (opts.stringification && sync // If this is a synchronous request for stringification, yet a promise is the result, we don't want to resolve leading to an async result, so we return an array to avoid ambiguity
                     ? [finish(ret)]
@@ -200,12 +195,13 @@ function Typeson (options) {
                     ));
 
         function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
-            var ret, observerData = {};
-            var runObserver = encapsulateObserver ? function (obj) {
+            let ret;
+            let observerData = {};
+            const runObserver = encapsulateObserver ? function (obj) {
                 if (!encapsulateObserver) {
                     return;
                 }
-                var type = detectedType || stateObj.type;
+                const type = detectedType || stateObj.type;
                 encapsulateObserver(Object.assign(obj || observerData, {
                     keypath: keypath,
                     value: value,
@@ -216,8 +212,8 @@ function Typeson (options) {
                     awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
                 }, type !== undefined ? {type: type} : {}));
             } : null;
-            var $typeof = typeof value;
-            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 }) {
+            const $typeof = typeof value;
+            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1}) {
                 if (value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity))) {
                     ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise);
@@ -236,7 +232,7 @@ function Typeson (options) {
             }
             if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
                 // Options set to detect cyclic references and be able to rewrite them.
-                var refIndex = refObjs.indexOf(value);
+                const refIndex = refObjs.indexOf(value);
                 if (refIndex < 0) {
                     if (cyclic === true) {
                         refObjs.push(value);
@@ -244,22 +240,24 @@ function Typeson (options) {
                     }
                 } else {
                     types[keypath] = '#';
-                    if (runObserver) runObserver({
-                        cyclicKeypath: refKeys[refIndex]
-                    });
+                    if (runObserver) {
+                        runObserver({
+                            cyclicKeypath: refKeys[refIndex]
+                        });
+                    }
                     return '#' + refKeys[refIndex];
                 }
             }
-            var isPlainObj = isPlainObject(value);
-            var isArr = isArray(value);
-            var replaced = (
+            const isPlainObj = isPlainObject(value);
+            const isArr = isArray(value);
+            const replaced = (
                 ((isPlainObj || isArr) && (!plainObjectReplacers.length || stateObj.replaced)) ||
                 stateObj.iterateIn // Running replace will cause infinite loop as will test positive again
             )
                 // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
                 ? value
                 : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
-            var clone;
+            let clone;
             if (replaced !== value) {
                 ret = replaced;
                 observerData = {replaced: replaced};
@@ -284,10 +282,10 @@ function Typeson (options) {
 
             // Iterate object or array
             if (stateObj.iterateIn) {
-                for (var key in value) {
-                    var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
-                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
+                for (const key in value) {
+                    const ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
+                    const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
+                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
                         promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
                     } else if (val !== undefined) clone[key] = val;
@@ -295,9 +293,9 @@ function Typeson (options) {
                 if (runObserver) runObserver({endIterateIn: true, end: true});
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
-                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    var ownKeysObj = {ownKeys: true};
-                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
+                    const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
+                    const ownKeysObj = {ownKeys: true};
+                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
                         promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
                     } else if (val !== undefined) clone[key] = val;
@@ -306,11 +304,12 @@ function Typeson (options) {
             }
             // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
             if (stateObj.iterateUnsetNumeric) {
-                for (var i = 0, vl = value.length; i < vl; i++) {
+                const vl = value.length;
+                for (let i = 0; i < vl; i++) {
                     if (!(i in value)) {
-                        var kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
-                        var ownKeysObj = {ownKeys: false};
-                        var val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
+                        const kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
+                        const ownKeysObj = {ownKeys: false};
+                        const val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                         if (hasConstructorOf(val, TypesonPromise)) {
                             promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
                         } else if (val !== undefined) clone[i] = val;
@@ -323,18 +322,18 @@ function Typeson (options) {
 
         function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise) {
             // Encapsulate registered types
-            var replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
-            var i = replacers.length;
+            const replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
+            let i = replacers.length;
             while (i--) {
-                var replacer = replacers[i];
+                const replacer = replacers[i];
                 if (replacer.test(value, stateObj)) {
-                    var type = replacer.type;
+                    const type = replacer.type;
                     if (revivers[type]) {
                         // Record the type only if a corresponding reviver exists.
                         // This is to support specs where only replacement is done.
                         // For example ensuring deep cloning of the object, or
                         // replacing a type to its equivalent without the need to revive it.
-                        var existing = types[keypath];
+                        const existing = types[keypath];
                         // type can comprise an array of types (see test shouldSupportIntermediateTypes)
                         types[keypath] = existing ? [type].concat(existing) : type;
                     }
@@ -344,7 +343,7 @@ function Typeson (options) {
                         return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                     }
 
-                    var replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
+                    const replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
                     return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                 }
             }
@@ -365,10 +364,10 @@ function Typeson (options) {
      * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
      * will be replaced with its true type instead of just plain objects.
      */
-    var revive = this.revive = function (obj, opts) {
+    const revive = this.revive = function (obj, opts) {
         opts = Object.assign({sync: true}, options, opts);
-        var sync = opts.sync;
-        var types = obj && obj.$types,
+        const sync = opts.sync;
+        let types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
         if (types === true) return obj.$; // Object happened to have own `$types` property but with no actual types, so we unescape and return that object
@@ -378,18 +377,18 @@ function Typeson (options) {
             types = types.$;
             ignore$Types = false;
         }
-        var keyPathResolutions = [];
-        var ret = _revive('', obj, null, opts);
+        const keyPathResolutions = [];
+        let ret = _revive('', obj, null, opts);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
         return isThenable(ret)
             ? sync && opts.throwOnBadSyncType
                 ? (function () {
-                    throw new TypeError("Sync method requested but async result obtained");
+                    throw new TypeError('Sync method requested but async result obtained');
                 }())
                 : ret
             : !sync && opts.throwOnBadSyncType
                 ? (function () {
-                    throw new TypeError("Async method requested but sync result obtained");
+                    throw new TypeError('Async method requested but sync result obtained');
                 }())
                 : sync
                     ? ret
@@ -397,23 +396,23 @@ function Typeson (options) {
 
         function _revive (keypath, value, target, opts, clone, key) {
             if (ignore$Types && keypath === '$types') return;
-            var type = types[keypath];
+            const type = types[keypath];
             if (isArray(value) || isPlainObject(value)) {
-                var clone = isArray(value) ? new Array(value.length) : {};
+                const clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key], target || clone, opts, clone, key);
+                    const val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key], target || clone, opts, clone, key);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
                 value = clone;
                 while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
-                    var kpr = keyPathResolutions[0];
-                    var target = kpr[0];
-                    var keyPath = kpr[1];
-                    var clone = kpr[2];
-                    var key = kpr[3];
-                    var val = getByKeyPath(target, keyPath);
+                    const kpr = keyPathResolutions[0];
+                    const target = kpr[0];
+                    const keyPath = kpr[1];
+                    const clone = kpr[2];
+                    const key = kpr[3];
+                    const val = getByKeyPath(target, keyPath);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                     else break;
@@ -422,17 +421,17 @@ function Typeson (options) {
             }
             if (!type) return value;
             if (type === '#') {
-                var ret = getByKeyPath(target, value.substr(1));
+                const ret = getByKeyPath(target, value.substr(1));
                 if (ret === undefined) { // Cyclic reference not yet available
                     keyPathResolutions.push([target, value.substr(1), clone, key]);
                 }
                 return ret;
             }
-            var sync = opts.sync;
+            const sync = opts.sync;
             return [].concat(type).reduce(function (val, type) {
-                var reviver = revivers[type];
-                if (!reviver) throw new Error ('Unregistered type: ' + type);
-                return reviver[
+                const reviver = revivers[type];
+                if (!reviver) throw new Error('Unregistered type: ' + type);
+                return reviver[ // eslint-disable-line standard/computed-property-even-spacing
                     sync && reviver.revive
                         ? 'revive'
                         : !sync && reviver.reviveAsync
@@ -463,9 +462,9 @@ function Typeson (options) {
                 if (typeId === '#') {
                     throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
                 }
-                var spec = typeSpec[typeId];
-                var replacers = spec.testPlainObjects ? plainObjectReplacers : nonplainObjectReplacers;
-                var existingReplacer = replacers.filter(function(r){ return r.type === typeId; });
+                let spec = typeSpec[typeId];
+                const replacers = spec.testPlainObjects ? plainObjectReplacers : nonplainObjectReplacers;
+                const existingReplacer = replacers.filter(function (r) { return r.type === typeId; });
                 if (existingReplacer.length) {
                     // Remove existing spec and replace with this one.
                     replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
@@ -475,7 +474,7 @@ function Typeson (options) {
                 if (spec) {
                     if (typeof spec === 'function') {
                         // Support registering just a class without replacer/reviver
-                        var Class = spec;
+                        const Class = spec;
                         spec = {
                             test: function (x) { return x && x.constructor === Class; },
                             replace: function (x) { return assign({}, x); },
@@ -488,7 +487,7 @@ function Typeson (options) {
                             revive: spec[2]
                         };
                     }
-                    var replacerObj = {
+                    const replacerObj = {
                         type: typeId,
                         test: spec.test.bind(spec)
                     };
@@ -498,7 +497,7 @@ function Typeson (options) {
                     if (spec.replaceAsync) {
                         replacerObj.replaceAsync = spec.replaceAsync.bind(spec);
                     }
-                    var start = typeof opts.fallback === 'number' ? opts.fallback : (opts.fallback ? 0 : Infinity);
+                    const start = typeof opts.fallback === 'number' ? opts.fallback : (opts.fallback ? 0 : Infinity);
                     if (spec.testPlainObjects) {
                         plainObjectReplacers.splice(start, 0, replacerObj);
                     } else {
@@ -506,7 +505,7 @@ function Typeson (options) {
                     }
                     // Todo: We might consider a testAsync type
                     if (spec.revive || spec.reviveAsync) {
-                        var reviverObj = {};
+                        const reviverObj = {};
                         if (spec.revive) reviverObj.revive = spec.revive.bind(spec);
                         if (spec.reviveAsync) reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
                         revivers[typeId] = reviverObj;
@@ -520,7 +519,7 @@ function Typeson (options) {
     };
 }
 
-function assign(t,s) {
+function assign (t, s) {
     keys(s).map(function (k) { t[k] = s[k]; });
     return t;
 }
@@ -538,9 +537,9 @@ function unescapeKeyPathComponent (keyPathComponent) {
 /** getByKeyPath() utility */
 function getByKeyPath (obj, keyPath) {
     if (keyPath === '') return obj;
-    var period = keyPath.indexOf('.');
+    const period = keyPath.indexOf('.');
     if (period > -1) {
-        var innerObj = obj[unescapeKeyPathComponent(keyPath.substr(0, period))];
+        const innerObj = obj[unescapeKeyPathComponent(keyPath.substr(0, period))];
         return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
     }
     return obj[unescapeKeyPathComponent(keyPath)];
@@ -553,12 +552,11 @@ function TypesonPromise (f) {
     this.p = new Promise(f);
 };
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
-    var that = this;
-    return new TypesonPromise(function (typesonResolve, typesonReject) {
-        that.p.then(function (res) {
+    return new TypesonPromise((typesonResolve, typesonReject) => {
+        this.p.then(function (res) {
             typesonResolve(onFulfilled ? onFulfilled(res) : res);
-        }, function (r) {
-            that.p['catch'](function (res) {
+        }, (r) => {
+            this.p['catch'](function (res) {
                 return onRejected ? onRejected(res) : Promise.reject(res);
             }).then(typesonResolve, typesonReject);
         });
@@ -580,7 +578,7 @@ TypesonPromise.reject = function (v) {
 ['all', 'race'].map(function (meth) {
     TypesonPromise[meth] = function (promArr) {
         return new TypesonPromise(function (typesonResolve, typesonReject) {
-            Promise[meth](promArr.map(function (prom) {return prom.p;})).then(typesonResolve, typesonReject);
+            Promise[meth](promArr.map(function (prom) { return prom.p; })).then(typesonResolve, typesonReject);
         });
     };
 });
@@ -601,4 +599,4 @@ Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
 Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
 Typeson.getByKeyPath = getByKeyPath;
 
-module.exports = Typeson;
+export default Typeson;
