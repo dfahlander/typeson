@@ -89,7 +89,7 @@ function Typeson (options) {
         if (isArray(encapsulated)) {
             return JSON.stringify(encapsulated[0], replacer, space);
         }
-        return encapsulated.then(function (res) {
+        return encapsulated.then((res) => {
             return JSON.stringify(res, replacer, space);
         });
     };
@@ -150,7 +150,7 @@ function Typeson (options) {
         }
         function checkPromises (ret, promisesData) {
             return Promise.all(
-                promisesData.map(function (pd) { return pd[1].p; })
+                promisesData.map((pd) => { return pd[1].p; })
             ).then(function (promResults) {
                 return Promise.all(
                     promResults.map(function (promResult) {
@@ -173,20 +173,18 @@ function Typeson (options) {
                         return checkPromises(ret, newPromisesData);
                     })
                 );
-            }).then(function () {
-                return ret;
-            });
+            }).then(() => ret);
         };
         return promisesDataRoot.length
             ? sync && opts.throwOnBadSyncType
-                ? (function () {
+                ? (() => {
                     throw new TypeError('Sync method requested but async result obtained');
-                }())
+                })()
                 : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
             : !sync && opts.throwOnBadSyncType
-                ? (function () {
+                ? (() => {
                     throw new TypeError('Async method requested but sync result obtained');
-                }())
+                })()
                 : (opts.stringification && sync // If this is a synchronous request for stringification, yet a promise is the result, we don't want to resolve leading to an async result, so we return an array to avoid ambiguity
                     ? [finish(ret)]
                     : (sync
@@ -203,12 +201,12 @@ function Typeson (options) {
                 }
                 const type = detectedType || stateObj.type;
                 encapsulateObserver(Object.assign(obj || observerData, {
-                    keypath: keypath,
-                    value: value,
-                    cyclic: cyclic,
-                    stateObj: stateObj,
-                    promisesData: promisesData,
-                    resolvingTypesonPromise: resolvingTypesonPromise,
+                    keypath,
+                    value,
+                    cyclic,
+                    stateObj,
+                    promisesData,
+                    resolvingTypesonPromise,
                     awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
                 }, type !== undefined ? {type: type} : {}));
             } : null;
@@ -382,14 +380,14 @@ function Typeson (options) {
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
         return isThenable(ret)
             ? sync && opts.throwOnBadSyncType
-                ? (function () {
+                ? (() => {
                     throw new TypeError('Sync method requested but async result obtained');
-                }())
+                })()
                 : ret
             : !sync && opts.throwOnBadSyncType
-                ? (function () {
+                ? (() => {
                     throw new TypeError('Async method requested but sync result obtained');
-                }())
+                })()
                 : sync
                     ? ret
                     : Promise.resolve(ret);
@@ -400,18 +398,20 @@ function Typeson (options) {
             if (isArray(value) || isPlainObject(value)) {
                 const clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
-                keys(value).forEach(function (key) {
-                    const val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key], target || clone, opts, clone, key);
+                keys(value).forEach((key) => {
+                    const val = _revive(
+                        keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key],
+                        target || clone,
+                        opts,
+                        clone,
+                        key
+                    );
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
                 value = clone;
                 while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
-                    const kpr = keyPathResolutions[0];
-                    const target = kpr[0];
-                    const keyPath = kpr[1];
-                    const clone = kpr[2];
-                    const key = kpr[3];
+                    const [[target, keyPath, clone, key]] = keyPathResolutions;
                     const val = getByKeyPath(target, keyPath);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
@@ -428,7 +428,7 @@ function Typeson (options) {
                 return ret;
             }
             const sync = opts.sync;
-            return [].concat(type).reduce(function (val, type) {
+            return [].concat(type).reduce((val, type) => {
                 const reviver = revivers[type];
                 if (!reviver) throw new Error('Unregistered type: ' + type);
                 return reviver[ // eslint-disable-line standard/computed-property-even-spacing
@@ -476,9 +476,9 @@ function Typeson (options) {
                         // Support registering just a class without replacer/reviver
                         const Class = spec;
                         spec = {
-                            test: function (x) { return x && x.constructor === Class; },
-                            replace: function (x) { return assign({}, x); },
-                            revive: function (x) { return assign(Object.create(Class.prototype), x); }
+                            test: (x) => x && x.constructor === Class,
+                            replace: (x) => assign({}, x),
+                            revive: (x) => assign(Object.create(Class.prototype), x)
                         };
                     } else if (isArray(spec)) {
                         spec = {
@@ -520,7 +520,7 @@ function Typeson (options) {
 }
 
 function assign (t, s) {
-    keys(s).map(function (k) { t[k] = s[k]; });
+    keys(s).map((k) => { t[k] = s[k]; });
     return t;
 }
 
@@ -566,19 +566,19 @@ TypesonPromise.prototype['catch'] = function (onRejected) {
     return this.then(null, onRejected);
 };
 TypesonPromise.resolve = function (v) {
-    return new TypesonPromise(function (typesonResolve) {
+    return new TypesonPromise((typesonResolve) => {
         typesonResolve(v);
     });
 };
 TypesonPromise.reject = function (v) {
-    return new TypesonPromise(function (typesonResolve, typesonReject) {
+    return new TypesonPromise((typesonResolve, typesonReject) => {
         typesonReject(v);
     });
 };
 ['all', 'race'].map(function (meth) {
     TypesonPromise[meth] = function (promArr) {
         return new TypesonPromise(function (typesonResolve, typesonReject) {
-            Promise[meth](promArr.map(function (prom) { return prom.p; })).then(typesonResolve, typesonReject);
+            Promise[meth](promArr.map((prom) => { return prom.p; })).then(typesonResolve, typesonReject);
         });
     };
 });
