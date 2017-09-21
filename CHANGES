@@ -1,5 +1,9 @@
 # typeson
 
+## Version 5.0.1
+
+- Fix `rootTypeName` to work with promises and for replacements
+
 ## Version 5.0.0
 
 - Breaking change (minor): Throw upon attempts to register objects with JSON type names
