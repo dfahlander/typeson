@@ -1,6 +1,6 @@
 # typeson
 
-## Unreleased
+## Version 5.0.0
 
 - Breaking change (minor): Throw upon attempts to register objects with JSON type names
 - Breaking change (minor): Include JSON type names on `type` property
