@@ -1,5 +1,11 @@
 # typeson
 
+## Unreleased
+
+- Breaking change (minor): Throw upon attempts to register objects with JSON type names
+- Breaking change (minor): Include JSON type names on `type` property
+    of object passed to `encapsulateObserver`
+
 ## Version 4.0.0
 
 - Breaking change: Use object-based structure on `types` (esp. important

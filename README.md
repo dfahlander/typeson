@@ -24,7 +24,7 @@ JSON can only contain strings, numbers, booleans, `null`, arrays and objects. If
 [typeson-registry](https://github.com/dfahlander/typeson-registry) contains encapsulation rules for standard JavaScript types such as `Date`, `Error`, `ArrayBuffer`, etc. Pick the types you need, use a preset or write your own.
 
 ```js
-var typeson = new Typeson().register([
+const typeson = new Typeson().register([
     require('typeson-registry/types/date'),
     require('typeson-registry/types/set'),
     require('typeson-registry/types/regexp'),
@@ -33,7 +33,7 @@ var typeson = new Typeson().register([
 ```
 or if you want support for all built-in javascript classes:
 ```js
-var typeson = new Typeson().register([
+const typeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
 ]);
 ```
@@ -67,9 +67,9 @@ npm install typeson
 
 ```js
 // Require typeson. It's an UMD module so you could also use requirejs or plain script tags.
-var Typeson = require('typeson');
+const Typeson = require('typeson');
 
-var typeson = new Typeson().register({
+const typeson = new Typeson().register({
     Date: [
         x => x instanceof Date, // test function
         d => d.getTime(), // encapsulator function
@@ -80,7 +80,7 @@ var typeson = new Typeson().register({
         e => ({name: e.name, message: e.message}), // encapsulator
         data => {
           // reviver
-          var e = new Error (data.message);
+          const e = new Error (data.message);
           e.name = data.name;
           return e;
         }
@@ -93,13 +93,13 @@ function SimpleClass (foo) {
 }
 
 // Encapsulate to a JSON friendly format:
-var jsonFriendly = typeson.encapsulate({
+const jsonFriendly = typeson.encapsulate({
     date: new Date(),
     e: new Error("Oops"),
     c: new SimpleClass("bar")
 });
 // Stringify using good old JSON.stringify()
-var json = JSON.stringify(jsonFriendly, null, 2);
+const json = JSON.stringify(jsonFriendly, null, 2);
 /*
 {
   "date": 1464049031538,
@@ -119,9 +119,9 @@ var json = JSON.stringify(jsonFriendly, null, 2);
 */
 
 // Parse using good old JSON.parse()
-var parsed = JSON.parse(json);
+const parsed = JSON.parse(json);
 // Revive back again:
-var revived = typeson.revive(parsed);
+const revived = typeson.revive(parsed);
 
 ```
 *The above sample separates Typeson.encapsulate() from JSON.stringify(). Could also have used Typeson.stringify().*
@@ -141,10 +141,10 @@ So to get the best of two worlds:
 - Use `Typeson.revive()` to revive the encapsulated object at the other end.
 
 ```js
-var Typeson = require('typeson'),
+const Typeson = require('typeson'),
     presetSocketIo = require('typeson-registry/presets/socketio.js');
 
-var TSON = new Typeson()
+const TSON = new Typeson()
     .register(presetSocketIo)
     .register({
         CustomClass: [
@@ -154,10 +154,10 @@ var TSON = new Typeson()
         ]
     });
 
-var array = new Float64Array(65536);
+const array = new Float64Array(65536);
 array.fill(42, 0, 65536);
 
-var data = {
+const data = {
     date: new Date(),
     error: new SyntaxError("Ooops!"),
     array: array,
@@ -173,7 +173,7 @@ Packing it up at the other end:
 
 ```js
 socket.on('myEvent', function (data) {
-    var revived = TSON.revive(data);
+    const revived = TSON.revive(data);
     // Here we have a true Date, SyntaxError, Float64Array and Custom to play with.
 });
 ```
@@ -205,8 +205,8 @@ Creates an instance of Typeson, on which you may configure additional types to s
 {
     cyclic?: boolean, // Default true to allow cyclic objects
     encapsulateObserver?: function, // Default no-op
-    sync: true, // Don't force a promise response regardless of type
-    throwOnBadSyncType: true // Default to throw when mismatch with `Typeson.Promise` obtained for sync request or not returned for async
+    sync?: true, // Don't force a promise response regardless of type
+    throwOnBadSyncType?: true // Default to throw when mismatch with `Typeson.Promise` obtained for sync request or not returned for async
 }
 ```
 
@@ -220,6 +220,10 @@ For encapsulations/stringifications, this callback will be executed as objects a
 
 `encapsulateObserver` is passed an object with the following properties:
 
+- `type` - If a type was detected, whether at either the `awaitingTypesonPromise` or
+    `resolvingTypesonPromise` stage, this property will indicate the detected type. If
+    this is a regular JSON type, its name ('null', 'boolean', 'number', 'string', 'array',
+    or 'object') will be reported
 - `keypath` - The keypath at which the observer is reporting.
 - `value` - The original value found at this stage by the observer. (`replaced`, on the other hand, can be consulted to obtain any type replacement value.)
 - `cyclic` - A boolean indicating whether the current state is expecting cyclics. Will be `"readonly"` if this iteration is due to a recursive replacement.
@@ -229,7 +233,6 @@ For encapsulations/stringifications, this callback will be executed as objects a
 - `awaitingTypesonPromise` - Will be `true` if still awaiting the full resolution; this could be ignored or used to set a placeholder.
 
 The following properties are also present in particular cases:
-- `type` - If a type was detected, whether at either the `awaitingTypesonPromise` or `resolvingTypesonPromise` stage, this property will indicate the detected type.
 - `clone` - If a plain object or array is found or if `iterateIn` is set, this property holds the clone of that object or array.
 - `replaced` - This property will be set when a type was detected. This value is useful for obtaining the serialization of types.
 - `cyclicKeypath` - Will be present if a cyclic object (including array) were detected; refers to the key path of the prior detected object.
@@ -265,13 +268,13 @@ the actual result of a revival/parsing or just the inevitable return of using an
 #### Sample
 
 ```js
-var Typeson = require('typeson');
-var typeson = new Typeson()
+const Typeson = require('typeson');
+const typeson = new Typeson()
     .register (require('typeson-registry/presets/builtin'));
 
-var tson = typeson.stringify(complexObject);
+const tson = typeson.stringify(complexObject);
 console.log(tson);
-var obj = typeson.parse(tson);
+const obj = typeson.parse(tson);
 ```
 
 ### Properties
@@ -283,11 +286,11 @@ A map between type identifier and type-rules. Same (object-based) structure as p
 ##### Sample
 
 ```js
-var commonTypeson = new Typeson().register([
+const commonTypeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
 ]);
 
-var myTypeson = new Typeson().register([
+const myTypeson = new Typeson().register([
     commonTypeson.types, // Derive from commonTypeson
     myOwnSpecificTypes // Add your extra types
 ]);
@@ -316,7 +319,7 @@ If an array or primitive is encoded at root, an object will be created with a pr
 ##### Sample
 
 ```js
-var TSON = new Typeson().register(require('typeson-registry/types/date'));
+const TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.stringify ({date: new Date()});
 ```
 Output:
@@ -346,7 +349,7 @@ the documentation under `Typeson.Promise`.
 ##### Sample
 
 ```js
-var TSON = new Typeson().register(require('typeson-registry/types/date'));
+const TSON = new Typeson().register(require('typeson-registry/types/date'));
 TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
@@ -378,8 +381,8 @@ As with `encapsulate` but automatically throws upon obtaining a non-`Typeson.Pro
 ##### Sample
 
 ```js
-var encapsulated = typeson.encapsulate(new Date());
-var revived = typeson.revive(encapsulated);
+const encapsulated = typeson.encapsulate(new Date());
+const revived = typeson.revive(encapsulated);
 assert (revived instanceof Date);
 ```
 
@@ -475,7 +478,7 @@ will prevent the addition of the property. To explicitly add `undefined`, see
 ##### Sample
 
 ```js
-var typeson = new Typeson();
+const typeson = new Typeson();
 
 function CustomType(foo) {
     this.foo = foo;
@@ -550,7 +553,7 @@ function MyAsync (prop) {
     this.prop = prop;
 }
 
-var typeson = new Typeson({sync: false}).register({
+const typeson = new Typeson({sync: false}).register({
     myAsyncType: [
         function (x) { return x instanceof MyAsync;},
         function (o) {
@@ -566,9 +569,9 @@ var typeson = new Typeson({sync: false}).register({
     ]
 });
 
-var mya = new MyAsync(500);
+const mya = new MyAsync(500);
 return typeson.stringify(mya).then(function (result) {
-    var back = typeson.parse(result, null, {sync: true});
+    const back = typeson.parse(result, null, {sync: true});
     console.log(back.prop); // 500
 });
 ```

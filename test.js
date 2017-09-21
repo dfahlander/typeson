@@ -159,6 +159,17 @@ run([function shouldSupportBasicTypes () {
         caught = true;
     }
     assert(caught, "Should throw on attempting to register the reserved 'type', '#'");
+}, function disallowsJSONTypeNames () {
+    const ok = ['null', 'boolean', 'number', 'string', 'array', 'object'].every((type) => {
+        let caught = false;
+        try {
+            new Typeson().register({[type]: [function () {}, function () {}, function () {}]});
+        } catch (err) {
+            caught = true;
+        }
+        return caught;
+    });
+    assert(ok, 'Should throw on attempting to register the reserved JSON object type names');
 }, function shouldHandlePathSeparatorsInObjects () {
     const input = {
         'aaa': {
@@ -571,6 +582,29 @@ run([function shouldSupportBasicTypes () {
     // console.log(str);
     // console.log(expected);
     assert(str === expected, 'Observer able to reduce JSON to expected string');
+}, function encapsulateObserverShouldObserveTypes () {
+    const actual = [];
+    const expected = ['object', 'Date', 'array', 'null', 'undefined', 'number', 'string'];
+    const typeson = new Typeson({
+        encapsulateObserver: function (o) {
+            if (o.cyclic !== 'readonly' && !o.end) {
+                actual.push(o.type);
+            }
+        }
+    }).register({
+        Date: [
+            function (x) { return x instanceof Date; },
+            function (date) { return date.getTime(); },
+            function (time) { return new Date(time); }
+        ]
+    });
+    const input = {
+        time: new Date(959000000000),
+        vals: [null, undefined, 5, 'str']
+    };
+    /* const tson = */ typeson.encapsulate(input);
+    assert(actual.length === expected.length &&
+        actual.every((type, i) => type === expected[i]), 'Should report primitive and compound types');
 }, function shouldRunEncapsulateObserverAsync () {
     let str = '';
     const placeholderText = '(Please wait for the value...)';

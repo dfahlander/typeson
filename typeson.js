@@ -195,11 +195,18 @@ function Typeson (options) {
         function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
             let ret;
             let observerData = {};
+            const $typeof = typeof value;
             const runObserver = encapsulateObserver ? function (obj) {
                 if (!encapsulateObserver) {
                     return;
                 }
-                const type = detectedType || stateObj.type;
+                const type = detectedType || stateObj.type || (
+                    value === null ? 'null' : (
+                        isArray(value)
+                            ? 'array'
+                            : $typeof
+                    )
+                );
                 encapsulateObserver(Object.assign(obj || observerData, {
                     keypath,
                     value,
@@ -208,9 +215,8 @@ function Typeson (options) {
                     promisesData,
                     resolvingTypesonPromise,
                     awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
-                }, type !== undefined ? {type: type} : {}));
+                }, type !== undefined ? {type} : {}));
             } : null;
-            const $typeof = typeof value;
             if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1}) {
                 if (value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity))) {
@@ -461,6 +467,10 @@ function Typeson (options) {
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
                     throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
+                } else if ([
+                    'null', 'boolean', 'number', 'string', 'array', 'object'
+                ].includes(typeId)) {
+                    throw new TypeError('Plain JSON object types are reserved as type names');
                 }
                 let spec = typeSpec[typeId];
                 const replacers = spec.testPlainObjects ? plainObjectReplacers : nonplainObjectReplacers;
