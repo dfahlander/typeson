@@ -1026,4 +1026,34 @@ run([function shouldSupportBasicTypes () {
     }).then(function (result) {
         assert(result.prop === 5, 'Example of synchronously-resolved simple object should work with async API');
     });
+}, function shouldRetrieveSpecialTypeNames () {
+    const typeson = new Typeson().register({
+        Date: {
+            test: function (x) { return x instanceof Date; },
+            replace: function (date) { return date.getTime(); },
+            revive: function (time) { return new Date(time); }
+        }
+    });
+    const typeNames = typeson.specialTypeNames([
+        5, new Date(), 'str', new Date()
+    ]);
+    assert(typeNames.length === 1 && typeNames[0] === 'Date', 'Should only return (unique) special type names');
+}, function shouldRetrieveRootTypeName () {
+    let runCount = 0;
+    const typeson = new Typeson({
+        encapsulateObserver: (o) => {
+            runCount++;
+        }
+    }).register({
+        Date: {
+            test: function (x) { return x instanceof Date; },
+            replace: function (date) { return date.getTime(); },
+            revive: function (time) { return new Date(time); }
+        }
+    });
+    const rootTypeName = typeson.rootTypeName([
+        5, new Date(), 'str', new Date()
+    ]);
+    assert(rootTypeName === 'array', 'Should return the single root type name');
+    assert(runCount === 1, 'Should not iterate through the array structure');
 }]);

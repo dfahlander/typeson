@@ -119,6 +119,15 @@ function Typeson (options) {
         return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false})); // This reviver has nothing to do with our revivers.
     };
 
+    this.specialTypeNames = function (obj, stateObj, opts = {}) {
+        opts.returnTypeNames = true;
+        return this.encapsulate(obj, stateObj, opts);
+    };
+    this.rootTypeName = function (obj, stateObj, opts = {}) {
+        opts.iterateNone = true;
+        return this.encapsulate(obj, stateObj, opts);
+    };
+
     /** Encapsulate a complex object into a plain Object by replacing registered types with
      * plain objects representing the types data.
      *
@@ -138,13 +147,23 @@ function Typeson (options) {
         const ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
-            if (keys(types).length) {
+            const typeNames = Object.values(types);
+            if (typeNames.length) {
+                if (opts.returnTypeNames) {
+                    return [...new Set(typeNames)];
+                }
                 if (!ret || !isPlainObject(ret) || // Special if array (or a primitive) was serialized because JSON would ignore custom `$types` prop on it
                     ret.hasOwnProperty('$types') // Also need to handle if this is an object with its own `$types` property (to avoid ambiguity)
-                ) ret = {$: ret, $types: {$: types}};
-                else ret.$types = types;
-            } else if (isObject(ret) && ret.hasOwnProperty('$types')) {
+                ) {
+                    ret = {$: ret, $types: {$: types}};
+                } else {
+                    ret.$types = types;
+                }
+            } else if (isObject(ret) && ret.hasOwnProperty('$types')) { // No special types
                 ret = {$: ret, $types: true};
+            }
+            if (opts.returnTypeNames) {
+                return false;
             }
             return ret;
         }
@@ -201,11 +220,7 @@ function Typeson (options) {
                     return;
                 }
                 const type = detectedType || stateObj.type || (
-                    value === null ? 'null' : (
-                        isArray(value)
-                            ? 'array'
-                            : $typeof
-                    )
+                    Typeson.getJSONType(value)
                 );
                 encapsulateObserver(Object.assign(obj || observerData, {
                     keypath,
@@ -280,6 +295,15 @@ function Typeson (options) {
                 }
             }
             if (runObserver) runObserver();
+
+            if (opts.iterateNone) {
+                const typeNames = Object.values(types);
+                if (typeNames.length) {
+                    return typeNames[0];
+                }
+                return Typeson.getJSONType(clone || ret);
+            }
+
             if (!clone) {
                 return ret;
             }
@@ -342,7 +366,7 @@ function Typeson (options) {
                         types[keypath] = existing ? [type].concat(existing) : type;
                     }
                     // Now, also traverse the result in case it contains its own types to replace
-                    stateObj = Object.assign(stateObj, {replaced: true, type: type});
+                    stateObj = Object.assign(stateObj, {type, replaced: true});
                     if ((sync || !replacer.replaceAsync) && !replacer.replace) {
                         return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                     }
@@ -467,9 +491,7 @@ function Typeson (options) {
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
                     throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
-                } else if ([
-                    'null', 'boolean', 'number', 'string', 'array', 'object'
-                ].includes(typeId)) {
+                } else if (Typeson.JSON_TYPES.includes(typeId)) {
                     throw new TypeError('Plain JSON object types are reserved as type names');
                 }
                 let spec = typeSpec[typeId];
@@ -608,5 +630,13 @@ Typeson.isUserObject = isUserObject;
 Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
 Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
 Typeson.getByKeyPath = getByKeyPath;
+Typeson.getJSONType = (value) =>
+    value === null ? 'null' : (
+        isArray(value)
+            ? 'array'
+            : typeof value);
+Typeson.JSON_TYPES = [
+    'null', 'boolean', 'number', 'string', 'array', 'object'
+];
 
 export default Typeson;

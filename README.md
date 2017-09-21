@@ -517,6 +517,17 @@ console.log(typeson.stringify({
 Expected to return a `Typeson.Promise` which resolves to the revived value.
 See `revive`.
 
+#### `specialTypeNames` (obj, [stateObj], [opts])
+
+This method returns an array of the unique Typeson type names. To return all
+type names including JSON type names or duplicates, use an `encapsulateObserver`.
+
+#### `rootTypeName` (obj, [stateObj], [opts])
+
+This method returns a single type name string of the supplied
+object at root: a Typeson type if present or a JSON type otherwise.
+This method avoids iterating whole object/array structures.
+
 ### Class methods
 
 #### `Typeson.Undefined` class
@@ -644,6 +655,19 @@ Unescapes a key path component. See `Typeson.escapeKeyPathComponent`.
 #### `Typeson.getByKeyPath` (obj, keyPath)
 
 Retrieves a value pointed to by a key path on an object.
+
+#### `Typeson.getJSONType` (obj)
+
+Utility that returns 'null', 'boolean', 'number', 'string', 'array',
+or 'object' depending on JSON type.
+
+### Class properties
+
+#### `Typeson.JSON_TYPES`
+
+Set to the following array of JSON type names.
+
+`['null', 'boolean', 'number', 'string', 'array', 'object']`
 
 ## Finding types and groups of types
 

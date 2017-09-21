@@ -5,6 +5,14 @@
 - Breaking change (minor): Throw upon attempts to register objects with JSON type names
 - Breaking change (minor): Include JSON type names on `type` property
     of object passed to `encapsulateObserver`
+- Enhancement (Basic API): `specialTypeNames` instance method to return array
+    of unique Typeson type names
+- Enhancement (Basic API): `rootTypeName` instance method to return string of
+    Typeson type name at root if present or the JSON type name otherwise
+- Enhancement (Basic API): Add `Typeson.getJSONType` class method to return
+    `null` and `array` where appropriate or `typeof` otherwise
+- Enhancement (Basic API): Add `Typeson.JSON_TYPES` class property to list
+    the available JSON types
 
 ## Version 4.0.0
 
