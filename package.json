@@ -1,12 +1,12 @@
 {
   "name": "typeson",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.js",
   "scripts": {
     "eslint": "eslint *.js",
     "test": "node test.js",
-    "build": "node_modules/.bin/webpack --optimize-minimize"
+    "install": "node_modules/.bin/webpack --optimize-minimize"
   },
   "repository": {
     "type": "git",
