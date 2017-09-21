@@ -1,5 +1,9 @@
 # typeson
 
+## Version 5.0.3
+
+- Add back prepublish script to ensure rebuilding upon publish
+
 ## Version 5.0.2
 
 - Ensure build occurs on install
