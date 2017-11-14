@@ -391,7 +391,7 @@ function Typeson (options) {
     };
 
     /** Revive an encapsulated object.
-     * This method is used internally by JSON.parse().
+     * This method is used internally by Typeson.parse().
      * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
      * will be replaced with its true type instead of just plain objects.
      */
