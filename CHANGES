@@ -1,5 +1,15 @@
 # typeson
 
+## Version 5.1.0
+
+- For `encapsulateObserver`, report `typeDetected` as `true` when a
+    Typeson-detected type is found but no relevant replacer is present
+    to be performed.
+- For `encapsulateObserver`, report `replacing` as `true` preceding a
+    Typeson-detected type replacement. (Can be used to get at the original
+    object value before encapsulation)
+- npm/Testing: Update dev dependencies
+
 ## Version 5.0.3
 
 - Add back prepublish script to ensure rebuilding upon publish

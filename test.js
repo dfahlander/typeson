@@ -538,6 +538,9 @@ run([function shouldSupportBasicTypes () {
     };
     const typeson = new Typeson({
         encapsulateObserver: function (o) {
+            if (o.typeDetected || o.replacing) {
+                return;
+            }
             const isObject = o.value && typeof o.value === 'object';
             const isArray = Array.isArray(o.value);
             if (o.end) {
@@ -587,6 +590,9 @@ run([function shouldSupportBasicTypes () {
     const expected = ['object', 'Date', 'array', 'null', 'undefined', 'number', 'string'];
     const typeson = new Typeson({
         encapsulateObserver: function (o) {
+            if (o.typeDetected || o.replacing) {
+                return;
+            }
             if (o.cyclic !== 'readonly' && !o.end) {
                 actual.push(o.type);
             }
@@ -611,6 +617,10 @@ run([function shouldSupportBasicTypes () {
     function APromiseUser (a) { this.a = a; }
     const typeson = new Typeson({
         encapsulateObserver: function (o) {
+            if (o.typeDetected || o.replacing) {
+                return;
+            }
+
             const isObject = o.value && typeof o.value === 'object';
             const isArray = Array.isArray(o.value);
             if (o.resolvingTypesonPromise) {

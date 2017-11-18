@@ -223,9 +223,6 @@ function Typeson (options) {
             let observerData = {};
             const $typeof = typeof value;
             const runObserver = encapsulateObserver ? function (obj) {
-                if (!encapsulateObserver) {
-                    return;
-                }
                 const type = detectedType || stateObj.type || (
                     Typeson.getJSONType(value)
                 );
@@ -242,7 +239,7 @@ function Typeson (options) {
             if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1}) {
                 if (value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity))) {
-                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise);
+                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise, runObserver);
                     if (ret !== value) {
                         observerData = {replaced: ret};
                     }
@@ -282,7 +279,7 @@ function Typeson (options) {
             )
                 // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
                 ? value
-                : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
+                : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr, null, runObserver);
             let clone;
             if (replaced !== value) {
                 ret = replaced;
@@ -351,7 +348,7 @@ function Typeson (options) {
             return clone;
         }
 
-        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise) {
+        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise, runObserver) {
             // Encapsulate registered types
             const replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
             let i = replacers.length;
@@ -371,8 +368,10 @@ function Typeson (options) {
                     // Now, also traverse the result in case it contains its own types to replace
                     stateObj = Object.assign(stateObj, {type, replaced: true});
                     if ((sync || !replacer.replaceAsync) && !replacer.replace) {
+                        if (runObserver) runObserver({typeDetected: true});
                         return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                     }
+                    if (runObserver) runObserver({replacing: true});
 
                     const replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
                     return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);

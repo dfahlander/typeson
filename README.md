@@ -233,6 +233,8 @@ For encapsulations/stringifications, this callback will be executed as objects a
 - `awaitingTypesonPromise` - Will be `true` if still awaiting the full resolution; this could be ignored or used to set a placeholder.
 
 The following properties are also present in particular cases:
+- `typeDetected` - Set to `true` when a Typeson-detected type is found but no relevant replacer is present to be performed.
+- `replacing` - Set to `true` preceding a Typeson-detected type replacement. Use this to get at the original object value before encapsulation
 - `clone` - If a plain object or array is found or if `iterateIn` is set, this property holds the clone of that object or array.
 - `replaced` - This property will be set when a type was detected. This value is useful for obtaining the serialization of types.
 - `cyclicKeypath` - Will be present if a cyclic object (including array) were detected; refers to the key path of the prior detected object.
