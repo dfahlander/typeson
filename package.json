@@ -1,8 +1,9 @@
 {
   "name": "typeson",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.js",
+  "module": "./typeson.js",
   "scripts": {
     "eslint": "eslint *.js",
     "test": "node test.js",
@@ -31,21 +32,21 @@
   "dependencies": {},
   "engines": {},
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-es2015": "^6.24.1",
-    "base64-arraybuffer": "^0.1.5",
-    "eslint": "4.11.0",
+    "babel-core": "6.26.0",
+    "babel-loader": "7.1.2",
+    "babel-plugin-add-module-exports": "0.2.1",
+    "babel-polyfill": "6.26.0",
+    "babel-preset-es2015": "6.24.1",
+    "base64-arraybuffer": "0.1.5",
+    "eslint": "4.12.1",
     "eslint-config-standard": "10.2.1",
     "eslint-plugin-compat": "2.1.0",
     "eslint-plugin-import": "2.8.0",
     "eslint-plugin-node": "5.2.1",
     "eslint-plugin-promise": "3.6.0",
     "eslint-plugin-standard": "3.0.1",
-    "uglify-js": "^3.1.9",
-    "webpack": "^3.8.1"
+    "uglify-js": "3.2.0",
+    "webpack": "3.9.1"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }

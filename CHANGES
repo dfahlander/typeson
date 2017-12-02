@@ -1,5 +1,9 @@
 # typeson
 
+## Version 5.2.0
+
+- npm: Add `module` to `package.json` for downstream Rollup/Webpack
+
 ## Version 5.1.0
 
 - For `encapsulateObserver`, report `typeDetected` as `true` when a
