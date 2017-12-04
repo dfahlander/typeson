@@ -1,5 +1,5 @@
-const Typeson = require('./');
-const B64 = require('base64-arraybuffer');
+import Typeson from '../typeson.js';
+import B64 from 'base64-arraybuffer';
 
 const typeson = new Typeson().register({
     Date: [
@@ -38,7 +38,13 @@ const globalTypeson = typeson;
 // The test framework I need:
 function assert (x, msg) {
     if (!x) throw new Error(msg);
-    console.log('  OK: ' + msg);
+    msg = '  OK: ' + msg;
+    if (typeof document !== 'undefined') {
+        document.body.append(
+            msg, ...Array.from({length: 2}, () => document.createElement('br'))
+        );
+    }
+    console.log(msg);
 };
 function run (tests) {
     if (!tests.length) {
@@ -112,44 +118,105 @@ run([function shouldSupportBasicTypes () {
     }
     function valSwitch (val) {
         test({$types: val}, function (result) {
-            assert(result.$types === val && Object.keys(result).length === 1, 'Preserves $types on original object without additions');
+            assert(
+                result.$types === val &&
+                    Object.keys(result).length === 1,
+                'Preserves $types on original object without additions'
+            );
         });
         test({$: val}, function (result) {
-            assert(result.$ === val && Object.keys(result).length === 1, 'Preserves $ on original object without additions');
+            assert(
+                result.$ === val && Object.keys(result).length === 1,
+                'Preserves $ on original object without additions'
+            );
         });
         test({$: val, $types: val}, function (result) {
-            assert(result.$ === val && result.$types === val && Object.keys(result).length === 2, 'Preserves $ and $types on original object without additions');
+            assert(
+                result.$ === val &&
+                    result.$types === val &&
+                    Object.keys(result).length === 2,
+                'Preserves $ and $types values on original object without additions'
+            );
         });
     }
     valSwitch(true);
     valSwitch(false);
     test({$: {}, $types: {$: {'': 'val', 'cyc': '#'}, '#': 'a1', '': 'b1'}}, function (result) {
-        assert(typeof result.$ === 'object' && !Object.keys(result.$).length && result.$types.$[''] === 'val' && result.$types.$.cyc === '#' && result.$types['#'] === 'a1' && result.$types[''] === 'b1' && Object.keys(result.$types).length === 3, 'Preserves $ and $types on original object without additions');
+        assert(
+            typeof result.$ === 'object' &&
+                !Object.keys(result.$).length &&
+                result.$types.$[''] === 'val' &&
+                result.$types.$.cyc === '#' &&
+                result.$types['#'] === 'a1' &&
+                result.$types[''] === 'b1' &&
+                Object.keys(result.$types).length === 3,
+            'Preserves $ and $types subobjects on original object without additions'
+        );
     });
     test({a: new Date(), $types: {}}, function (result) {
-        assert(result.a instanceof Date && !('$' in result) && typeof result.$types === 'object' && !Object.keys(result.$types).length);
+        assert(
+            result.a instanceof Date &&
+                !('$' in result) &&
+                typeof result.$types === 'object' &&
+                !Object.keys(result.$types).length,
+            'Roundtrips type while preserving $types subobject from original object without additions'
+        );
     });
     test({a: new Date(), $: {}}, function (result) {
-        assert(result.a instanceof Date && !('$types' in result) && typeof result.$ === 'object' && !Object.keys(result.$).length);
+        assert(
+            result.a instanceof Date &&
+                !('$types' in result) &&
+                typeof result.$ === 'object' &&
+                !Object.keys(result.$).length,
+            'Roundtrips type while preserving $ subobject from original object without additions'
+        );
     });
     test({a: new Date(), $types: {}, $: {}}, function (result) {
-        assert(result.a instanceof Date && typeof result.$types === 'object' && !Object.keys(result.$types).length && typeof result.$ === 'object' && !Object.keys(result.$).length);
+        assert(
+            result.a instanceof Date &&
+                typeof result.$types === 'object' &&
+                !Object.keys(result.$types).length &&
+                typeof result.$ === 'object' &&
+                !Object.keys(result.$).length,
+            'Roundtrips type while preserving $ and $types subobjects from original object without additions'
+        );
     });
     function valSwitch2 (val) {
         test({a: new Date(), $types: val}, function (result) {
-            assert(result.a instanceof Date && !('$' in result) && result.$types === val);
+            assert(
+                result.a instanceof Date &&
+                    !('$' in result) &&
+                    result.$types === val,
+                'Roundtrips type while preserving $types value from original object'
+            );
         });
         test({a: new Date(), $: val}, function (result) {
-            assert(result.a instanceof Date && !('$types' in result) && result.$ === val);
+            assert(
+                result.a instanceof Date &&
+                    !('$types' in result) &&
+                    result.$ === val,
+                'Roundtrips type while preserving $ value from original object'
+            );
         });
         test({a: new Date(), $types: val, $: val}, function (result) {
-            assert(result.a instanceof Date && result.$types === val && result.$ === val);
+            assert(
+                result.a instanceof Date &&
+                    result.$types === val &&
+                    result.$ === val,
+                'Roundtrips type while preserving $types and $ values from original object'
+            );
         });
     }
     valSwitch2(true);
     valSwitch2(false);
     test({a: new Date(), $: {}}, function (result) {
-        assert(result.a instanceof Date && !('$types' in result) && typeof result.$ === 'object' && !Object.keys(result.$).length);
+        assert(
+            result.a instanceof Date &&
+                !('$types' in result) &&
+                typeof result.$ === 'object' &&
+                !Object.keys(result.$).length,
+            'Roundtrips type while preserving $ subojbect from original object without additions'
+        );
     });
 }, function disallowsHashType () {
     let caught = false;

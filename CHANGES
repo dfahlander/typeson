@@ -1,5 +1,17 @@
 # typeson
 
+## Version 5.4.0
+
+- npm: Include typeson.js file with npm in case using as module
+    and also include LICENSE (but ignore new test directory)
+- npm: Remove build and prepublish scripts (runs on local installs in npm <= 4)
+- Build: Switch from Webpack to Rollup
+- npm/Testing: add ESLint script to test routines
+- npm/Testing: Add browser test file and npm script
+- Testing refactoring: Write tests in ES6
+- Testing: Add messages for tests missing them
+- gitignore: Ignore new auto-generated test file
+
 ## Version 5.3.0
 
 - npm: Add `browser` to `package.json` for bundlers
