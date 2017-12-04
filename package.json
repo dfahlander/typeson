@@ -1,8 +1,9 @@
 {
   "name": "typeson",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.js",
+  "browser": "./dist/typeson.js",
   "module": "./typeson.js",
   "scripts": {
     "eslint": "eslint *.js",
