@@ -147,14 +147,13 @@ function Typeson (options) {
         const ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
+            const typeNames = Object.values(types);
             if (opts.iterateNone) {
-                const typeNames = Object.values(types);
                 if (typeNames.length) {
                     return typeNames[0];
                 }
                 return Typeson.getJSONType(ret);
             }
-            const typeNames = Object.values(types);
             if (typeNames.length) {
                 if (opts.returnTypeNames) {
                     return [...new Set(typeNames)];
