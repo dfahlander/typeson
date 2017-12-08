@@ -1,6 +1,8 @@
 import babel from 'rollup-plugin-babel';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
+const uglify = require('rollup-plugin-uglify');
+const {minify} = require('uglify-es');
 
 export default [{
     input: 'typeson.js',
@@ -11,6 +13,10 @@ export default [{
     },
     plugins: [
         babel(),
+        uglify({
+            keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
+            keep_classnames: true // Keep in case implementing above as classes
+        }, minify),
         resolve(),
         commonjs()
     ]
@@ -23,6 +29,10 @@ export default [{
     },
     plugins: [
         babel(),
+        uglify({
+            keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
+            keep_classnames: true // Keep in case implementing above as classes
+        }, minify),
         resolve(),
         commonjs()
     ]
@@ -35,6 +45,10 @@ export default [{
     },
     plugins: [
         babel(),
+        uglify({
+            keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
+            keep_classnames: true // Keep in case implementing above as classes
+        }, minify),
         resolve(),
         commonjs()
     ]

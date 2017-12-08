@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "5.5.0",
+  "version": "5.6.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.js",
   "browser": "./dist/typeson.js",
@@ -50,6 +50,8 @@
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-uglify": "^2.0.1",
+    "uglify-es": "^3.2.1",
     "uglify-js": "3.2.0"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"

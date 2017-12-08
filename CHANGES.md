@@ -1,8 +1,13 @@
 # typeson
 
+## Version 5.6.0
+
+- Build: Add minification for its own sake and also avoiding our
+    Rollup process (Babel?) unminifying our source and creating inconsistency
+
 ## Version 5.5.0
 
-- Preminimize internally used constructors so basic functionality not
+- Build: Preminimize internally used constructors so basic functionality not
     fragile across multiple Typeson instances
 
 ## Version 5.4.0
