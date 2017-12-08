@@ -13,6 +13,8 @@ function toStringTag (val) {
     return toString.call(val).slice(8, -1);
 }
 
+// This function is dependent on both constructors
+//   being identical so any minimization is expected of both
 function hasConstructorOf (a, b) {
     if (!a || typeof a !== 'object') {
         return false;
@@ -578,12 +580,12 @@ function getByKeyPath (obj, keyPath) {
     return obj[unescapeKeyPathComponent(keyPath)];
 }
 
-function Undefined () {}
-
+// We keep these two functions minimized so if using two instances of this
+//   library, where one is minimized and one is not, it will still work
+function Undefined(){} // eslint-disable-line space-before-function-paren, space-before-blocks
 // With ES6 classes, we may be able to simply use `class TypesonPromise extends Promise` and add a string tag for detection
-function TypesonPromise (f) {
-    this.p = new Promise(f);
-};
+function TypesonPromise(f){this.p=new Promise(f)} // eslint-disable-line block-spacing, space-before-function-paren, space-before-blocks, space-infix-ops, semi
+
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
     return new TypesonPromise((typesonResolve, typesonReject) => {
         this.p.then(function (res) {

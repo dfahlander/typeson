@@ -1,5 +1,10 @@
 # typeson
 
+## Version 5.5.0
+
+- Preminimize internally used constructors so basic functionality not
+    fragile across multiple Typeson instances
+
 ## Version 5.4.0
 
 - npm: Include typeson.js file with npm in case using as module
