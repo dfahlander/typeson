@@ -1,8 +1,8 @@
 import babel from 'rollup-plugin-babel';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
-const uglify = require('rollup-plugin-uglify');
-const {minify} = require('uglify-es');
+import uglify from 'rollup-plugin-uglify';
+import {minify} from 'uglify-es';
 
 export default [{
     input: 'typeson.js',
