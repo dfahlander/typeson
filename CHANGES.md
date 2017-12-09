@@ -1,5 +1,10 @@
 # typeson
 
+## Version 5.7.0
+
+- Build: Add Yarn.lock
+- npm: Update dev deps
+
 ## Version 5.6.0
 
 - Build: Add minification for its own sake and also avoiding our
