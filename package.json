@@ -37,7 +37,7 @@
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.1",
     "base64-arraybuffer": "0.1.5",
-    "eslint": "4.12.1",
+    "eslint": "4.13.0",
     "eslint-config-standard": "10.2.1",
     "eslint-plugin-compat": "2.1.0",
     "eslint-plugin-import": "2.8.0",
@@ -46,13 +46,13 @@
     "eslint-plugin-standard": "3.0.1",
     "node-static": "0.7.10",
     "opn": "5.1.0",
-    "rollup": "0.52.0",
+    "rollup": "0.52.1",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-uglify": "^2.0.1",
     "uglify-es": "^3.2.1",
-    "uglify-js": "3.2.0"
+    "uglify-js": "3.2.1"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }
