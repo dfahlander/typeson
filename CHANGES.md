@@ -1,21 +1,25 @@
 # typeson
 
-## Version 5.7.0
+## 5.7.1
+
+- Fix `.npmignore`
+
+## 5.7.0
 
 - Build: Add Yarn.lock
 - npm: Update dev deps
 
-## Version 5.6.0
+## 5.6.0
 
 - Build: Add minification for its own sake and also avoiding our
     Rollup process (Babel?) unminifying our source and creating inconsistency
 
-## Version 5.5.0
+## 5.5.0
 
 - Build: Preminimize internally used constructors so basic functionality not
     fragile across multiple Typeson instances
 
-## Version 5.4.0
+## 5.4.0
 
 - npm: Include typeson.js file with npm in case using as module
     and also include LICENSE (but ignore new test directory)
@@ -27,15 +31,15 @@
 - Testing: Add messages for tests missing them
 - gitignore: Ignore new auto-generated test file
 
-## Version 5.3.0
+## 5.3.0
 
 - npm: Add `browser` to `package.json` for bundlers
 
-## Version 5.2.0
+## 5.2.0
 
 - npm: Add `module` to `package.json` for downstream Rollup/Webpack
 
-## Version 5.1.0
+## 5.1.0
 
 - For `encapsulateObserver`, report `typeDetected` as `true` when a
     Typeson-detected type is found but no relevant replacer is present
@@ -45,19 +49,19 @@
     object value before encapsulation)
 - npm/Testing: Update dev dependencies
 
-## Version 5.0.3
+## 5.0.3
 
 - Add back prepublish script to ensure rebuilding upon publish
 
-## Version 5.0.2
+## 5.0.2
 
 - Ensure build occurs on install
 
-## Version 5.0.1
+## 5.0.1
 
 - Fix `rootTypeName` to work with promises and for replacements
 
-## Version 5.0.0
+## 5.0.0
 
 - Breaking change (minor): Throw upon attempts to register objects with JSON type names
 - Breaking change (minor): Include JSON type names on `type` property
@@ -71,7 +75,7 @@
 - Enhancement (Basic API): Add `Typeson.JSON_TYPES` class property to list
     the available JSON types
 
-## Version 4.0.0
+## 4.0.0
 
 - Breaking change: Use object-based structure on `types` (esp. important
     as more possible properties/methods are added, reliance on array
@@ -177,7 +181,7 @@
 
 - npm: Update dev dependencies
 
-## Version 3.2.0
+## 3.2.0
 
 - Enhancement: Allow reviver to set the explicit value `undefined` (by
     returning an instance of `Typeson.Undefined`)

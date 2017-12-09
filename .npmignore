@@ -1,5 +1,6 @@
 .*
 *.log
+/*.*
 test/
 !typeson.js
-!LICENSE
+!LICENSE-MIT.txt
