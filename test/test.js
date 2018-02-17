@@ -1103,6 +1103,61 @@ run([function shouldSupportBasicTypes () {
     }).then(function (result) {
         assert(result.prop === 5, 'Example of synchronously-resolved simple object should work with async API');
     });
+}, function shouldTransmitStateThroughReplacersAndRevivers () {
+    function ReplaceReviver (obj) {
+        Object.defineProperty(this, 'obj', {
+            enumerable: false,
+            value: obj
+        });
+    }
+    ReplaceReviver.prototype[Symbol.toStringTag] = 'ReplaceReviver';
+    const typeson = new Typeson().register({
+        replaceReviveContainer: {
+            test (x) { return Typeson.toStringTag(x) === 'ReplaceReviver'; },
+            replace (b, stateObj) {
+                if (!stateObj.objs) {
+                    stateObj.objs = [];
+                }
+                const index = stateObj.objs.indexOf(b.obj);
+                if (index > -1) {
+                    return {index};
+                }
+                stateObj.objs.push(b.obj);
+                return {
+                    obj: b.obj
+                };
+            },
+            revive (o, stateObj) {
+                if (!stateObj.objs) {
+                    stateObj.objs = [];
+                }
+                if ('index' in o) {
+                    return stateObj.objs[o.index];
+                }
+                const rr = new ReplaceReviver(o.obj);
+                stateObj.objs.push(rr);
+                return rr;
+            }
+        }
+    });
+    const rrObj1 = {value: 10};
+    const rrObj2 = {value: 353};
+    const rrObjXYZ = {value: 10};
+
+    const rr1 = new ReplaceReviver(rrObj1);
+    const rr2 = new ReplaceReviver(rrObj2);
+    const rr3 = new ReplaceReviver(rrObj1);
+    const rrXYZ = new ReplaceReviver(rrObjXYZ);
+    const obj = {rr1, rr2, rr3, rrXYZ};
+    const tson = typeson.stringify(obj);
+    console.log(tson);
+    const back = typeson.parse(tson);
+    assert(back.rr1.obj.value === 10, 'Should preserve value (rr1)');
+    assert(back.rr2.obj.value === 353, 'Should preserve value (rr2)');
+    assert(back.rr3.obj.value === 10, 'Should preserve value (rr3)');
+    assert(back.rrXYZ.obj.value === 10, 'Should preserve value (rrXYZ)');
+    assert(back.rr1.obj === back.rr3.obj, 'Should preserve objects');
+    assert(back.rr1.obj !== back.rrXYZ.obj, 'Should not confuse objects where only value is the same');
 }, function shouldRetrieveSpecialTypeNames () {
     const typeson = new Typeson().register({
         Date: {

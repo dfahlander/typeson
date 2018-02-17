@@ -219,6 +219,10 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
+        function _removeStateObjectProperties (stateObj) {
+            delete stateObj.type;
+            delete stateObj.replaced;
+        }
         function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
             let ret;
             let observerData = {};
@@ -312,7 +316,8 @@ function Typeson (options) {
             // Iterate object or array
             if (stateObj.iterateIn) {
                 for (const key in value) {
-                    const ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
+                    const ownKeysObj = Object.assign(stateObj, {ownKeys: value.hasOwnProperty(key)});
+                    _removeStateObjectProperties(ownKeysObj);
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
                     const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
@@ -323,7 +328,8 @@ function Typeson (options) {
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    const ownKeysObj = {ownKeys: true};
+                    const ownKeysObj = Object.assign(stateObj, {ownKeys: true});
+                    _removeStateObjectProperties(ownKeysObj);
                     const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
                         promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
@@ -337,7 +343,8 @@ function Typeson (options) {
                 for (let i = 0; i < vl; i++) {
                     if (!(i in value)) {
                         const kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
-                        const ownKeysObj = {ownKeys: false};
+                        const ownKeysObj = Object.assign(stateObj, {ownKeys: false});
+                        _removeStateObjectProperties(ownKeysObj);
                         const val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                         if (hasConstructorOf(val, TypesonPromise)) {
                             promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
@@ -409,6 +416,7 @@ function Typeson (options) {
             ignore$Types = false;
         }
         const keyPathResolutions = [];
+        const stateObj = {};
         let ret = _revive('', obj, null, opts);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
         return isThenable(ret)
@@ -470,7 +478,7 @@ function Typeson (options) {
                         : !sync && reviver.reviveAsync
                             ? 'reviveAsync'
                             : 'revive'
-                ](val);
+                ](val, stateObj);
             }, value);
         }
     };

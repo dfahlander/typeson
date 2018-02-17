@@ -1,5 +1,13 @@
 # typeson
 
+## 5.8.0
+
+- Enhancement: Except for `type` and `replaced` states, preserve state
+    object keys (including user-supplied ones) within replacers; add tests
+- Enhancement: Pass a state object as the second argument to revivers;
+    add tests
+- npm: Update devDeps
+
 ## 5.7.1
 
 - Fix `.npmignore`
