@@ -1,5 +1,10 @@
 # typeson
 
+## 5.8.1
+
+- Yarn: Update `yarn.lock`
+- npm: Add `package-lock.json`
+
 ## 5.8.0
 
 - Enhancement: Except for `type` and `replaced` states, preserve state
