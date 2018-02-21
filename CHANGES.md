@@ -1,5 +1,10 @@
 # typeson
 
+## 5.8.2
+
+- Fix: Ensure deleted state object properties are restored
+- npm: Update devDeps
+
 ## 5.8.1
 
 - Yarn: Update `yarn.lock`

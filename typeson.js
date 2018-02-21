@@ -3,7 +3,8 @@ const keys = Object.keys,
     toString = ({}.toString),
     getProto = Object.getPrototypeOf,
     hasOwn = ({}.hasOwnProperty),
-    fnToString = hasOwn.toString;
+    fnToString = hasOwn.toString,
+    internalStateObjPropsToIgnore = ['type', 'replaced', 'iterateIn', 'iterateUnsetNumeric'];
 
 function isThenable (v, catchCheck) {
     return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
@@ -219,9 +220,17 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
-        function _removeStateObjectProperties (stateObj) {
-            delete stateObj.type;
-            delete stateObj.replaced;
+        function _adaptBuiltinStateObjectProperties (stateObj, ownKeysObj, cb) {
+            Object.assign(stateObj, ownKeysObj);
+            const vals = internalStateObjPropsToIgnore.map((prop) => {
+                const tmp = stateObj[prop];
+                delete stateObj[prop];
+                return tmp;
+            });
+            cb();
+            internalStateObjPropsToIgnore.forEach((prop, i) => {
+                stateObj[prop] = vals[i];
+            });
         }
         function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
             let ret;
@@ -316,24 +325,26 @@ function Typeson (options) {
             // Iterate object or array
             if (stateObj.iterateIn) {
                 for (const key in value) {
-                    const ownKeysObj = Object.assign(stateObj, {ownKeys: value.hasOwnProperty(key)});
-                    _removeStateObjectProperties(ownKeysObj);
-                    const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
-                    if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
-                    } else if (val !== undefined) clone[key] = val;
+                    const ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
+                    _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
+                        const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
+                        const val = _encapsulate(kp, value[key], !!cyclic, stateObj, promisesData, resolvingTypesonPromise);
+                        if (hasConstructorOf(val, TypesonPromise)) {
+                            promisesData.push([kp, val, !!cyclic, stateObj, clone, key, stateObj.type]);
+                        } else if (val !== undefined) clone[key] = val;
+                    });
                 }
                 if (runObserver) runObserver({endIterateIn: true, end: true});
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    const ownKeysObj = Object.assign(stateObj, {ownKeys: true});
-                    _removeStateObjectProperties(ownKeysObj);
-                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
-                    if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
-                    } else if (val !== undefined) clone[key] = val;
+                    const ownKeysObj = {ownKeys: true};
+                    _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
+                        const val = _encapsulate(kp, value[key], !!cyclic, stateObj, promisesData, resolvingTypesonPromise);
+                        if (hasConstructorOf(val, TypesonPromise)) {
+                            promisesData.push([kp, val, !!cyclic, stateObj, clone, key, stateObj.type]);
+                        } else if (val !== undefined) clone[key] = val;
+                    });
                 });
                 if (runObserver) runObserver({endIterateOwn: true, end: true});
             }
@@ -343,12 +354,13 @@ function Typeson (options) {
                 for (let i = 0; i < vl; i++) {
                     if (!(i in value)) {
                         const kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
-                        const ownKeysObj = Object.assign(stateObj, {ownKeys: false});
-                        _removeStateObjectProperties(ownKeysObj);
-                        const val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
-                        if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
-                        } else if (val !== undefined) clone[i] = val;
+                        const ownKeysObj = {ownKeys: false};
+                        _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
+                            const val = _encapsulate(kp, undefined, !!cyclic, stateObj, promisesData, resolvingTypesonPromise);
+                            if (hasConstructorOf(val, TypesonPromise)) {
+                                promisesData.push([kp, val, !!cyclic, stateObj, clone, i, stateObj.type]);
+                            } else if (val !== undefined) clone[i] = val;
+                        });
                     }
                 }
                 if (runObserver) runObserver({endIterateUnsetNumeric: true, end: true});
@@ -374,7 +386,7 @@ function Typeson (options) {
                         types[keypath] = existing ? [type].concat(existing) : type;
                     }
                     // Now, also traverse the result in case it contains its own types to replace
-                    stateObj = Object.assign(stateObj, {type, replaced: true});
+                    Object.assign(stateObj, {type, replaced: true});
                     if ((sync || !replacer.replaceAsync) && !replacer.replace) {
                         if (runObserver) runObserver({typeDetected: true});
                         return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
