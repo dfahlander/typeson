@@ -470,7 +470,7 @@ and type detection.
 Expected to return a `Typeson.Promise` which resolves to the replaced value.
 See `replace`.
 
-###### `revive` (obj: Object) : YourType
+###### `revive` (obj: Object, stateObj : {}) : YourType
 
 Function that maps your JSON-serializable object into a real instance of your type.
 In a property context (for arrays or objects), returning `undefined`
