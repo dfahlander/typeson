@@ -1,8 +1,6 @@
 import babel from 'rollup-plugin-babel';
+import {terser} from 'rollup-plugin-terser';
 import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import uglify from 'rollup-plugin-uglify';
-import {minify} from 'uglify-es';
 
 export default [{
     input: 'typeson.js',
@@ -13,12 +11,10 @@ export default [{
     },
     plugins: [
         babel(),
-        uglify({
+        terser({
             keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
             keep_classnames: true // Keep in case implementing above as classes
-        }, minify),
-        resolve(),
-        commonjs()
+        })
     ]
 }, {
     input: 'typeson.js',
@@ -29,12 +25,10 @@ export default [{
     },
     plugins: [
         babel(),
-        uglify({
+        terser({
             keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
             keep_classnames: true // Keep in case implementing above as classes
-        }, minify),
-        resolve(),
-        commonjs()
+        })
     ]
 }, {
     input: 'test/test.js',
@@ -45,11 +39,10 @@ export default [{
     },
     plugins: [
         babel(),
-        uglify({
+        terser({
             keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
             keep_classnames: true // Keep in case implementing above as classes
-        }, minify),
-        resolve(),
-        commonjs()
+        }),
+        resolve()
     ]
 }];

@@ -1,5 +1,5 @@
 import Typeson from '../typeson.js';
-import B64 from 'base64-arraybuffer';
+import * as B64 from 'base64-arraybuffer-es6';
 
 const typeson = new Typeson().register({
     Date: [
@@ -28,7 +28,7 @@ const typeson = new Typeson().register({
     ],
     DataView: [
         function (x) { return x instanceof DataView; },
-        function (dw) { return { buffer: dw.buffer, byteOffset: dw.byteOffset, byteLength: dw.byteLength }; },
+        function (dw) { return {buffer: dw.buffer, byteOffset: dw.byteOffset, byteLength: dw.byteLength}; },
         function (obj) { return new DataView(obj.buffer, obj.byteOffset, obj.byteLength); }
     ]
 });
@@ -77,7 +77,7 @@ run([function shouldSupportBasicTypes () {
     let res = roundtrip({});
     assert(Object.keys(res).length === 0, 'Result should be empty');
     const date = new Date();
-    const input = {a: 'a', b: 2, c: function () {}, d: false, e: null, f: Symbol('symbol'), g: [], h: date, i: /apa/gi};
+    const input = {a: 'a', b: 2, c () {}, d: false, e: null, f: Symbol('symbol'), g: [], h: date, i: /apa/gi};
     res = roundtrip(input);
     assert(res !== input, 'Object is a clone, not a reference');
     assert(res.a === 'a', 'String value');
@@ -99,9 +99,9 @@ run([function shouldSupportBasicTypes () {
 }, function shouldSupportObjectAPI () {
     const typeson = new Typeson().register({
         Date: {
-            test: function (x) { return x instanceof Date; },
-            replace: function (date) { return date.getTime(); },
-            revive: function (time) { return new Date(time); }
+            test (x) { return x instanceof Date; },
+            replace (date) { return date.getTime(); },
+            revive (time) { return new Date(time); }
         }
     });
     const date = new Date();
@@ -604,7 +604,7 @@ run([function shouldSupportBasicTypes () {
         return new Array(indentFactor * 4 + 1).join(' ');
     };
     const typeson = new Typeson({
-        encapsulateObserver: function (o) {
+        encapsulateObserver (o) {
             if (o.typeDetected || o.replacing) {
                 return;
             }
@@ -656,7 +656,7 @@ run([function shouldSupportBasicTypes () {
     const actual = [];
     const expected = ['object', 'Date', 'array', 'null', 'undefined', 'number', 'string'];
     const typeson = new Typeson({
-        encapsulateObserver: function (o) {
+        encapsulateObserver (o) {
             if (o.typeDetected || o.replacing) {
                 return;
             }
@@ -683,7 +683,7 @@ run([function shouldSupportBasicTypes () {
     const placeholderText = '(Please wait for the value...)';
     function APromiseUser (a) { this.a = a; }
     const typeson = new Typeson({
-        encapsulateObserver: function (o) {
+        encapsulateObserver (o) {
             if (o.typeDetected || o.replacing) {
                 return;
             }
@@ -756,7 +756,7 @@ run([function shouldSupportBasicTypes () {
 
     const typeson = new Typeson().register({
         iterateIn: {
-            test: function (x, stateObj) {
+            test (x, stateObj) {
                 if (x instanceof A) {
                     stateObj.iterateIn = x.isArr ? 'array' : 'object';
                     return true;
@@ -797,7 +797,7 @@ run([function shouldSupportBasicTypes () {
 
     typeson = new Typeson();
     a = { // Plain object rebuilt during encapsulation including with `toJSON`
-        toJSON: function () { return 'abcd'; }
+        toJSON () { return 'abcd'; }
     };
     tson = typeson.stringify(a);
     console.log(tson);
@@ -807,10 +807,10 @@ run([function shouldSupportBasicTypes () {
     const typeson = new Typeson().register({
         plainObj: {
             testPlainObjects: true,
-            test: function (x) {
+            test (x) {
                 return 'nonenum' in x;
             },
-            replace: function (o) {
+            replace (o) {
                 return {
                     b: o.b,
                     nonenum: o.nonenum
@@ -1161,9 +1161,9 @@ run([function shouldSupportBasicTypes () {
 }, function shouldRetrieveSpecialTypeNames () {
     const typeson = new Typeson().register({
         Date: {
-            test: function (x) { return x instanceof Date; },
-            replace: function (date) { return date.getTime(); },
-            revive: function (time) { return new Date(time); }
+            test (x) { return x instanceof Date; },
+            replace (date) { return date.getTime(); },
+            revive (time) { return new Date(time); }
         }
     });
     const typeNames = typeson.specialTypeNames([
@@ -1178,9 +1178,9 @@ run([function shouldSupportBasicTypes () {
         }
     }).register({
         Date: {
-            test: function (x) { return x instanceof Date; },
-            replace: function (date) { return date.getTime(); },
-            revive: function (time) { return new Date(time); }
+            test (x) { return x instanceof Date; },
+            replace (date) { return date.getTime(); },
+            revive (time) { return new Date(time); }
         }
     });
     const rootTypeName = typeson.rootTypeName([

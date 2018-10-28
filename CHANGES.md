@@ -1,5 +1,16 @@
 # typeson
 
+## ?
+
+- Linting (ESLint): Remove unused file from ignore; apply script to whole
+    repo save ignore file; override new "standard" rule with own
+    "object-curly-spacing"; avoid Node-11-deprecated `url.parse`
+- Testing (Refactoring): Use object shorthand
+- Build (Rollup): Switch to terser for minification; avoid plugins where
+    not needed
+- npm: Update to Babel 7; update other devDeps; switch to
+    base64-arraybuffer-es6
+
 ## 5.8.2
 
 - Fix: Ensure deleted state object properties are restored

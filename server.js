@@ -2,7 +2,7 @@
 'use strict';
 const ns = require('node-static');
 const opn = require('opn');
-const url = require('url');
+const {URL, format} = require('url');
 
 const portIdx = 3;
 const defaultPort = 8092;
@@ -23,9 +23,9 @@ let site = process.argv[siteIdx]
     : defaultURL;
 
 if (port !== defaultPort) {
-    const portAdded = url.parse(site);
+    const portAdded = new URL(site);
     portAdded.host = portAdded.host.replace(/:.*$/, '') + ':' + port;
-    site = url.format(portAdded);
+    site = format(portAdded);
 }
 
 if (site === '0') {
