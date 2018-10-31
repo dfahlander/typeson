@@ -1,6 +1,6 @@
-const keys = Object.keys,
-    isArray = Array.isArray,
-    toString = ({}.toString),
+const {keys} = Object,
+    {isArray} = Array,
+    {toString} = {},
     getProto = Object.getPrototypeOf,
     hasOwn = ({}.hasOwnProperty),
     fnToString = hasOwn.toString,
@@ -139,14 +139,14 @@ function Typeson (options) {
      */
     const encapsulate = this.encapsulate = function (obj, stateObj, opts) {
         opts = Object.assign({sync: true}, options, opts);
-        const sync = opts.sync;
+        const {sync} = opts;
         const types = {},
             refObjs = [], // For checking cyclic references
             refKeys = [], // For checking cyclic references
             promisesDataRoot = [];
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
         const cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
-        const encapsulateObserver = opts.encapsulateObserver;
+        const {encapsulateObserver} = opts;
         const ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
@@ -375,7 +375,7 @@ function Typeson (options) {
             while (i--) {
                 const replacer = replacers[i];
                 if (replacer.test(value, stateObj)) {
-                    const type = replacer.type;
+                    const {type} = replacer;
                     if (revivers[type]) {
                         // Record the type only if a corresponding reviver exists.
                         // This is to support specs where only replacement is done.
@@ -416,7 +416,7 @@ function Typeson (options) {
      */
     const revive = this.revive = function (obj, opts) {
         opts = Object.assign({sync: true}, options, opts);
-        const sync = opts.sync;
+        const {sync} = opts;
         let types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
@@ -480,7 +480,7 @@ function Typeson (options) {
                 }
                 return ret;
             }
-            const sync = opts.sync;
+            const {sync} = opts;
             return [].concat(type).reduce((val, type) => {
                 const reviver = revivers[type];
                 if (!reviver) throw new Error('Unregistered type: ' + type);
