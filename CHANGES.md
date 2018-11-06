@@ -1,6 +1,6 @@
 # typeson
 
-## ?
+## 5.9.0
 
 - Linting (ESLint): Remove unused file from ignore; apply script to whole
     repo save ignore file; override new "standard" rule with own
