@@ -5,7 +5,10 @@
 - Linting (ESLint): Remove unused file from ignore; apply script to whole
     repo save ignore file; override new "standard" rule with own
     "object-curly-spacing"; avoid Node-11-deprecated `url.parse`
-- Testing (Refactoring): Use object shorthand
+- Linting (ESLint): Actually use compat plugin (identifies need for
+    promises and URL polyfills as a minimum on some older browsers to
+    get full browser coverage)
+- Refactoring: Use object shorthand, destructuring
 - Build (Rollup): Switch to terser for minification; avoid plugins where
     not needed
 - npm: Update to Babel 7; update other devDeps; switch to

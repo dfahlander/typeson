@@ -15,6 +15,9 @@
     "type": "git",
     "url": "git+https://github.com/dfahlander/typeson.git"
   },
+  "browserslist": [
+    "cover 100%"
+  ],
   "keywords": [
     "JSON",
     "remoting",
@@ -35,17 +38,17 @@
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
-    "base64-arraybuffer-es6": "^0.3.1",
+    "base64-arraybuffer-es6": "^0.4.2",
     "eslint": "5.8.0",
     "eslint-config-standard": "12.0.0",
-    "eslint-plugin-compat": "2.6.2",
+    "eslint-plugin-compat": "2.6.3",
     "eslint-plugin-import": "2.14.0",
     "eslint-plugin-node": "8.0.0",
     "eslint-plugin-promise": "4.0.1",
     "eslint-plugin-standard": "4.0.0",
     "node-static": "0.7.11",
     "opn": "5.4.0",
-    "rollup": "0.66.6",
+    "rollup": "0.67.0",
     "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-terser": "^3.0.0"

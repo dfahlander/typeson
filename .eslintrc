@@ -1,9 +1,14 @@
 {
   "extends": "standard",
+  "plugins": ["compat"],
   "parserOptions": {
       "sourceType": "module"
   },
+  "settings": {
+      "polyfills": ["promises", "url"]
+  },
   "rules": {
+    "compat/compat": "error",
     "semi": [2, "always"],
     "indent": ["error", 4, {"outerIIFEBody": 0}],
     "object-property-newline": 0,
