@@ -356,13 +356,13 @@ run([function shouldSupportBasicTypes () {
     }
     data.list[3].children = [data.list[0], data.list[1]];
 
-    // const tson = typeson.stringify(data, null, 2);
+    const tson = typeson.stringify(data, null, 2);
     // console.log(tson);
-    // const result = typeson.parse(tson);
+    const result = typeson.parse(tson);
 
-    assert(data.list.length === 10, 'Data.list.length should be 10');
-    assert(data.list[3].children.length === 2, 'data.list[3] should have 2 children');
-    assert(data.list[3].children[0] === data.list[0], 'First child of data.list[3] should be data.list[0]');
+    assert(result.list.length === 10, 'result.list.length should be 10');
+    assert(result.list[3].children.length === 2, 'result.list[3] should have 2 children');
+    assert(result.list[3].children[0] === result.list[0], 'First child of result.list[3] should be result.list[0]');
 }, function shouldResolveCyclics2 () {
     //
     // shouldResolveCyclics2
