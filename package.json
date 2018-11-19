@@ -8,7 +8,8 @@
   "scripts": {
     "eslint": "eslint .",
     "browser-test": "npm run eslint && npm run rollup && npm start test/",
-    "test": "npm run eslint && npm run rollup && node test/test-polyglot.js",
+    "node-test": "npx babel-node test/test.js",
+    "test": "npm run eslint && npm run rollup && npm run node-test",
     "rollup": "rollup -c"
   },
   "repository": {
@@ -37,6 +38,7 @@
   "engines": {},
   "devDependencies": {
     "@babel/core": "^7.1.2",
+    "@babel/node": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "base64-arraybuffer-es6": "^0.4.2",
     "eslint": "5.8.0",

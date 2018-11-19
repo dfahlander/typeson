@@ -297,14 +297,14 @@ function Typeson (options) {
             let clone;
             if (replaced !== value) {
                 ret = replaced;
-                observerData = {replaced: replaced};
+                observerData = {replaced};
             } else {
                 if (isArr || stateObj.iterateIn === 'array') {
                     clone = new Array(value.length);
-                    observerData = {clone: clone};
+                    observerData = {clone};
                 } else if (isPlainObj || stateObj.iterateIn === 'object') {
                     clone = {};
-                    observerData = {clone: clone};
+                    observerData = {clone};
                 } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
                     promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type]);
                     ret = value;
