@@ -1,5 +1,12 @@
 # typeson
 
+## 5.10.0
+
+- Fix: Give string tag to `TypesonPromise` to prevent it from passing
+    `isUserObject`
+- Linting (Markdown): Update per newer API
+- npm: Update devDeps
+
 ## 5.9.0
 
 - Linting (ESLint): Remove unused file from ignore; apply script to whole

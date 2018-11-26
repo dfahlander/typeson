@@ -3,3 +3,4 @@
 /dist
 *.log
 test/test-polyglot.js
+/ignore

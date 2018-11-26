@@ -606,6 +606,11 @@ function Undefined(){} // eslint-disable-line space-before-function-paren, space
 // With ES6 classes, we may be able to simply use `class TypesonPromise extends Promise` and add a string tag for detection
 function TypesonPromise(f){this.p=new Promise(f)} // eslint-disable-line block-spacing, space-before-function-paren, space-before-blocks, space-infix-ops, semi
 
+if (typeof Symbol !== 'undefined') { // Note: @babel/polyfill provides
+    // Ensure `isUserObject` will return `false` for `TypesonPromise`
+    TypesonPromise.prototype[Symbol.toStringTag] = 'TypesonPromise';
+}
+
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
     return new TypesonPromise((typesonResolve, typesonReject) => {
         this.p.then(function (res) {
