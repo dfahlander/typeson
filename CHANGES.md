@@ -1,5 +1,9 @@
 # typeson
 
+## 5.10.1
+
+- yarn: Update `yarn.lock`
+
 ## 5.10.0
 
 - Fix: Give string tag to `TypesonPromise` to prevent it from passing
