@@ -829,7 +829,7 @@ run([function shouldSupportBasicTypes () {
     const back = typeson.parse(tson);
     assert(back.b === 5, 'Should have kept property');
     assert(back.nonenum === 100, 'Should have kept non-enumerable property');
-    assert(Object.keys(back).includes('nonenum'), 'Non-enumerable property should now be enumerable');
+    assert(back.propertyIsEnumerable('nonenum'), 'Non-enumerable property should now be enumerable');
 }, function shouldAllowSinglePromiseResolution () {
     const typeson = new Typeson();
     const x = new Typeson.Promise(function (res) {
