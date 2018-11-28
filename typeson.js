@@ -352,11 +352,15 @@ function Typeson (options) {
                 } else {
                     ret = value;
                 }
-                if (runObserver) runObserver();
+                if (runObserver) {
+                    runObserver();
+                }
                 return ret;
             }
             if (value === null) {
-                if (runObserver) runObserver();
+                if (runObserver) {
+                    runObserver();
+                }
                 return value;
             }
             if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
@@ -415,7 +419,9 @@ function Typeson (options) {
                     ret = value; // Only clone vanilla objects and arrays
                 }
             }
-            if (runObserver) runObserver();
+            if (runObserver) {
+                runObserver();
+            }
 
             if (opts.iterateNone) {
                 return clone || ret;
@@ -446,7 +452,9 @@ function Typeson (options) {
                         }
                     });
                 }
-                if (runObserver) runObserver({endIterateIn: true, end: true});
+                if (runObserver) {
+                    runObserver({endIterateIn: true, end: true});
+                }
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
@@ -466,7 +474,9 @@ function Typeson (options) {
                         }
                     });
                 });
-                if (runObserver) runObserver({endIterateOwn: true, end: true});
+                if (runObserver) {
+                    runObserver({endIterateOwn: true, end: true});
+                }
             }
             // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
             if (stateObj.iterateUnsetNumeric) {
@@ -491,7 +501,9 @@ function Typeson (options) {
                         });
                     }
                 }
-                if (runObserver) runObserver({endIterateUnsetNumeric: true, end: true});
+                if (runObserver) {
+                    runObserver({endIterateUnsetNumeric: true, end: true});
+                }
             }
             return clone;
         }
@@ -533,13 +545,17 @@ function Typeson (options) {
                     //   own types to replace
                     Object.assign(stateObj, {type, replaced: true});
                     if ((sync || !replacer.replaceAsync) && !replacer.replace) {
-                        if (runObserver) runObserver({typeDetected: true});
+                        if (runObserver) {
+                            runObserver({typeDetected: true});
+                        }
                         return _encapsulate(
                             keypath, value, cyclic && 'readonly', stateObj,
                             promisesData, resolvingTypesonPromise, type
                         );
                     }
-                    if (runObserver) runObserver({replacing: true});
+                    if (runObserver) {
+                        runObserver({replacing: true});
+                    }
 
                     const replaceMethod = sync || !replacer.replaceAsync
                         ? 'replace'
