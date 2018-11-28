@@ -485,7 +485,9 @@ function Typeson (options) {
                                     kp, val, !!cyclic, stateObj,
                                     clone, i, stateObj.type
                                 ]);
-                            } else if (val !== undefined) clone[i] = val;
+                            } else if (val !== undefined) {
+                                clone[i] = val;
+                            }
                         });
                     }
                 }
@@ -589,11 +591,15 @@ function Typeson (options) {
             ignore$Types = true;
 
         // No type info added. Revival not needed.
-        if (!types) return obj;
+        if (!types) {
+            return obj;
+        }
 
         // Object happened to have own `$types` property but with
         //   no actual types, so we unescape and return that object
-        if (types === true) return obj.$;
+        if (types === true) {
+            return obj.$;
+        }
 
         // Special when root object is not a trivial Object, it will
         //   be encapsulated in `$`. It will also be encapsulated in
