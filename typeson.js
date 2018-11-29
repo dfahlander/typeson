@@ -15,7 +15,9 @@ import {
 const {keys} = Object,
     {isArray} = Array,
     hasOwn = ({}.hasOwnProperty),
-    internalStateObjPropsToIgnore = ['type', 'replaced', 'iterateIn', 'iterateUnsetNumeric'];
+    internalStateObjPropsToIgnore = [
+        'type', 'replaced', 'iterateIn', 'iterateUnsetNumeric'
+    ];
 
 /**
  * An instance of this class can be used to call `stringify()` and `parse()`.
@@ -35,7 +37,8 @@ class Typeson {
         this.plainObjectReplacers = [];
         this.nonplainObjectReplacers = [];
 
-        // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
+        // Revivers: map {type => reviver}.
+        //   Sample: {'Date': value => new Date(value)}
         this.revivers = {};
 
         /** Types registered via register() */
@@ -160,8 +163,8 @@ class Typeson {
     }
 
     /**
-     * Encapsulate a complex object into a plain Object by replacing registered
-     * types with plain objects representing the types data.
+     * Encapsulate a complex object into a plain Object by replacing
+     * registered types with plain objects representing the types data.
      *
      * This method is used internally by T`ypeson.stringify()`.
      * @param {Object} obj - Object to encapsulate.
@@ -208,8 +211,8 @@ class Typeson {
                     return [...new Set(typeNames)];
                 }
 
-                // Special if array (or a primitive) was serialized because
-                //   JSON would ignore custom `$types` prop on it
+                // Special if array (or a primitive) was serialized
+                //   because JSON would ignore custom `$types` prop on it
                 if (!ret || !isPlainObject(ret) ||
                     // Also need to handle if this is an object with its
                     //   own `$types` property (to avoid ambiguity)
@@ -251,7 +254,10 @@ class Typeson {
                         keyPath, promResult, cyclic, stateObj,
                         newPromisesData, true, detectedType
                     );
-                    const isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
+                    const isTypesonPromise = hasConstructorOf(
+                        encaps,
+                        TypesonPromise
+                    );
                     // Handle case where an embedded custom type itself
                     //   returns a `Typeson.Promise`
                     if (keyPath && isTypesonPromise) {
@@ -329,7 +335,10 @@ class Typeson {
                         stateObj,
                         promisesData,
                         resolvingTypesonPromise,
-                        awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
+                        awaitingTypesonPromise: hasConstructorOf(
+                            value,
+                            TypesonPromise
+                        )
                     }, type !== undefined ? {type} : {}));
                 }
                 : null;
@@ -406,7 +415,9 @@ class Typeson {
                 } else if (isPlainObj || stateObj.iterateIn === 'object') {
                     clone = {};
                     observerData = {clone};
-                } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
+                } else if (keypath === '' &&
+                    hasConstructorOf(value, TypesonPromise)
+                ) {
                     promisesData.push([
                         keypath, value, cyclic, stateObj,
                         undefined, undefined, stateObj.type
@@ -681,7 +692,9 @@ class Typeson {
          * @returns {}
          */
         function _revive (keypath, value, target, opts, clone, key) {
-            if (ignore$Types && keypath === '$types') return;
+            if (ignore$Types && keypath === '$types') {
+                return;
+            }
             const type = types[keypath];
             if (isArray(value) || isPlainObject(value)) {
                 const clone = isArray(value) ? new Array(value.length) : {};
@@ -782,8 +795,9 @@ class Typeson {
 
     /**
      * Register types.
-     * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
-     * @param {Array.<Object.<string,Function[]>>} typeSpecSets - Types and their functions [test, encapsulate, revive];
+     * For examples how to use this method, see {@link https://github.com/dfahlander/typeson-registry/tree/master/types}
+     * @param {Array.<Object.<string,Function[]>>} typeSpecSets - Types and
+     *   their functions [test, encapsulate, revive];
      * @param {object} opts
      * @returns {Typeson}
      */
@@ -827,7 +841,9 @@ class Typeson {
                     spec = {
                         test: (x) => x && x.constructor === Class,
                         replace: (x) => Object.assign({}, x),
-                        revive: (x) => Object.assign(Object.create(Class.prototype), x)
+                        revive: (x) => Object.assign(
+                            Object.create(Class.prototype), x
+                        )
                     };
                 } else if (isArray(spec)) {
                     const [test, replace, revive] = spec;
