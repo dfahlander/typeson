@@ -115,7 +115,9 @@ function unescapeKeyPathComponent (keyPathComponent) {
  * @returns {*}
  */
 function getByKeyPath (obj, keyPath) {
-    if (keyPath === '') return obj;
+    if (keyPath === '') {
+        return obj;
+    }
     const period = keyPath.indexOf('.');
     if (period > -1) {
         const innerObj = obj[

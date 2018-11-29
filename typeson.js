@@ -756,7 +756,9 @@ class Typeson {
                     keyPathResolutions.splice(0, 1);
                 }
             }
-            if (!type) return value;
+            if (!type) {
+                return value;
+            }
             if (type === '#') {
                 const ret = getByKeyPath(target, value.substr(1));
                 if (ret === undefined) { // Cyclic reference not yet available

@@ -52,7 +52,9 @@ const globalTypeson = typeson;
 
 // The test framework I need:
 function assert (x, msg) {
-    if (!x) throw new Error(msg);
+    if (!x) {
+        throw new Error(msg);
+    }
     msg = '  OK: ' + msg;
     if (typeof document !== 'undefined') {
         document.body.append(
