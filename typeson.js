@@ -95,7 +95,8 @@ class Typeson {
      * Parse Typeson back into an obejct.
      * Initial arguments works identical to those of `JSON.parse()`.
      * @param {string} text
-     * @param {function} reviver This JSON reviver has nothing to do with our revivers.
+     * @param {function} reviver This JSON reviver has nothing to do with
+     *   our revivers.
      * @param {object} opts
      * @returns {external:JSON}
      */
@@ -107,7 +108,8 @@ class Typeson {
     /**
     * Also sync but throws on non-sync result
     * @param {string} text
-    * @param {function} reviver This JSON reviver has nothing to do with our revivers.
+    * @param {function} reviver This JSON reviver has nothing to do with
+    *   our revivers.
     * @param {object} opts
     * @returns {external:JSON}
     */
@@ -120,7 +122,8 @@ class Typeson {
     }
     /**
     * @param {string} text
-    * @param {function} reviver This JSON reviver has nothing to do with our revivers.
+    * @param {function} reviver This JSON reviver has nothing to do with
+    *   our revivers.
     * @param {object} opts
     * @returns {Promise} Resolves to `external:JSON`
     */
@@ -352,7 +355,8 @@ class Typeson {
                 return value;
             }
             if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
-                // Options set to detect cyclic references and be able to rewrite them.
+                // Options set to detect cyclic references and be able
+                //   to rewrite them.
                 const refIndex = refObjs.indexOf(value);
                 if (refIndex < 0) {
                     if (cyclic === true) {
@@ -443,7 +447,11 @@ class Typeson {
                 if (runObserver) {
                     runObserver({endIterateIn: true, end: true});
                 }
-            } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
+            } else {
+                // Note: Non-indexes on arrays won't survive stringify so somewhat
+                //  wasteful for arrays, but so too is iterating all numeric
+                //  indexes on sparse arrays when not wanted or filtering own keys
+                //  for positive integers
                 keys(value).forEach(function (key) {
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
                     const ownKeysObj = {ownKeys: true};
@@ -466,12 +474,15 @@ class Typeson {
                     runObserver({endIterateOwn: true, end: true});
                 }
             }
-            // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
+            // Iterate array for non-own numeric properties (we can't
+            //   replace the prior loop though as it iterates non-integer keys)
             if (stateObj.iterateUnsetNumeric) {
                 const vl = value.length;
                 for (let i = 0; i < vl; i++) {
                     if (!(i in value)) {
-                        const kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
+                        // No need to escape numeric
+                        const kp = keypath + (keypath ? '.' : '') + i;
+
                         const ownKeysObj = {ownKeys: false};
                         _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
                             const val = _encapsulate(
@@ -512,7 +523,9 @@ class Typeson {
             resolvingTypesonPromise, runObserver
         ) {
             // Encapsulate registered types
-            const replacers = plainObject ? that.plainObjectReplacers : that.nonplainObjectReplacers;
+            const replacers = plainObject
+                ? that.plainObjectReplacers
+                : that.nonplainObjectReplacers;
             let i = replacers.length;
             while (i--) {
                 const replacer = replacers[i];
@@ -587,7 +600,9 @@ class Typeson {
      * @returns {*}
      */
     encapsulateSync (obj, stateObj, opts) {
-        return this.encapsulate(obj, stateObj, {throwOnBadSyncType: true, ...opts, sync: true});
+        return this.encapsulate(obj, stateObj, {
+            throwOnBadSyncType: true, ...opts, sync: true
+        });
     }
 
     /**
@@ -597,15 +612,17 @@ class Typeson {
      * @returns {*}
      */
     encapsulateAsync (obj, stateObj, opts) {
-        return this.encapsulate(obj, stateObj, {throwOnBadSyncType: true, ...opts, sync: false});
+        return this.encapsulate(obj, stateObj, {
+            throwOnBadSyncType: true, ...opts, sync: false
+        });
     }
 
     /**
      * Revive an encapsulated object.
      * This method is used internally by `Typeson.parse()`.
-     * @param {object} obj - Object to revive. If it has `$types` member, the properties
-     *   that are listed there will be replaced with its true type instead of just
-     *   plain objects.
+     * @param {object} obj - Object to revive. If it has `$types` member, the
+     *   properties that are listed there will be replaced with its true type
+     *   instead of just plain objects.
      * @param {object} opts
      * @returns {}
      */
@@ -673,7 +690,8 @@ class Typeson {
                     }
                 });
                 value = clone;
-                while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
+                // Try to resolve cyclic reference as soon as available
+                while (keyPathResolutions.length) {
                     const [[target, keyPath, clone, key]] = keyPathResolutions;
                     const val = getByKeyPath(target, keyPath);
                     if (hasConstructorOf(val, Undefined)) {
