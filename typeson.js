@@ -183,7 +183,10 @@ class Typeson {
         //   special types or cyclic reference:
         const cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
         const {encapsulateObserver} = opts;
-        const ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
+        const ret = _encapsulate(
+            '', obj, cyclic, stateObj || {},
+            promisesDataRoot
+        );
 
         /**
          *
@@ -332,7 +335,9 @@ class Typeson {
                 : null;
             if (['string', 'boolean', 'number', 'undefined'].includes($typeof)) {
                 if (value === undefined || ($typeof === 'number' &&
-                    (isNaN(value) || value === -Infinity || value === Infinity))) {
+                    (isNaN(value) || value === -Infinity ||
+                        value === Infinity)
+                )) {
                     ret = replace(
                         keypath, value, stateObj, promisesData,
                         false, resolvingTypesonPromise, runObserver
@@ -574,12 +579,16 @@ class Typeson {
         return promisesDataRoot.length
             ? sync && opts.throwOnBadSyncType
                 ? (() => {
-                    throw new TypeError('Sync method requested but async result obtained');
+                    throw new TypeError(
+                        'Sync method requested but async result obtained'
+                    );
                 })()
                 : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
             : !sync && opts.throwOnBadSyncType
                 ? (() => {
-                    throw new TypeError('Async method requested but sync result obtained');
+                    throw new TypeError(
+                        'Async method requested but sync result obtained'
+                    );
                 })()
                 // If this is a synchronous request for stringification, yet
                 //   a promise is the result, we don't want to resolve leading
@@ -778,9 +787,14 @@ class Typeson {
             }
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
-                    throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
+                    throw new TypeError(
+                        '# cannot be used as a type name as it is reserved ' +
+                        'for cyclic objects'
+                    );
                 } else if (Typeson.JSON_TYPES.includes(typeId)) {
-                    throw new TypeError('Plain JSON object types are reserved as type names');
+                    throw new TypeError(
+                        'Plain JSON object types are reserved as type names'
+                    );
                 }
                 let spec = typeSpec[typeId];
                 const replacers = spec.testPlainObjects
@@ -831,8 +845,12 @@ class Typeson {
                 // Todo: We might consider a testAsync type
                 if (spec.revive || spec.reviveAsync) {
                     const reviverObj = {};
-                    if (spec.revive) reviverObj.revive = spec.revive.bind(spec);
-                    if (spec.reviveAsync) reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
+                    if (spec.revive) {
+                        reviverObj.revive = spec.revive.bind(spec);
+                    }
+                    if (spec.reviveAsync) {
+                        reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
+                    }
                     this.revivers[typeId] = reviverObj;
                 }
 

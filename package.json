@@ -6,8 +6,9 @@
   "browser": "./dist/typeson.js",
   "module": "./typeson.js",
   "scripts": {
-    "eslint": "eslint .",
-    "browser-test": "npm run eslint && npm run rollup && npm start test/",
+    "eslint": "eslint --report-unused-disable-directives .",
+    "start": "static -p 8092",
+    "browser-test": "npm run eslint && npm run rollup && opn http://localhost:8092/test/ && npm start",
     "node-test": "npx babel-node test/test.js",
     "test": "npm run eslint && npm run rollup && npm run node-test",
     "rollup": "rollup -c"
@@ -49,7 +50,7 @@
     "eslint-plugin-promise": "4.0.1",
     "eslint-plugin-standard": "4.0.0",
     "node-static": "0.7.11",
-    "opn": "5.4.0",
+    "opn-cli": "^4.0.0",
     "rollup": "0.67.3",
     "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-node-resolve": "^3.4.0",
