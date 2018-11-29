@@ -342,7 +342,9 @@ class Typeson {
                     }, type !== undefined ? {type} : {}));
                 }
                 : null;
-            if (['string', 'boolean', 'number', 'undefined'].includes($typeof)) {
+            if (['string', 'boolean', 'number', 'undefined'].includes(
+                $typeof
+            )) {
                 if (value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity ||
                         value === Infinity)
@@ -368,7 +370,9 @@ class Typeson {
                 }
                 return value;
             }
-            if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
+            if (cyclic && !stateObj.iterateIn &&
+                !stateObj.iterateUnsetNumeric
+            ) {
                 // Options set to detect cyclic references and be able
                 //   to rewrite them.
                 const refIndex = refObjs.indexOf(value);
