@@ -6,6 +6,7 @@
  * @param {function} f
  */
 class TypesonPromise{constructor(f){this.p=new Promise(f)}} // eslint-disable-line block-spacing, space-before-function-paren, space-before-blocks, space-infix-ops, semi
+// class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
 
 // Note: @babel/polyfill provides a `Symbol` polyfill
 if (typeof Symbol !== 'undefined') {

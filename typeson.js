@@ -878,8 +878,6 @@ class Typeson {
  */
 class Undefined{} // eslint-disable-line space-before-blocks
 
-// class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
-
 // The following provide classes meant to avoid clashes with other values
 Typeson.Undefined = Undefined; // To insist `undefined` should be added
 Typeson.Promise = TypesonPromise; // To support async encapsulation/stringification
