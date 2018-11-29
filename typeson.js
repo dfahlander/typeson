@@ -26,16 +26,21 @@ const {keys} = Object,
  * @param {{cyclic: boolean}} [options] - if cyclic (default true),
  *   cyclic references will be handled gracefully.
  */
-function Typeson (options) {
-    // Replacers signature: replace (value). Returns falsy if not
-    //   replacing. Otherwise ['Date', value.getTime()]
-    const plainObjectReplacers = [];
-    const nonplainObjectReplacers = [];
-    // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
-    const revivers = {};
+class Typeson {
+    constructor (options) {
+        this.options = options;
 
-    /** Types registered via register() */
-    const regTypes = this.types = {};
+        // Replacers signature: replace (value). Returns falsy if not
+        //   replacing. Otherwise ['Date', value.getTime()]
+        this.plainObjectReplacers = [];
+        this.nonplainObjectReplacers = [];
+
+        // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
+        this.revivers = {};
+
+        /** Types registered via register() */
+        this.types = {};
+    }
 
     /**
      * Serialize given object to Typeson.
@@ -47,16 +52,16 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {string|Promise} Promise resolves to a string
      */
-    const stringify = this.stringify = function (obj, replacer, space, opts) {
-        opts = {...options, ...opts, stringification: true};
-        const encapsulated = encapsulate(obj, null, opts);
+    stringify (obj, replacer, space, opts) {
+        opts = {...this.options, ...opts, stringification: true};
+        const encapsulated = this.encapsulate(obj, null, opts);
         if (isArray(encapsulated)) {
             return JSON.stringify(encapsulated[0], replacer, space);
         }
         return encapsulated.then((res) => {
             return JSON.stringify(res, replacer, space);
         });
-    };
+    }
 
     /**
      * Also sync but throws on non-sync result
@@ -66,11 +71,11 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {string}
      */
-    this.stringifySync = function (obj, replacer, space, opts) {
-        return stringify(obj, replacer, space, {
+    stringifySync (obj, replacer, space, opts) {
+        return this.stringify(obj, replacer, space, {
             throwOnBadSyncType: true, ...opts, sync: true
         });
-    };
+    }
 
     /**
      *
@@ -80,11 +85,11 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {Promise} Resolves to string
      */
-    this.stringifyAsync = function (obj, replacer, space, opts) {
-        return stringify(obj, replacer, space, {
+    stringifyAsync (obj, replacer, space, opts) {
+        return this.stringify(obj, replacer, space, {
             throwOnBadSyncType: true, ...opts, sync: false
         });
-    };
+    }
 
     /**
      * Parse Typeson back into an obejct.
@@ -94,10 +99,10 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {external:JSON}
      */
-    const parse = this.parse = function (text, reviver, opts) {
-        opts = {...options, ...opts, parse: true};
-        return revive(JSON.parse(text, reviver), opts);
-    };
+    parse (text, reviver, opts) {
+        opts = {...this.options, ...opts, parse: true};
+        return this.revive(JSON.parse(text, reviver), opts);
+    }
 
     /**
     * Also sync but throws on non-sync result
@@ -106,26 +111,26 @@ function Typeson (options) {
     * @param {object} opts
     * @returns {external:JSON}
     */
-    this.parseSync = function (text, reviver, opts) {
-        return parse(
+    parseSync (text, reviver, opts) {
+        return this.parse(
             text,
             reviver,
             {throwOnBadSyncType: true, ...opts, sync: true}
         );
-    };
+    }
     /**
     * @param {string} text
     * @param {function} reviver This JSON reviver has nothing to do with our revivers.
     * @param {object} opts
     * @returns {Promise} Resolves to `external:JSON`
     */
-    this.parseAsync = function (text, reviver, opts) {
-        return parse(
+    parseAsync (text, reviver, opts) {
+        return this.parse(
             text,
             reviver,
             {throwOnBadSyncType: true, ...opts, sync: false}
         );
-    };
+    }
 
     /**
      *
@@ -134,10 +139,11 @@ function Typeson (options) {
      * @param {object} [opts={}]
      * @returns {string[]|false}
      */
-    this.specialTypeNames = function (obj, stateObj, opts = {}) {
+    specialTypeNames (obj, stateObj, opts = {}) {
         opts.returnTypeNames = true;
         return this.encapsulate(obj, stateObj, opts);
-    };
+    }
+
     /**
      *
      * @param {*} obj
@@ -145,10 +151,10 @@ function Typeson (options) {
      * @param {object} [opts={}]
      * @returns {Promise|Array|object|string|false}
      */
-    this.rootTypeName = function (obj, stateObj, opts = {}) {
+    rootTypeName (obj, stateObj, opts = {}) {
         opts.iterateNone = true;
         return this.encapsulate(obj, stateObj, opts);
-    };
+    }
 
     /**
      * Encapsulate a complex object into a plain Object by replacing registered
@@ -160,11 +166,12 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {Promise|Array|object|string|false}
      */
-    const encapsulate = this.encapsulate = function (obj, stateObj, opts) {
-        opts = {sync: true, ...options, ...opts};
+    encapsulate (obj, stateObj, opts) {
+        opts = {sync: true, ...this.options, ...opts};
         const {sync} = opts;
 
-        const types = {},
+        const that = this,
+            types = {},
             refObjs = [], // For checking cyclic references
             refKeys = [], // For checking cyclic references
             promisesDataRoot = [];
@@ -264,26 +271,7 @@ function Typeson (options) {
                 })
             );
             return ret;
-        };
-        return promisesDataRoot.length
-            ? sync && opts.throwOnBadSyncType
-                ? (() => {
-                    throw new TypeError('Sync method requested but async result obtained');
-                })()
-                : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
-            : !sync && opts.throwOnBadSyncType
-                ? (() => {
-                    throw new TypeError('Async method requested but sync result obtained');
-                })()
-                // If this is a synchronous request for stringification, yet
-                //   a promise is the result, we don't want to resolve leading
-                //   to an async result, so we return an array to avoid ambiguity
-                : (opts.stringification && sync
-                    ? [finish(ret)]
-                    : (sync
-                        ? finish(ret)
-                        : Promise.resolve(finish(ret))
-                    ));
+        }
 
         /**
          *
@@ -386,7 +374,7 @@ function Typeson (options) {
             const replaced = (
                 // Running replace will cause infinite loop as will test positive again
                 ((isPlainObj || isArr) &&
-                    (!plainObjectReplacers.length || stateObj.replaced)) ||
+                    (!that.plainObjectReplacers.length || stateObj.replaced)) ||
                 stateObj.iterateIn
             )
                 // Optimization: if plain object and no plain-object replacers, don't
@@ -524,13 +512,13 @@ function Typeson (options) {
             resolvingTypesonPromise, runObserver
         ) {
             // Encapsulate registered types
-            const replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
+            const replacers = plainObject ? that.plainObjectReplacers : that.nonplainObjectReplacers;
             let i = replacers.length;
             while (i--) {
                 const replacer = replacers[i];
                 if (replacer.test(value, stateObj)) {
                     const {type} = replacer;
-                    if (revivers[type]) {
+                    if (that.revivers[type]) {
                         // Record the type only if a corresponding reviver exists.
                         // This is to support specs where only replacement is done.
                         // For example ensuring deep cloning of the object, or
@@ -569,7 +557,27 @@ function Typeson (options) {
             }
             return value;
         }
-    };
+
+        return promisesDataRoot.length
+            ? sync && opts.throwOnBadSyncType
+                ? (() => {
+                    throw new TypeError('Sync method requested but async result obtained');
+                })()
+                : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
+            : !sync && opts.throwOnBadSyncType
+                ? (() => {
+                    throw new TypeError('Async method requested but sync result obtained');
+                })()
+                // If this is a synchronous request for stringification, yet
+                //   a promise is the result, we don't want to resolve leading
+                //   to an async result, so we return an array to avoid ambiguity
+                : (opts.stringification && sync
+                    ? [finish(ret)]
+                    : (sync
+                        ? finish(ret)
+                        : Promise.resolve(finish(ret))
+                    ));
+    }
 
     /**
      * Also sync but throws on non-sync result
@@ -578,18 +586,19 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {*}
      */
-    this.encapsulateSync = function (obj, stateObj, opts) {
-        return encapsulate(obj, stateObj, {throwOnBadSyncType: true, ...opts, sync: true});
-    };
+    encapsulateSync (obj, stateObj, opts) {
+        return this.encapsulate(obj, stateObj, {throwOnBadSyncType: true, ...opts, sync: true});
+    }
+
     /**
      * @param {*} obj
      * @param {object} stateObj
      * @param {object} opts
      * @returns {*}
      */
-    this.encapsulateAsync = function (obj, stateObj, opts) {
-        return encapsulate(obj, stateObj, {throwOnBadSyncType: true, ...opts, sync: false});
-    };
+    encapsulateAsync (obj, stateObj, opts) {
+        return this.encapsulate(obj, stateObj, {throwOnBadSyncType: true, ...opts, sync: false});
+    }
 
     /**
      * Revive an encapsulated object.
@@ -600,8 +609,9 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {}
      */
-    const revive = this.revive = function (obj, opts) {
-        opts = {sync: true, ...options, ...opts};
+    revive (obj, opts) {
+        const that = this;
+        opts = {sync: true, ...this.options, ...opts};
         const {sync} = opts;
         let types = obj && obj.$types,
             ignore$Types = true;
@@ -630,19 +640,6 @@ function Typeson (options) {
         const stateObj = {};
         let ret = _revive('', obj, null, opts);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
-        return isThenable(ret)
-            ? sync && opts.throwOnBadSyncType
-                ? (() => {
-                    throw new TypeError('Sync method requested but async result obtained');
-                })()
-                : ret
-            : !sync && opts.throwOnBadSyncType
-                ? (() => {
-                    throw new TypeError('Async method requested but sync result obtained');
-                })()
-                : sync
-                    ? ret
-                    : Promise.resolve(ret);
 
         /**
          *
@@ -699,7 +696,7 @@ function Typeson (options) {
             }
             const {sync} = opts;
             return [].concat(type).reduce((val, type) => {
-                const reviver = revivers[type];
+                const reviver = that.revivers[type];
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
                 }
@@ -712,7 +709,21 @@ function Typeson (options) {
                 ](val, stateObj);
             }, value);
         }
-    };
+
+        return isThenable(ret)
+            ? sync && opts.throwOnBadSyncType
+                ? (() => {
+                    throw new TypeError('Sync method requested but async result obtained');
+                })()
+                : ret
+            : !sync && opts.throwOnBadSyncType
+                ? (() => {
+                    throw new TypeError('Async method requested but sync result obtained');
+                })()
+                : sync
+                    ? ret
+                    : Promise.resolve(ret);
+    }
 
     /**
      * Also sync but throws on non-sync result
@@ -720,17 +731,18 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {*}
      */
-    this.reviveSync = function (obj, opts) {
-        return revive(obj, {throwOnBadSyncType: true, ...opts, sync: true});
-    };
+    reviveSync (obj, opts) {
+        return this.revive(obj, {throwOnBadSyncType: true, ...opts, sync: true});
+    }
+
     /**
     * @param {*} obj
     * @param {object} opts
     * @returns {Promise} Resolves to `*`
     */
-    this.reviveAsync = function (obj, opts) {
-        return revive(obj, {throwOnBadSyncType: true, ...opts, sync: false});
-    };
+    reviveAsync (obj, opts) {
+        return this.revive(obj, {throwOnBadSyncType: true, ...opts, sync: false});
+    }
 
     /**
      * Register types.
@@ -739,7 +751,7 @@ function Typeson (options) {
      * @param {object} opts
      * @returns {Typeson}
      */
-    this.register = function (typeSpecSets, opts) {
+    register (typeSpecSets, opts) {
         opts = opts || {};
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             // Allow arrays of arrays of arrays...
@@ -754,16 +766,16 @@ function Typeson (options) {
                 }
                 let spec = typeSpec[typeId];
                 const replacers = spec.testPlainObjects
-                    ? plainObjectReplacers
-                    : nonplainObjectReplacers;
+                    ? this.plainObjectReplacers
+                    : this.nonplainObjectReplacers;
                 const existingReplacer = replacers.filter(function (r) {
                     return r.type === typeId;
                 });
                 if (existingReplacer.length) {
                     // Remove existing spec and replace with this one.
                     replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
-                    delete revivers[typeId];
-                    delete regTypes[typeId];
+                    delete this.revivers[typeId];
+                    delete this.types[typeId];
                 }
                 if (!spec) {
                     return;
@@ -794,24 +806,24 @@ function Typeson (options) {
                     ? opts.fallback
                     : (opts.fallback ? 0 : Infinity);
                 if (spec.testPlainObjects) {
-                    plainObjectReplacers.splice(start, 0, replacerObj);
+                    this.plainObjectReplacers.splice(start, 0, replacerObj);
                 } else {
-                    nonplainObjectReplacers.splice(start, 0, replacerObj);
+                    this.nonplainObjectReplacers.splice(start, 0, replacerObj);
                 }
                 // Todo: We might consider a testAsync type
                 if (spec.revive || spec.reviveAsync) {
                     const reviverObj = {};
                     if (spec.revive) reviverObj.revive = spec.revive.bind(spec);
                     if (spec.reviveAsync) reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
-                    revivers[typeId] = reviverObj;
+                    this.revivers[typeId] = reviverObj;
                 }
 
                 // Record to be retrieved via public types property.
-                regTypes[typeId] = spec;
-            });
-        });
+                this.types[typeId] = spec;
+            }, this);
+        }, this);
         return this;
-    };
+    }
 }
 
 /**
