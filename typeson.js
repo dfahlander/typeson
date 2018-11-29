@@ -772,7 +772,7 @@ class Typeson {
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
                 }
-                return reviver[ // eslint-disable-line standard/computed-property-even-spacing
+                return reviver[
                     sync && reviver.revive
                         ? 'revive'
                         : !sync && reviver.reviveAsync

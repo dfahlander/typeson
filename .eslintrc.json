@@ -16,6 +16,7 @@
     "no-var": 2,
     "prefer-const": 2,
     "object-curly-spacing": ["error", "never"],
-    "max-len": ["error", {"ignorePattern": "eslint-disable-line|@link"}]
+    "standard/computed-property-even-spacing": 0,
+    "max-len": ["error", {"ignorePattern": "eslint-disable-line|@link|@returns"}]
   }
 }

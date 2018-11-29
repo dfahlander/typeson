@@ -118,7 +118,9 @@ function getByKeyPath (obj, keyPath) {
     if (keyPath === '') return obj;
     const period = keyPath.indexOf('.');
     if (period > -1) {
-        const innerObj = obj[unescapeKeyPathComponent(keyPath.substr(0, period))];
+        const innerObj = obj[
+            unescapeKeyPathComponent(keyPath.substr(0, period))
+        ];
         return innerObj === undefined
             ? undefined
             : getByKeyPath(innerObj, keyPath.substr(period + 1));

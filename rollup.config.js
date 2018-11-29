@@ -12,8 +12,10 @@ export default [{
     plugins: [
         babel(),
         terser({
-            keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
-            keep_classnames: true // Keep in case implementing above as classes
+            // Needed for `Typeson.Undefined` and other constructor detection
+            keep_fnames: true,
+            // Keep in case implementing above as classes
+            keep_classnames: true
         })
     ]
 }, {
@@ -26,8 +28,10 @@ export default [{
     plugins: [
         babel(),
         terser({
-            keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
-            keep_classnames: true // Keep in case implementing above as classes
+            // Needed for `Typeson.Undefined` and other constructor detection
+            keep_fnames: true,
+            // Keep in case implementing above as classes
+            keep_classnames: true
         })
     ]
 }, {
@@ -40,8 +44,10 @@ export default [{
     plugins: [
         babel(),
         terser({
-            keep_fnames: true, // Needed for `Typeson.Undefined` and other constructor detection
-            keep_classnames: true // Keep in case implementing above as classes
+            // Needed for `Typeson.Undefined` and other constructor detection
+            keep_fnames: true,
+            // Keep in case implementing above as classes
+            keep_classnames: true
         }),
         resolve()
     ]
