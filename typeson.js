@@ -271,12 +271,12 @@ class Typeson {
                         ret = encaps.p;
                     } else {
                         // If this is itself a `Typeson.Promise` (because the
-                        //   original value supplied was a `Promise` or because
-                        //   the supplied custom type value resolved to one),
-                        //   returning it below will be fine since a `Promise`
-                        //   is expected anyways given current config (and if
-                        //   not a `Promise`, it will be ready as the resolve
-                        //   value)
+                        //   original value supplied was a `Promise` or
+                        //   because the supplied custom type value resolved
+                        //   to one), returning it below will be fine since
+                        //   a `Promise` is expected anyways given current
+                        //   config (and if not a `Promise`, it will be ready
+                        //   as the resolve value)
                         ret = encaps;
                     }
                     return checkPromises(ret, newPromisesData);
@@ -292,7 +292,9 @@ class Typeson {
          * @param {function} cb
          * @returns {undefined}
          */
-        function _adaptBuiltinStateObjectProperties (stateObj, ownKeysObj, cb) {
+        function _adaptBuiltinStateObjectProperties (
+            stateObj, ownKeysObj, cb
+        ) {
             Object.assign(stateObj, ownKeysObj);
             const vals = internalStateObjPropsToIgnore.map((prop) => {
                 const tmp = stateObj[prop];
@@ -394,13 +396,15 @@ class Typeson {
             const isPlainObj = isPlainObject(value);
             const isArr = isArray(value);
             const replaced = (
-                // Running replace will cause infinite loop as will test positive again
+                // Running replace will cause infinite loop as will test
+                //   positive again
                 ((isPlainObj || isArr) &&
-                    (!that.plainObjectReplacers.length || stateObj.replaced)) ||
+                    (!that.plainObjectReplacers.length ||
+                        stateObj.replaced)) ||
                 stateObj.iterateIn
             )
-                // Optimization: if plain object and no plain-object replacers, don't
-                //   try finding a replacer
+                // Optimization: if plain object and no plain-object
+                //   replacers, don't try finding a replacer
                 ? value
                 : replace(
                     keypath, value, stateObj, promisesData,
@@ -447,22 +451,26 @@ class Typeson {
             if (stateObj.iterateIn) {
                 for (const key in value) {
                     const ownKeysObj = {ownKeys: hasOwn.call(value, key)};
-                    _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
-                        const kp = keypath + (keypath ? '.' : '') +
-                            escapeKeyPathComponent(key);
-                        const val = _encapsulate(
-                            kp, value[key], !!cyclic, stateObj,
-                            promisesData, resolvingTypesonPromise
-                        );
-                        if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([
-                                kp, val, !!cyclic, stateObj,
-                                clone, key, stateObj.type
-                            ]);
-                        } else if (val !== undefined) {
-                            clone[key] = val;
+                    _adaptBuiltinStateObjectProperties(
+                        stateObj,
+                        ownKeysObj,
+                        () => {
+                            const kp = keypath + (keypath ? '.' : '') +
+                                escapeKeyPathComponent(key);
+                            const val = _encapsulate(
+                                kp, value[key], !!cyclic, stateObj,
+                                promisesData, resolvingTypesonPromise
+                            );
+                            if (hasConstructorOf(val, TypesonPromise)) {
+                                promisesData.push([
+                                    kp, val, !!cyclic, stateObj,
+                                    clone, key, stateObj.type
+                                ]);
+                            } else if (val !== undefined) {
+                                clone[key] = val;
+                            }
                         }
-                    });
+                    );
                 }
                 if (runObserver) {
                     runObserver({endIterateIn: true, end: true});
@@ -470,33 +478,38 @@ class Typeson {
             } else {
                 // Note: Non-indexes on arrays won't survive stringify so
                 //  somewhat wasteful for arrays, but so too is iterating
-                //  all numeric indexes on sparse arrays when not wanted or
-                //  filtering own keys for positive integers
+                //  all numeric indexes on sparse arrays when not wanted
+                //  or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
                     const kp = keypath + (keypath ? '.' : '') +
                         escapeKeyPathComponent(key);
                     const ownKeysObj = {ownKeys: true};
-                    _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
-                        const val = _encapsulate(
-                            kp, value[key], !!cyclic, stateObj,
-                            promisesData, resolvingTypesonPromise
-                        );
-                        if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([
-                                kp, val, !!cyclic, stateObj,
-                                clone, key, stateObj.type
-                            ]);
-                        } else if (val !== undefined) {
-                            clone[key] = val;
+                    _adaptBuiltinStateObjectProperties(
+                        stateObj,
+                        ownKeysObj,
+                        () => {
+                            const val = _encapsulate(
+                                kp, value[key], !!cyclic, stateObj,
+                                promisesData, resolvingTypesonPromise
+                            );
+                            if (hasConstructorOf(val, TypesonPromise)) {
+                                promisesData.push([
+                                    kp, val, !!cyclic, stateObj,
+                                    clone, key, stateObj.type
+                                ]);
+                            } else if (val !== undefined) {
+                                clone[key] = val;
+                            }
                         }
-                    });
+                    );
                 });
                 if (runObserver) {
                     runObserver({endIterateOwn: true, end: true});
                 }
             }
             // Iterate array for non-own numeric properties (we can't
-            //   replace the prior loop though as it iterates non-integer keys)
+            //   replace the prior loop though as it iterates non-integer
+            //   keys)
             if (stateObj.iterateUnsetNumeric) {
                 const vl = value.length;
                 for (let i = 0; i < vl; i++) {
@@ -505,20 +518,24 @@ class Typeson {
                         const kp = keypath + (keypath ? '.' : '') + i;
 
                         const ownKeysObj = {ownKeys: false};
-                        _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
-                            const val = _encapsulate(
-                                kp, undefined, !!cyclic, stateObj,
-                                promisesData, resolvingTypesonPromise
-                            );
-                            if (hasConstructorOf(val, TypesonPromise)) {
-                                promisesData.push([
-                                    kp, val, !!cyclic, stateObj,
-                                    clone, i, stateObj.type
-                                ]);
-                            } else if (val !== undefined) {
-                                clone[i] = val;
+                        _adaptBuiltinStateObjectProperties(
+                            stateObj,
+                            ownKeysObj,
+                            () => {
+                                const val = _encapsulate(
+                                    kp, undefined, !!cyclic, stateObj,
+                                    promisesData, resolvingTypesonPromise
+                                );
+                                if (hasConstructorOf(val, TypesonPromise)) {
+                                    promisesData.push([
+                                        kp, val, !!cyclic, stateObj,
+                                        clone, i, stateObj.type
+                                    ]);
+                                } else if (val !== undefined) {
+                                    clone[i] = val;
+                                }
                             }
-                        });
+                        );
                     }
                 }
                 if (runObserver) {
@@ -553,11 +570,12 @@ class Typeson {
                 if (replacer.test(value, stateObj)) {
                     const {type} = replacer;
                     if (that.revivers[type]) {
-                        // Record the type only if a corresponding reviver exists.
-                        // This is to support specs where only replacement is done.
-                        // For example ensuring deep cloning of the object, or
-                        // replacing a type to its equivalent without the need to
-                        // revive it.
+                        // Record the type only if a corresponding reviver
+                        //   exists. This is to support specs where only
+                        //   replacement is done.
+                        // For example, ensuring deep cloning of the object,
+                        //   or replacing a type to its equivalent without
+                        //   the need to revive it.
                         const existing = types[keypath];
                         // type can comprise an array of types (see test
                         //   `shouldSupportIntermediateTypes`)
@@ -568,7 +586,9 @@ class Typeson {
                     // Now, also traverse the result in case it contains its
                     //   own types to replace
                     Object.assign(stateObj, {type, replaced: true});
-                    if ((sync || !replacer.replaceAsync) && !replacer.replace) {
+                    if ((sync || !replacer.replaceAsync) &&
+                        !replacer.replace
+                    ) {
                         if (runObserver) {
                             runObserver({typeDetected: true});
                         }
@@ -601,7 +621,9 @@ class Typeson {
                         'Sync method requested but async result obtained'
                     );
                 })()
-                : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
+                : Promise.resolve(
+                    checkPromises(ret, promisesDataRoot)
+                ).then(finish)
             : !sync && opts.throwOnBadSyncType
                 ? (() => {
                     throw new TypeError(
@@ -610,7 +632,8 @@ class Typeson {
                 })()
                 // If this is a synchronous request for stringification, yet
                 //   a promise is the result, we don't want to resolve leading
-                //   to an async result, so we return an array to avoid ambiguity
+                //   to an async result, so we return an array to avoid
+                //   ambiguity
                 : (opts.stringification && sync
                     ? [finish(ret)]
                     : (sync
@@ -785,7 +808,9 @@ class Typeson {
      * @returns {*}
      */
     reviveSync (obj, opts) {
-        return this.revive(obj, {throwOnBadSyncType: true, ...opts, sync: true});
+        return this.revive(obj, {
+            throwOnBadSyncType: true, ...opts, sync: true
+        });
     }
 
     /**
@@ -794,12 +819,15 @@ class Typeson {
     * @returns {Promise} Resolves to `*`
     */
     reviveAsync (obj, opts) {
-        return this.revive(obj, {throwOnBadSyncType: true, ...opts, sync: false});
+        return this.revive(obj, {
+            throwOnBadSyncType: true, ...opts, sync: false
+        });
     }
 
     /**
      * Register types.
-     * For examples how to use this method, see {@link https://github.com/dfahlander/typeson-registry/tree/master/types}
+     * For examples on how to use this method, see
+     *   {@link https://github.com/dfahlander/typeson-registry/tree/master/types}
      * @param {Array.<Object.<string,Function[]>>} typeSpecSets - Types and
      *   their functions [test, encapsulate, revive];
      * @param {object} opts
@@ -899,8 +927,11 @@ class Typeson {
 class Undefined{} // eslint-disable-line space-before-blocks
 
 // The following provide classes meant to avoid clashes with other values
-Typeson.Undefined = Undefined; // To insist `undefined` should be added
-Typeson.Promise = TypesonPromise; // To support async encapsulation/stringification
+
+// To insist `undefined` should be added
+Typeson.Undefined = Undefined;
+// To support async encapsulation/stringification
+Typeson.Promise = TypesonPromise;
 
 // Some fundamental type-checking utilities
 Typeson.isThenable = isThenable;
