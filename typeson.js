@@ -922,6 +922,7 @@ class Typeson {
 /**
  * We keep this function minimized so if using two instances of this
  * library, where one is minimized and one is not, it will still work
+ * with `hasConstructorOf`.
  * @constructor
  */
 class Undefined{} // eslint-disable-line space-before-blocks

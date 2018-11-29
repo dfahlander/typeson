@@ -1,6 +1,7 @@
 /**
  * We keep this function minimized so if using two instances of this
  *   library, where one is minimized and one is not, it will still work
+ *   with `hasConstructorOf`.
  * With ES6 classes, we may be able to simply use `class TypesonPromise
  *   extends Promise` and add a string tag for detection
  * @param {function} f
