@@ -453,12 +453,13 @@ class Typeson {
                     runObserver({endIterateIn: true, end: true});
                 }
             } else {
-                // Note: Non-indexes on arrays won't survive stringify so somewhat
-                //  wasteful for arrays, but so too is iterating all numeric
-                //  indexes on sparse arrays when not wanted or filtering own keys
-                //  for positive integers
+                // Note: Non-indexes on arrays won't survive stringify so
+                //  somewhat wasteful for arrays, but so too is iterating
+                //  all numeric indexes on sparse arrays when not wanted or
+                //  filtering own keys for positive integers
                 keys(value).forEach(function (key) {
-                    const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
+                    const kp = keypath + (keypath ? '.' : '') +
+                        escapeKeyPathComponent(key);
                     const ownKeysObj = {ownKeys: true};
                     _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, () => {
                         const val = _encapsulate(
@@ -545,7 +546,9 @@ class Typeson {
                         const existing = types[keypath];
                         // type can comprise an array of types (see test
                         //   `shouldSupportIntermediateTypes`)
-                        types[keypath] = existing ? [type].concat(existing) : type;
+                        types[keypath] = existing
+                            ? [type].concat(existing)
+                            : type;
                     }
                     // Now, also traverse the result in case it contains its
                     //   own types to replace
@@ -717,7 +720,9 @@ class Typeson {
             if (type === '#') {
                 const ret = getByKeyPath(target, value.substr(1));
                 if (ret === undefined) { // Cyclic reference not yet available
-                    keyPathResolutions.push([target, value.substr(1), clone, key]);
+                    keyPathResolutions.push([
+                        target, value.substr(1), clone, key
+                    ]);
                 }
                 return ret;
             }
@@ -740,12 +745,16 @@ class Typeson {
         return isThenable(ret)
             ? sync && opts.throwOnBadSyncType
                 ? (() => {
-                    throw new TypeError('Sync method requested but async result obtained');
+                    throw new TypeError(
+                        'Sync method requested but async result obtained'
+                    );
                 })()
                 : ret
             : !sync && opts.throwOnBadSyncType
                 ? (() => {
-                    throw new TypeError('Async method requested but sync result obtained');
+                    throw new TypeError(
+                        'Async method requested but sync result obtained'
+                    );
                 })()
                 : sync
                     ? ret
