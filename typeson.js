@@ -417,11 +417,16 @@ class Typeson {
                 ret = replaced;
                 observerData = {replaced};
             } else {
-                if (isArr || stateObj.iterateIn === 'array') {
+                if ((isArr && stateObj.iterateIn !== 'object') ||
+                    stateObj.iterateIn === 'array'
+                ) {
                     clone = new Array(value.length);
                     observerData = {clone};
                 } else if (isPlainObj || stateObj.iterateIn === 'object') {
                     clone = {};
+                    if (stateObj.addLength) {
+                        clone.length = value.length;
+                    }
                     observerData = {clone};
                 } else if (keypath === '' &&
                     hasConstructorOf(value, TypesonPromise)

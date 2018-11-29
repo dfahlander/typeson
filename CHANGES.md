@@ -1,4 +1,11 @@
-# typeson
+# typeson CHANGES
+
+## ?
+
+- Fix: Allow `iterateIn === 'object` to override array and create
+    object from array
+- Enhancement: Add state object option to auto-copy array length onto
+    array-like object clone
 
 ## 5.10.1
 
