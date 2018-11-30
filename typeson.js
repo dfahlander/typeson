@@ -774,7 +774,12 @@ class Typeson {
                 return ret;
             }
             const {sync} = opts;
-            return [].concat(type).reduce((val, type) => {
+            return [].concat(type).reduce(function reducer (val, type) {
+                if (hasConstructorOf(val, TypesonPromise)) {
+                    return val.then((v) => { // TypesonPromise here too
+                        return reducer(v, type);
+                    });
+                }
                 const reviver = that.revivers[type];
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
@@ -796,7 +801,11 @@ class Typeson {
                         'Sync method requested but async result obtained'
                     );
                 })()
-                : ret
+                : hasConstructorOf(ret, TypesonPromise)
+                    ? ret.p.then((v) => {
+                        return hasConstructorOf(v, Undefined) ? undefined : v;
+                    })
+                    : ret
             : !sync && opts.throwOnBadSyncType
                 ? (() => {
                     throw new TypeError(
