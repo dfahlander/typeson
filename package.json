@@ -6,6 +6,7 @@
   "browser": "./dist/typeson.js",
   "module": "./typeson.js",
   "scripts": {
+    "prepublishOnly": "yarn",
     "eslint": "eslint --report-unused-disable-directives .",
     "start": "static -p 8092",
     "browser-test": "npm run eslint && npm run rollup && opn http://localhost:8092/test/ && npm start",
