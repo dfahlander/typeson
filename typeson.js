@@ -764,10 +764,10 @@ class Typeson {
                 return value;
             }
             if (type === '#') {
-                const ret = getByKeyPath(target, value.substr(1));
+                const ret = getByKeyPath(target, value.slice(1));
                 if (ret === undefined) { // Cyclic reference not yet available
                     keyPathResolutions.push([
-                        target, value.substr(1), clone, key
+                        target, value.slice(1), clone, key
                     ]);
                 }
                 return ret;
