@@ -72,14 +72,13 @@ function run (tests) {
     console.log('Running test: ' + test.name);
     const ret = test();
     if (Typeson.isThenable(ret)) {
-        ret.then(function () {
-            run(tests);
+        return ret.then(function () {
+            return run(tests);
         }).catch(function (err) {
             console.log('Promise error in test ' + test.name + ': \n\t' + err);
         });
-    } else {
-        run(tests);
     }
+    return run(tests);
 }
 function roundtrip (x) {
     const tson = typeson.stringify(x, null, 2);
@@ -87,7 +86,7 @@ function roundtrip (x) {
     return typeson.parse(tson);
 }
 
-run([function shouldSupportBasicTypes () {
+const tests = [function shouldSupportBasicTypes () {
     //
     // shouldSupportBasicTypes
     //
@@ -1390,4 +1389,16 @@ run([function shouldSupportBasicTypes () {
     ]);
     assert(rootTypeName === 'array', 'Should return the single root type name');
     assert(runCount === 1, 'Should not iterate through the array structure');
-}]);
+}];
+
+(async () => {
+const testLength = tests.length;
+
+await run(tests);
+
+if (typeof document !== 'undefined') {
+    document.body.prepend(`Passed: ${testLength} tests`);
+} else {
+    console.log(`Passed: ${testLength} tests`);
+}
+})();
