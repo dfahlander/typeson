@@ -25,7 +25,7 @@ const typeson = new Typeson().register({
             return isNaN(n) ? 'NaN' : n > 0 ? 'Infinity' : '-Infinity';
         },
         function (s) {
-            return {NaN: NaN, Infinity: Infinity, '-Infinity': -Infinity}[s];
+            return {NaN, Infinity, '-Infinity': -Infinity}[s];
         }
     ],
     ArrayBuffer: [
@@ -673,7 +673,7 @@ run([function shouldSupportBasicTypes () {
 }, function shouldResolveCyclicsInEncapsulatedObjects () {
     const buf = new ArrayBuffer(16);
     const data = {
-        buf: buf,
+        buf,
         bar: {
             data: new DataView(buf, 8, 8)
         }
@@ -687,7 +687,7 @@ run([function shouldSupportBasicTypes () {
     );
 }, function shouldSupportRegisteringAClassWithoutReplacerOrReviver () {
     function MyClass () {}
-    const TSON = new Typeson().register({MyClass: MyClass});
+    const TSON = new Typeson().register({MyClass});
     const x = new MyClass();
     x.hello = 'world';
     const tson = TSON.stringify(x);

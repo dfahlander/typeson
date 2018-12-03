@@ -8,8 +8,8 @@ import {TypesonPromise} from './utils/TypesonPromise.js';
 import {
     isPlainObject, isObject, hasConstructorOf,
     isThenable, toStringTag, isUserObject,
-    escapeKeyPathComponent, unescapeKeyPathComponent, getByKeyPath,
-    getJSONType
+    escapeKeyPathComponent, unescapeKeyPathComponent,
+    getByKeyPath, getJSONType
 } from './utils/classMethods.js';
 
 const {keys} = Object,
@@ -193,7 +193,7 @@ class Typeson {
 
         /**
          *
-         * @param {} ret
+         * @param {*} ret
          * @returns {Array|object|string|false}
          */
         function finish (ret) {
@@ -233,7 +233,7 @@ class Typeson {
         }
         /**
          *
-         * @param {} ret
+         * @param {*} ret
          * @param {array} promisesData
          * @returns {Promise} Resolves to ...
          */
@@ -316,7 +316,7 @@ class Typeson {
          * @param {boolean} promisesData
          * @param {boolean} resolvingTypesonPromise
          * @param {string} detectedType
-         * @returns {}
+         * @returns {*}
          */
         function _encapsulate (
             keypath, value, cyclic, stateObj, promisesData,
@@ -559,7 +559,7 @@ class Typeson {
          * @param {boolean} plainObject
          * @param {boolean} resolvingTypesonPromise
          * @param {function} [runObserver]
-         * @returns {}
+         * @returns {*}
          */
         function replace (
             keypath, value, stateObj, promisesData, plainObject,
@@ -679,7 +679,8 @@ class Typeson {
      *   properties that are listed there will be replaced with its true type
      *   instead of just plain objects.
      * @param {object} opts
-     * @returns {}
+     * @throws TypeError If mismatch between sync/async type and result
+     * @returns {Promise|*} If async, returns a Promise that resolves to `*`
      */
     revive (obj, opts) {
         const that = this;
@@ -717,44 +718,44 @@ class Typeson {
          *
          * @param {string} keypath
          * @param {*} value
-         * @param {} target
+         * @param {?(Array|object)} target
          * @param {object} opts
-         * @param {Array|object} clone
-         * @param {string} key
-         * @returns {}
+         * @param {Array|object} [clone]
+         * @param {string} [key]
+         * @returns {*}
          */
         function _revive (keypath, value, target, opts, clone, key) {
             if (ignore$Types && keypath === '$types') {
-                return;
+                return undefined;
             }
             const type = types[keypath];
             if (isArray(value) || isPlainObject(value)) {
                 const clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
-                keys(value).forEach((key) => {
+                keys(value).forEach((k) => {
                     const val = _revive(
                         keypath + (keypath ? '.' : '') +
-                            escapeKeyPathComponent(key), value[key],
+                            escapeKeyPathComponent(k), value[k],
                         target || clone,
                         opts,
                         clone,
-                        key
+                        k
                     );
                     if (hasConstructorOf(val, Undefined)) {
-                        clone[key] = undefined;
+                        clone[k] = undefined;
                     } else if (val !== undefined) {
-                        clone[key] = val;
+                        clone[k] = val;
                     }
                 });
                 value = clone;
                 // Try to resolve cyclic reference as soon as available
                 while (keyPathResolutions.length) {
-                    const [[target, keyPath, clone, key]] = keyPathResolutions;
+                    const [[target, keyPath, clone, k]] = keyPathResolutions;
                     const val = getByKeyPath(target, keyPath);
                     if (hasConstructorOf(val, Undefined)) {
-                        clone[key] = undefined;
+                        clone[k] = undefined;
                     } else if (val !== undefined) {
-                        clone[key] = val;
+                        clone[k] = val;
                     } else {
                         break;
                     }
