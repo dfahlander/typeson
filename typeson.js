@@ -9,7 +9,7 @@ import {
     isPlainObject, isObject, hasConstructorOf,
     isThenable, toStringTag, isUserObject,
     escapeKeyPathComponent, unescapeKeyPathComponent,
-    getByKeyPath, getJSONType
+    getByKeyPath, setAtKeyPath, getJSONType
 } from './utils/classMethods.js';
 
 const {keys} = Object,
@@ -18,6 +18,24 @@ const {keys} = Object,
     internalStateObjPropsToIgnore = [
         'type', 'replaced', 'iterateIn', 'iterateUnsetNumeric'
     ];
+
+function nestedPathsFirst (a, b) {
+    let as = a.keypath.match(/\./g);
+    let bs = a.keypath.match(/\./g);
+    if (as) {
+        as = as.length;
+    }
+    if (bs) {
+        bs = bs.length;
+    }
+    return as > bs
+        ? -1
+        : bs < as
+            ? 1
+            : a.keypath < b.keypath
+                ? -1
+                : a.keypath > b.keypath;
+}
 
 /**
  * An instance of this class can be used to call `stringify()` and `parse()`.
@@ -37,8 +55,8 @@ class Typeson {
         this.plainObjectReplacers = [];
         this.nonplainObjectReplacers = [];
 
-        // Revivers: map {type => reviver}.
-        //   Sample: {'Date': value => new Date(value)}
+        // Revivers: [{type => reviver}, {plain: boolean}].
+        //   Sample: [{'Date': value => new Date(value)}, {plain: false}]
         this.revivers = {};
 
         /** Types registered via register() */
@@ -711,8 +729,78 @@ class Typeson {
 
         const keyPathResolutions = [];
         const stateObj = {};
+        revivePlainObjects();
         let ret = _revive('', obj, null);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
+
+        function revivePlainObjects () {
+            // const references = [];
+            // const reviveTypes = [];
+            const plainObjectTypes = [];
+            Object.entries(types).forEach(([
+                keypath, type
+            ]) => {
+                if (type === '#') {
+                    /*
+                    references.push({
+                        keypath,
+                        reference: getByKeyPath(obj, keypath)
+                    });
+                    */
+                    return;
+                }
+                [].concat(type).forEach(function (type) {
+                    const [, {plain}] = that.revivers[type];
+                    if (!plain) {
+                        // reviveTypes.push({keypath, type});
+                        return;
+                    }
+                    plainObjectTypes.push({keypath, type});
+                    delete types[keypath]; // Avoid repeating
+                });
+            });
+            // Handle plain object revivers first so reference
+            //   setting can use revived type (e.g., array instead
+            //   of object); assumes revived has same structure
+            //   or will otherwise break subsequent references
+            plainObjectTypes.sort(nestedPathsFirst).forEach(({
+                keypath, type
+            }) => {
+                let val = getByKeyPath(obj, keypath);
+                /*
+                // Todo: Allow async
+                if (hasConstructorOf(val, TypesonPromise)) {
+                    return val.then((v) => { // TypesonPromise here too
+                        return reducer(v, type);
+                    });
+                }
+                */
+                const [reviver] = that.revivers[type];
+                if (!reviver) {
+                    throw new Error('Unregistered type: ' + type);
+                }
+                val = reviver[
+                    sync && reviver.revive
+                        ? 'revive'
+                        : !sync && reviver.reviveAsync
+                            ? 'reviveAsync'
+                            : 'revive'
+                ](val, stateObj);
+
+                if (val === undefined) {
+                    return;
+                }
+                if (hasConstructorOf(val, Undefined)) {
+                    val = undefined;
+                }
+                const newVal = setAtKeyPath(obj, keypath, val);
+                if (newVal === val) {
+                    obj = val;
+                }
+            });
+            // references.forEach(({keypath, reference}) => {});
+            // reviveTypes.sort(nestedPathsFirst).forEach(() => {});
+        }
 
         /**
          *
@@ -778,7 +866,7 @@ class Typeson {
                         return reducer(v, type);
                     });
                 }
-                const reviver = that.revivers[type];
+                const [reviver] = that.revivers[type];
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
                 }
@@ -852,7 +940,7 @@ class Typeson {
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             // Allow arrays of arrays of arrays...
             if (isArray(typeSpec)) {
-                return typeSpec.map(R);
+                return typeSpec.map(R, this);
             }
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
@@ -922,7 +1010,9 @@ class Typeson {
                     if (spec.reviveAsync) {
                         reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
                     }
-                    this.revivers[typeId] = reviverObj;
+                    this.revivers[typeId] = [reviverObj, {
+                        plain: spec.testPlainObjects
+                    }];
                 }
 
                 // Record to be retrieved via public types property.

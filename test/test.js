@@ -1389,6 +1389,57 @@ const tests = [function shouldSupportBasicTypes () {
     ]);
     assert(rootTypeName === 'array', 'Should return the single root type name');
     assert(runCount === 1, 'Should not iterate through the array structure');
+}, function shouldAllowSerializingArraysToObjects () {
+    const typeson = new Typeson().register({
+        arraysToObjects: {
+            testPlainObjects: true,
+            test (x, stateObj) {
+                if (Array.isArray(x)) {
+                    stateObj.iterateIn = 'object';
+                    stateObj.addLength = true;
+                    return true;
+                }
+                return false;
+            },
+            revive (o) {
+                const arr = [];
+                // No map here as may be a sparse array (including
+                //   with `length` set)
+                Object.entries(o).forEach(([key, val]) => {
+                    arr[key] = val;
+                });
+                return arr;
+            }
+        }
+    });
+    const arr = new Array(10);
+    arr[0] = 3;
+    arr[3] = '4';
+    arr[4] = 5;
+    arr[6] = arr;
+    arr[7] = [arr];
+    arr[9] = {arr};
+    arr.b = 'ddd';
+    arr[-2] = 'eee';
+    const tson = typeson.stringify(arr, null, 2);
+    // console.log('tson', tson);
+    const back = typeson.parse(tson);
+    // console.log('back', back);
+    // console.log('back[6]', Array.isArray(back[6]));
+    // console.log('back[9].arr', Array.isArray(back[9].arr));
+    assert(
+        back[0] === 3 && back[3] === '4' && back[4] === 5,
+        'Preserves regular array indexes'
+    );
+    assert(
+        back.b === 'ddd' && back[-2] === 'eee',
+        'Preserves non-numeric and non-positive-integer indexes'
+    );
+    assert(
+        back[6] === back &&
+        back[7][0] === back,
+        'Preserves circular references'
+    );
 }];
 
 (async () => {

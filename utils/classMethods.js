@@ -130,6 +130,21 @@ function getByKeyPath (obj, keyPath) {
     return obj[unescapeKeyPathComponent(keyPath)];
 }
 
+function setAtKeyPath (obj, keyPath, value) {
+    if (keyPath === '') {
+        return value;
+    }
+    const period = keyPath.indexOf('.');
+    if (period > -1) {
+        const innerObj = obj[
+            unescapeKeyPathComponent(keyPath.substr(0, period))
+        ];
+        return setAtKeyPath(innerObj, keyPath.substr(period + 1), value);
+    }
+    obj[unescapeKeyPathComponent(keyPath)] = value;
+    return obj;
+}
+
 /**
  *
  * @param {external:JSON} value
@@ -145,6 +160,7 @@ function getJSONType (value) {
 export {
     isPlainObject, isObject, isUserObject,
     hasConstructorOf, isThenable, toStringTag,
-    escapeKeyPathComponent, unescapeKeyPathComponent, getByKeyPath,
+    escapeKeyPathComponent, unescapeKeyPathComponent,
+    getByKeyPath, setAtKeyPath,
     getJSONType
 };
