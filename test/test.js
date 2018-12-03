@@ -521,7 +521,7 @@ run([function shouldSupportBasicTypes () {
     assert(res instanceof Array, 'Result should be an array');
     assert(res.length === 3, 'Should have length 3');
     assert(res[2] === 3, 'Third item should be 3');
-}, function shouldSupportIntermedateTypes () {
+}, function shouldSupportIntermediateTypes () {
     function CustomDate (date) {
         this._date = date;
     }
