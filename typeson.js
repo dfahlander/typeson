@@ -711,7 +711,7 @@ class Typeson {
 
         const keyPathResolutions = [];
         const stateObj = {};
-        let ret = _revive('', obj, null, opts);
+        let ret = _revive('', obj, null);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
 
         /**
@@ -719,12 +719,11 @@ class Typeson {
          * @param {string} keypath
          * @param {*} value
          * @param {?(Array|object)} target
-         * @param {object} opts
          * @param {Array|object} [clone]
          * @param {string} [key]
          * @returns {*}
          */
-        function _revive (keypath, value, target, opts, clone, key) {
+        function _revive (keypath, value, target, clone, key) {
             if (ignore$Types && keypath === '$types') {
                 return undefined;
             }
@@ -737,7 +736,6 @@ class Typeson {
                         keypath + (keypath ? '.' : '') +
                             escapeKeyPathComponent(k), value[k],
                         target || clone,
-                        opts,
                         clone,
                         k
                     );
@@ -774,7 +772,6 @@ class Typeson {
                 }
                 return ret;
             }
-            const {sync} = opts;
             return [].concat(type).reduce(function reducer (val, type) {
                 if (hasConstructorOf(val, TypesonPromise)) {
                     return val.then((v) => { // TypesonPromise here too
