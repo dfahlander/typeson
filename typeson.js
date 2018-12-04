@@ -701,11 +701,7 @@ class Typeson {
      * @returns {Promise|*} If async, returns a Promise that resolves to `*`
      */
     revive (obj, opts) {
-        const that = this;
-        opts = {sync: true, ...this.options, ...opts};
-        const {sync} = opts;
-        let types = obj && obj.$types,
-            ignore$Types = true;
+        let types = obj && obj.$types;
 
         // No type info added. Revival not needed.
         if (!types) {
@@ -718,6 +714,12 @@ class Typeson {
             return obj.$;
         }
 
+        opts = {sync: true, ...this.options, ...opts};
+        const {sync} = opts;
+        const keyPathResolutions = [];
+        const stateObj = {};
+
+        let ignore$Types = true;
         // Special when root object is not a trivial Object, it will
         //   be encapsulated in `$`. It will also be encapsulated in
         //   `$` if it has its own `$` property to avoid ambiguity
@@ -727,12 +729,7 @@ class Typeson {
             ignore$Types = false;
         }
 
-        const keyPathResolutions = [];
-        const stateObj = {};
-        revivePlainObjects();
-        let ret = _revive('', obj, null);
-        ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
-
+        const that = this;
         function revivePlainObjects () {
             // const references = [];
             // const reviveTypes = [];
@@ -759,45 +756,57 @@ class Typeson {
                     delete types[keypath]; // Avoid repeating
                 });
             });
+            if (!plainObjectTypes.length) {
+                return;
+            }
             // Handle plain object revivers first so reference
             //   setting can use revived type (e.g., array instead
             //   of object); assumes revived has same structure
             //   or will otherwise break subsequent references
-            plainObjectTypes.sort(nestedPathsFirst).forEach(({
-                keypath, type
-            }) => {
-                let val = getByKeyPath(obj, keypath);
-                /*
-                // Todo: Allow async
-                if (hasConstructorOf(val, TypesonPromise)) {
-                    return val.then((v) => { // TypesonPromise here too
-                        return reducer(v, type);
-                    });
-                }
-                */
-                const [reviver] = that.revivers[type];
-                if (!reviver) {
-                    throw new Error('Unregistered type: ' + type);
-                }
-                val = reviver[
-                    sync && reviver.revive
-                        ? 'revive'
-                        : !sync && reviver.reviveAsync
-                            ? 'reviveAsync'
-                            : 'revive'
-                ](val, stateObj);
+            return plainObjectTypes.sort(nestedPathsFirst).reduce(
+                function reducer (possibleTypesonPromise, {
+                    keypath, type
+                }) {
+                    if (hasConstructorOf(
+                        possibleTypesonPromise, TypesonPromise
+                    )) {
+                        // TypesonPromise here too
+                        return possibleTypesonPromise.then((v) => {
+                            return reducer(v, type);
+                        });
+                    }
+                    let val = getByKeyPath(obj, keypath);
+                    if (hasConstructorOf(val, TypesonPromise)) {
+                        return val.then((v) => { // TypesonPromise here too
+                            return reducer(v, type);
+                        });
+                    }
+                    const [reviver] = that.revivers[type];
+                    if (!reviver) {
+                        throw new Error('Unregistered type: ' + type);
+                    }
+                    val = reviver[
+                        sync && reviver.revive
+                            ? 'revive'
+                            : !sync && reviver.reviveAsync
+                                ? 'reviveAsync'
+                                : 'revive'
+                    ](val, stateObj);
 
-                if (val === undefined) {
-                    return;
-                }
-                if (hasConstructorOf(val, Undefined)) {
-                    val = undefined;
-                }
-                const newVal = setAtKeyPath(obj, keypath, val);
-                if (newVal === val) {
-                    obj = val;
-                }
-            });
+                    if (val === undefined) {
+                        return undefined;
+                    }
+                    if (hasConstructorOf(val, Undefined)) {
+                        val = undefined;
+                    }
+                    const newVal = setAtKeyPath(obj, keypath, val);
+                    if (newVal === val) {
+                        obj = val;
+                    }
+                    return undefined;
+                },
+                undefined // This argument must be explicit
+            );
             // references.forEach(({keypath, reference}) => {});
             // reviveTypes.sort(nestedPathsFirst).forEach(() => {});
         }
@@ -880,6 +889,20 @@ class Typeson {
             }, value);
         }
 
+        function checkUndefined (retrn) {
+            return hasConstructorOf(retrn, Undefined) ? undefined : retrn;
+        }
+
+        const possibleTypesonPromise = revivePlainObjects();
+        let ret;
+        if (hasConstructorOf(possibleTypesonPromise, TypesonPromise)) {
+            ret = possibleTypesonPromise.then(() => {
+                return _revive('', obj, null);
+            });
+        } else {
+            ret = _revive('', obj, null);
+        }
+
         return isThenable(ret)
             ? sync && opts.throwOnBadSyncType
                 ? (() => {
@@ -888,9 +911,7 @@ class Typeson {
                     );
                 })()
                 : hasConstructorOf(ret, TypesonPromise)
-                    ? ret.p.then((v) => {
-                        return hasConstructorOf(v, Undefined) ? undefined : v;
-                    })
+                    ? ret.p.then(checkUndefined)
                     : ret
             : !sync && opts.throwOnBadSyncType
                 ? (() => {
@@ -899,8 +920,8 @@ class Typeson {
                     );
                 })()
                 : sync
-                    ? ret
-                    : Promise.resolve(ret);
+                    ? checkUndefined(ret)
+                    : Promise.resolve(checkUndefined(ret));
     }
 
     /**
