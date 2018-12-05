@@ -1,11 +1,27 @@
 # typeson CHANGES
 
-## ?
+## 5.11.0
 
+- Fix: Ensure `testPlainObjects` are revived before reference
+    resolution and setting (and before other types) so that
+    objects-to-arrays will be properly referenced in all cases
+    and can thus preserve non-index array properties (fixes #9)
 - Fix: Allow `iterateIn === 'object` to override array and create
     object from array
+- Fix (`reviveAsync`): Wait until all TypesonPromises resolve (no
+    tests still)
 - Enhancement: Add state object option to auto-copy array length onto
     array-like object clone
+- Optimization: Avoid passing around (unchanging) `opts` within inner
+    `revive` handling
+- Refactoring: Object property shorthand; avoid shadowing; make return
+    explicit; use `slice` over `substr`
+- Docs: Further JSDoc
+- Testing: Report total passed
+- Testing (fix): Ensure using `@babel/polyfill`
+- npm/yarn: Update devDep
+- npm: Add yarn to `prepublishOnly` to ensure stays up to date with
+    npm `package-lock.json`
 
 ## 5.10.1
 

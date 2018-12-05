@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "5.10.1",
+  "version": "5.11.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.js",
   "browser": "./dist/typeson.js",
@@ -39,9 +39,9 @@
   "dependencies": {},
   "engines": {},
   "devDependencies": {
-    "@babel/core": "^7.1.6",
-    "@babel/node": "^7.0.0",
-    "@babel/preset-env": "^7.1.6",
+    "@babel/core": "^7.2.0",
+    "@babel/node": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
     "base64-arraybuffer-es6": "^0.4.2",
     "eslint": "5.9.0",
     "eslint-config-standard": "12.0.0",
