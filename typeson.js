@@ -30,7 +30,7 @@ function nestedPathsFirst (a, b) {
     }
     return as > bs
         ? -1
-        : bs < as
+        : as < bs
             ? 1
             : a.keypath < b.keypath
                 ? -1

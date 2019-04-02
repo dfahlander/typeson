@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## 5.11.1
+
+- Fix: Sorting issue with plain object revivers (lgtm.com-inspired fix)
+- Refactoring: Avoid useless check (lgtm.com-inspired change)
+
 ## 5.11.0
 
 - Fix: Ensure `testPlainObjects` are revived before reference
