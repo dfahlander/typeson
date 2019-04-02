@@ -202,7 +202,7 @@ class Typeson {
 
         // Clone the object deeply while at the same time replacing any
         //   special types or cyclic reference:
-        const cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
+        const cyclic = 'cyclic' in opts ? opts.cyclic : true;
         const {encapsulateObserver} = opts;
         const ret = _encapsulate(
             '', obj, cyclic, stateObj || {},
