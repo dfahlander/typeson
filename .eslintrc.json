@@ -5,7 +5,22 @@
       "sourceType": "module"
   },
   "settings": {
-      "polyfills": ["promises", "url"]
+      "polyfills": [
+          "Array.from",
+          "Array.isArray",
+          "console",
+          "document.body",
+          "Error",
+          "JSON",
+          "Object.defineProperty",
+          "Object.entries",
+          "Object.getPrototypeOf",
+          "Object.keys",
+          "Promise",
+          "Set",
+          "Symbol",
+          "URL"
+      ]
   },
   "rules": {
     "compat/compat": "error",

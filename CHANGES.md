@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## 5.12.0
+
+- Linting (ESLint): Update `polyfills` for compat plugin
+- npm: Update devDeps, including Babel potentially impacting build
+
 ## 5.11.1
 
 - Fix: Sorting issue with plain object revivers (lgtm.com-inspired fix)

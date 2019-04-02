@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "5.11.1",
+  "version": "5.12.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.js",
   "browser": "./dist/typeson.js",
@@ -39,23 +39,23 @@
   "dependencies": {},
   "engines": {},
   "devDependencies": {
-    "@babel/core": "^7.2.0",
-    "@babel/node": "^7.2.0",
-    "@babel/preset-env": "^7.2.0",
+    "@babel/core": "^7.4.0",
+    "@babel/node": "^7.2.2",
+    "@babel/preset-env": "^7.4.2",
     "base64-arraybuffer-es6": "^0.4.2",
-    "eslint": "5.9.0",
+    "eslint": "5.16.0",
     "eslint-config-standard": "12.0.0",
-    "eslint-plugin-compat": "2.6.3",
-    "eslint-plugin-import": "2.14.0",
-    "eslint-plugin-node": "8.0.0",
-    "eslint-plugin-promise": "4.0.1",
+    "eslint-plugin-compat": "3.1.0",
+    "eslint-plugin-import": "2.16.0",
+    "eslint-plugin-node": "8.0.1",
+    "eslint-plugin-promise": "4.1.1",
     "eslint-plugin-standard": "4.0.0",
     "node-static": "0.7.11",
     "opn-cli": "^4.0.0",
-    "rollup": "0.67.4",
-    "rollup-plugin-babel": "^4.0.3",
-    "rollup-plugin-node-resolve": "^3.4.0",
-    "rollup-plugin-terser": "^3.0.0"
+    "rollup": "1.7.4",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-node-resolve": "^4.0.1",
+    "rollup-plugin-terser": "^4.0.4"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }
