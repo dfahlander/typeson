@@ -7,7 +7,7 @@
   "module": "./dist/typeson-esm.js",
   "scripts": {
     "prepublishOnly": "yarn",
-    "eslint": "eslint --report-unused-disable-directives .",
+    "eslint": "eslint --ext js,md .",
     "start": "static -p 8092",
     "rollup": "rollup -c",
     "browser-test": "npm run eslint && npm run rollup && open-cli http://localhost:8092/test/ && npm start",

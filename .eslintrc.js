@@ -21,6 +21,33 @@ module.exports = {
           "URL"
       ]
   },
+  "overrides": [
+      {
+        "settings": {
+          "polyfills": ["Float64Array", "Int8Array"]
+        },
+        files: ["**/*.md"],
+        rules: {
+          "eol-last": ["off"],
+          "no-console": ["off"],
+          "no-undef": ["off"],
+          "no-unused-vars": ["warn"],
+          "padded-blocks": ["off"],
+          "import/unambiguous": ["off"],
+          "import/no-unresolved": ["off"],
+          "import/no-commonjs": "off",
+          "import/no-extraneous-dependencies": "off",
+          "global-require": "off",
+          "no-restricted-syntax": ["off"],
+          "node/no-missing-import": ["off"],
+          "no-multi-spaces": "off",
+          "jsdoc/require-jsdoc": "off",
+          "no-unused-vars": ["error", {varsIgnorePattern: "^(typeson|myTypeson|objs|revived|obj)$"}],
+          // Disable until may fix https://github.com/gajus/eslint-plugin-jsdoc/issues/211
+          "indent": "off"
+        }
+      }
+  ],
   "rules": {
     "indent": ["error", 4, {"outerIIFEBody": 0}],
     // Todo: Reenable when apparent bug fixed

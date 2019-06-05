@@ -7,12 +7,20 @@ Preserves types over JSON, BSON or socket.io.
 ## Example of how a stringified object can look
 
 ```js
-{foo: "bar"}                    // {"foo":"bar"} (simple types gives plain JSON)
-{foo: new Date()}               // {"foo":1464049031538, "$types":{"foo":"Date"}}
-{foo: new Set([new Date()])}    // {"foo":[1464127925971], "$types":{"foo":"Set","foo.0":"Date"}}
-{foo: {sub: /bar/i}}            // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
-{foo: new Int8Array(3)}         // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
-new Date()                      // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format at root)
+const objs = [
+  {foo: 'bar'},
+  // {"foo":"bar"} (simple types gives plain JSON)
+  {foo: new Date()},
+  // {"foo":1464049031538, "$types":{"foo":"Date"}}
+  {foo: new Set([new Date()])},
+  // {"foo":[1464127925971], "$types":{"foo":"Set","foo.0":"Date"}}
+  {foo: {sub: /bar/iu}},
+  // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
+  {foo: new Int8Array(3)},
+  // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
+  new Date()
+  // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format at root)
+];
 ```
 
 ## Why?
@@ -31,13 +39,13 @@ const typeson = new Typeson().register([
     require('typeson-registry/types/typed-arrays')
 ]);
 ```
-or if you want support for all built-in javascript classes:
+or if you want support for all built-in JavaScript classes:
 ```js
 const typeson = new Typeson().register([
     require('typeson-registry/presets/builtin')
 ]);
 ```
-The module `typeson-registry/presets/builtin` is 1.6 kb minizied and gzipped and adds support 32 builtin JavaScript types: *Date, RegExp, NaN, Infinity, -Infinity, Set, Map, ArrayBuffer, DataView, Uint8Array, Int8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, Error, SyntaxError, TypeError, RangeError, ReferenceError, EvalError, URIError, InternalError, Intl.Collator, Intl.DateTimeFormat, Intl.NumberFormat, Object String, Object Number and Object Boolean*.
+The module `typeson-registry/presets/builtin` is 1.6 kb minified and gzipped and adds support 32 builtin JavaScript types: *Date, RegExp, NaN, Infinity, -Infinity, Set, Map, ArrayBuffer, DataView, Uint8Array, Int8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, Error, SyntaxError, TypeError, RangeError, ReferenceError, EvalError, URIError, InternalError, Intl.Collator, Intl.DateTimeFormat, Intl.NumberFormat, Object String, Object Number and Object Boolean*.
 
 ## Compatibility
 
@@ -66,26 +74,27 @@ npm install typeson
 ```
 
 ```js
-// Require typeson. It's an UMD module so you could also use requirejs or plain script tags.
+// Require typeson. It's an UMD module so you could also use requirejs
+//  or plain script tags.
 const Typeson = require('typeson');
 
 const typeson = new Typeson().register({
     Date: [
-        x => x instanceof Date, // test function
-        d => d.getTime(), // encapsulator function
-        number => new Date(number) // reviver function
+        (x) => x instanceof Date, // test function
+        (d) => d.getTime(), // encapsulator function
+        (number) => new Date(number) // reviver function
     ],
     Error: [
-        x => x instanceof Error, // tester
-        e => ({name: e.name, message: e.message}), // encapsulator
-        data => {
+        (x) => x instanceof Error, // tester
+        (e) => ({name: e.name, message: e.message}), // encapsulator
+        (data) => {
           // reviver
-          const e = new Error (data.message);
+          const e = new Error(data.message);
           e.name = data.name;
           return e;
         }
     ],
-    SimpleClass: SimpleClass // Default rules apply. See "register (typeSpec)"
+    SimpleClass // Default rules apply. See "register (typeSpec)"
 });
 
 function SimpleClass (foo) {
@@ -95,8 +104,8 @@ function SimpleClass (foo) {
 // Encapsulate to a JSON friendly format:
 const jsonFriendly = typeson.encapsulate({
     date: new Date(),
-    e: new Error("Oops"),
-    c: new SimpleClass("bar")
+    e: new Error('Oops'),
+    c: new SimpleClass('bar')
 });
 // Stringify using good old JSON.stringify()
 const json = JSON.stringify(jsonFriendly, null, 2);
@@ -148,9 +157,9 @@ const TSON = new Typeson()
     .register(presetSocketIo)
     .register({
         CustomClass: [
-            x => x instanceof CustomClass,
-            c => {foo: c.foo, bar: c.bar},
-            o => new CustomClass(o.foo, o.bar)
+            (x) => x instanceof CustomClass,
+            (c) => ({foo: c.foo, bar: c.bar}),
+            (o) => new CustomClass(o.foo, o.bar)
         ]
     });
 
@@ -159,9 +168,9 @@ array.fill(42, 0, 65536);
 
 const data = {
     date: new Date(),
-    error: new SyntaxError("Ooops!"),
-    array: array,
-    custom: new CustomClass("foo", "bar")
+    error: new SyntaxError('Ooops!'),
+    array,
+    custom: new CustomClass('foo', 'bar')
 };
 
 socket.emit('myEvent', TSON.encapsulate(data));
@@ -174,7 +183,8 @@ Packing it up at the other end:
 ```js
 socket.on('myEvent', function (data) {
     const revived = TSON.revive(data);
-    // Here we have a true Date, SyntaxError, Float64Array and Custom to play with.
+    // Here we have a true `Date`, `SyntaxError`, `Float64Array`
+    //  and `Custom` to play with.
 });
 ```
 *NOTE: Both peers must have the same types registered.*
@@ -192,7 +202,7 @@ Web Workers have the `onmessage` and `postMessage()` communication channel that 
 ### constructor ([options])
 
 ```js
-new Typeson([options]);
+const typeson = new Typeson([options]);
 ```
 
 Creates an instance of Typeson, on which you may configure additional types to support, or call `encapsulate()`, `revive()`, `stringify()` or `parse()` on.
@@ -272,7 +282,7 @@ the actual result of a revival/parsing or just the inevitable return of using an
 ```js
 const Typeson = require('typeson');
 const typeson = new Typeson()
-    .register (require('typeson-registry/presets/builtin'));
+    .register(require('typeson-registry/presets/builtin'));
 
 const tson = typeson.stringify(complexObject);
 console.log(tson);
@@ -322,10 +332,11 @@ If an array or primitive is encoded at root, an object will be created with a pr
 
 ```js
 const TSON = new Typeson().register(require('typeson-registry/types/date'));
-TSON.stringify ({date: new Date()});
+
+TSON.stringify({date: new Date()});
 ```
 Output:
-```js
+```json
 {"date": 1463667643065, "$types": {"date": "Date"}}
 ```
 
@@ -351,8 +362,10 @@ the documentation under `Typeson.Promise`.
 ##### Sample
 
 ```js
-const TSON = new Typeson().register(require('typeson-registry/types/date'));
-TSON.parse ('{"date": 1463667643065, "$types": {"date": "Date"}}');
+const date = require('typeson-registry/types/date');
+
+const TSON = new Typeson().register(date);
+TSON.parse('{"date": 1463667643065, "$types": {"date": "Date"}}');
 ```
 
 #### `parseSync` (obj, [reviver])
@@ -385,7 +398,7 @@ As with `encapsulate` but automatically throws upon obtaining a non-`Typeson.Pro
 ```js
 const encapsulated = typeson.encapsulate(new Date());
 const revived = typeson.revive(encapsulated);
-assert (revived instanceof Date);
+assert(revived instanceof Date);
 ```
 
 #### `revive` / `reviveSync` / `reviveAsync` (obj)
@@ -482,36 +495,37 @@ will prevent the addition of the property. To explicitly add `undefined`, see
 ```js
 const typeson = new Typeson();
 
-function CustomType(foo) {
+function CustomType (foo) {
     this.foo = foo;
 }
 
 typeson.register({
   // simple style - provide just a constructor function.
   // This style works for any trivial js class without hidden closures.
-  CustomType: CustomType,
+  CustomType,
 
   // Date is native and hides it's internal state.
   // We must define encapsulator and reviver that always works.
   Date: [
-    x => x instanceof Date, // tester
-    date => date.getTime(), // encapsulator
-    obj => new Date(obj)    // reviver
+    (x) => x instanceof Date, // tester
+    (date) => date.getTime(), // encapsulator
+    (obj) => new Date(obj)    // reviver
   ],
 
   RegExp: [
-    x = x instanceof RegExp,
-    re => [re.source, re.flags],
-    a => new RegExp (a[0], a[1])
+    (x) = x instanceof RegExp,
+    (re) => [re.source, re.flags],
+    ([source, flags]) => new RegExp(source, flags)
   ]
 });
 
 console.log(typeson.stringify({
-    ct: new CustomType("hello"),
+    ct: new CustomType('hello'),
     d: new Date(),
-    r:/foo/gi
+    r: /foo/giu
 }));
-// {"ct":{"foo":"hello"},"d":1464049031538,"r":["foo","gi"],$types:{"ct":"CustomType","d":"Date","r":"RegExp"}}
+// {"ct":{"foo":"hello"},"d":1464049031538,"r":["foo","gi"],
+//   $types:{"ct":"CustomType","d":"Date","r":"RegExp"}}
 ```
 
 ###### `reviveAsync` (obj: Object) : YourType
@@ -568,10 +582,15 @@ function MyAsync (prop) {
 
 const typeson = new Typeson({sync: false}).register({
     myAsyncType: [
-        function (x) { return x instanceof MyAsync;},
+        function (x) { return x instanceof MyAsync; },
         function (o) {
             return new Typeson.Promise(function (resolve, reject) {
-                setTimeout(function () { // Do something more useful in real code
+                setTimeout(function () {
+                    // Do something more useful in real code
+                    if (new Date().getTime() % 2) {
+                        reject(new Error('Better luck next time'));
+                        return;
+                    }
                     resolve(o.prop);
                 }, 800);
             });
@@ -583,10 +602,12 @@ const typeson = new Typeson({sync: false}).register({
 });
 
 const mya = new MyAsync(500);
-return typeson.stringify(mya).then(function (result) {
-    const back = typeson.parse(result, null, {sync: true});
-    console.log(back.prop); // 500
-});
+
+(async () => {
+const result = await typeson.stringify(mya);
+const back = typeson.parse(result, null, {sync: true});
+console.log(back.prop); // 500
+})();
 ```
 
 #### `Typeson.toStringTag`

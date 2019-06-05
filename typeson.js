@@ -330,7 +330,6 @@ class Typeson {
          * @returns {undefined}
          */
         function _adaptBuiltinStateObjectProperties (
-            // eslint-disable-next-line promise/prefer-await-to-callbacks
             stateObj, ownKeysObj, cb
         ) {
             Object.assign(stateObj, ownKeysObj);
@@ -339,8 +338,7 @@ class Typeson {
                 delete stateObj[prop];
                 return tmp;
             });
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line callback-return, promise/prefer-await-to-callbacks
+            // eslint-disable-next-line callback-return
             cb();
             internalStateObjPropsToIgnore.forEach((prop, i) => {
                 stateObj[prop] = vals[i];
