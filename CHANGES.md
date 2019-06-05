@@ -1,5 +1,17 @@
 # typeson CHANGES
 
+## 5.13.0
+
+- Enhancement: Add ESM dist format (and use in test and
+    `package.json`); provide non-minified versions
+- Testing: Avoid need for build file (use `esm` and relative path
+    for browser test)
+- npm: Indicate `core-js-bundle` and `regenerator-runtime` as
+    `peerDependencies` (and devDeps) in place of deprecated
+    `@babel/polyfill`
+- npm: Update `opn-cli` -> `open-cli`; update devDeps; remove now
+    unused `rollup-plugin-node-resolve`
+
 ## 5.12.0
 
 - Linting (ESLint): Update `polyfills` for compat plugin
