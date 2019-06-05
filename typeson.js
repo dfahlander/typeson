@@ -1,3 +1,4 @@
+/* eslint-disable node/no-unsupported-features/es-syntax, no-shadow */
 /**
  * Typeson - JSON with types
  * @license The MIT License (MIT)
@@ -19,9 +20,15 @@ const {keys} = Object,
         'type', 'replaced', 'iterateIn', 'iterateUnsetNumeric'
     ];
 
+/**
+ *
+ * @param {PlainObjectType} a
+ * @param {PlainObjectType} b
+ * @returns {1|-1|boolean}
+ */
 function nestedPathsFirst (a, b) {
-    let as = a.keypath.match(/\./g);
-    let bs = a.keypath.match(/\./g);
+    let as = a.keypath.match(/\./gu);
+    let bs = a.keypath.match(/\./gu);
     if (as) {
         as = as.length;
     }
@@ -64,11 +71,23 @@ class Typeson {
     }
 
     /**
+    * @typedef {null|boolean|number|string|GenericArray|PlainObject} JSON
+    */
+
+    /**
+    * @callback JSONReplacer
+    * @param {""|string} key
+    * @param {JSON} value
+    * @returns {number|string|boolean|null|PlainObject|undefined}
+    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#The%20replacer%20parameter
+    */
+
+    /**
      * Serialize given object to Typeson.
      * Initial arguments work identical to those of `JSON.stringify`.
      * The `replacer` argument has nothing to do with our replacers.
-     * @param {*} obj
-     * @param {function|string[]} replacer
+     * @param {Any} obj
+     * @param {JSONReplacer|string[]} replacer
      * @param {number|string} space
      * @param {object} opts
      * @returns {string|Promise} Promise resolves to a string
@@ -85,9 +104,9 @@ class Typeson {
     }
 
     /**
-     * Also sync but throws on non-sync result
-     * @param {*} obj
-     * @param {function|string[]} replacer
+     * Also sync but throws on non-sync result.
+     * @param {Any} obj
+     * @param {JSONReplacer|string[]} replacer
      * @param {number|string} space
      * @param {object} opts
      * @returns {string}
@@ -100,11 +119,11 @@ class Typeson {
 
     /**
      *
-     * @param {*} obj
-     * @param {function|string[]} replacer
+     * @param {Any} obj
+     * @param {JSONReplacer|string[]} replacer
      * @param {number|string} space
      * @param {object} opts
-     * @returns {Promise} Resolves to string
+     * @returns {Promise<string>}
      */
     stringifyAsync (obj, replacer, space, opts) {
         return this.stringify(obj, replacer, space, {
@@ -127,7 +146,7 @@ class Typeson {
     }
 
     /**
-    * Also sync but throws on non-sync result
+    * Also sync but throws on non-sync result.
     * @param {string} text
     * @param {function} reviver This JSON reviver has nothing to do with
     *   our revivers.
@@ -158,7 +177,7 @@ class Typeson {
 
     /**
      *
-     * @param {*} obj
+     * @param {Any} obj
      * @param {object} stateObj
      * @param {object} [opts={}]
      * @returns {string[]|false}
@@ -170,10 +189,10 @@ class Typeson {
 
     /**
      *
-     * @param {*} obj
-     * @param {object} stateObj
-     * @param {object} [opts={}]
-     * @returns {Promise|Array|object|string|false}
+     * @param {Any} obj
+     * @param {PlainObject} stateObj
+     * @param {PlainObject} [opts={}]
+     * @returns {Promise|GenericArray|PlainObject|string|false}
      */
     rootTypeName (obj, stateObj, opts = {}) {
         opts.iterateNone = true;
@@ -184,11 +203,11 @@ class Typeson {
      * Encapsulate a complex object into a plain Object by replacing
      * registered types with plain objects representing the types data.
      *
-     * This method is used internally by T`ypeson.stringify()`.
-     * @param {Object} obj - Object to encapsulate.
-     * @param {object} stateObj
-     * @param {object} opts
-     * @returns {Promise|Array|object|string|false}
+     * This method is used internally by `Typeson.stringify()`.
+     * @param {Any} obj - Object to encapsulate.
+     * @param {PlainObject} stateObj
+     * @param {PlainObject} opts
+     * @returns {Promise|GenericArray|PlainObject|string|false}
      */
     encapsulate (obj, stateObj, opts) {
         opts = {sync: true, ...this.options, ...opts};
@@ -211,8 +230,8 @@ class Typeson {
 
         /**
          *
-         * @param {*} ret
-         * @returns {Array|object|string|false}
+         * @param {Any} ret
+         * @returns {GenericArray|PlainObject|string|false}
          */
         function finish (ret) {
             // Add `$types` to result only if we ever bumped into a
@@ -251,9 +270,9 @@ class Typeson {
         }
         /**
          *
-         * @param {*} ret
-         * @param {array} promisesData
-         * @returns {Promise} Resolves to ...
+         * @param {Any} ret
+         * @param {GenericArray} promisesData
+         * @returns {Promise<Any>}
          */
         async function checkPromises (ret, promisesData) {
             const promResults = await Promise.all(
@@ -311,6 +330,7 @@ class Typeson {
          * @returns {undefined}
          */
         function _adaptBuiltinStateObjectProperties (
+            // eslint-disable-next-line promise/prefer-await-to-callbacks
             stateObj, ownKeysObj, cb
         ) {
             Object.assign(stateObj, ownKeysObj);
@@ -319,6 +339,8 @@ class Typeson {
                 delete stateObj[prop];
                 return tmp;
             });
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line callback-return, promise/prefer-await-to-callbacks
             cb();
             internalStateObjPropsToIgnore.forEach((prop, i) => {
                 stateObj[prop] = vals[i];
@@ -328,13 +350,13 @@ class Typeson {
         /**
          *
          * @param {string} keypath
-         * @param {*} value
+         * @param {Any} value
          * @param {boolean} cyclic
-         * @param {object} stateObj
+         * @param {PlainObject} stateObj
          * @param {boolean} promisesData
          * @param {boolean} resolvingTypesonPromise
          * @param {string} detectedType
-         * @returns {*}
+         * @returns {Any}
          */
         function _encapsulate (
             keypath, value, cyclic, stateObj, promisesData,
@@ -435,6 +457,7 @@ class Typeson {
                 ret = replaced;
                 observerData = {replaced};
             } else {
+                // eslint-disable-next-line no-lonely-if
                 if ((isArr && stateObj.iterateIn !== 'object') ||
                     stateObj.iterateIn === 'array'
                 ) {
@@ -472,6 +495,7 @@ class Typeson {
 
             // Iterate object or array
             if (stateObj.iterateIn) {
+                // eslint-disable-next-line guard-for-in
                 for (const key in value) {
                     const ownKeysObj = {ownKeys: hasOwn.call(value, key)};
                     _adaptBuiltinStateObjectProperties(
@@ -481,12 +505,12 @@ class Typeson {
                             const kp = keypath + (keypath ? '.' : '') +
                                 escapeKeyPathComponent(key);
                             const val = _encapsulate(
-                                kp, value[key], !!cyclic, stateObj,
+                                kp, value[key], Boolean(cyclic), stateObj,
                                 promisesData, resolvingTypesonPromise
                             );
                             if (hasConstructorOf(val, TypesonPromise)) {
                                 promisesData.push([
-                                    kp, val, !!cyclic, stateObj,
+                                    kp, val, Boolean(cyclic), stateObj,
                                     clone, key, stateObj.type
                                 ]);
                             } else if (val !== undefined) {
@@ -512,12 +536,12 @@ class Typeson {
                         ownKeysObj,
                         () => {
                             const val = _encapsulate(
-                                kp, value[key], !!cyclic, stateObj,
+                                kp, value[key], Boolean(cyclic), stateObj,
                                 promisesData, resolvingTypesonPromise
                             );
                             if (hasConstructorOf(val, TypesonPromise)) {
                                 promisesData.push([
-                                    kp, val, !!cyclic, stateObj,
+                                    kp, val, Boolean(cyclic), stateObj,
                                     clone, key, stateObj.type
                                 ]);
                             } else if (val !== undefined) {
@@ -546,12 +570,12 @@ class Typeson {
                             ownKeysObj,
                             () => {
                                 const val = _encapsulate(
-                                    kp, undefined, !!cyclic, stateObj,
+                                    kp, undefined, Boolean(cyclic), stateObj,
                                     promisesData, resolvingTypesonPromise
                                 );
                                 if (hasConstructorOf(val, TypesonPromise)) {
                                     promisesData.push([
-                                        kp, val, !!cyclic, stateObj,
+                                        kp, val, Boolean(cyclic), stateObj,
                                         clone, i, stateObj.type
                                     ]);
                                 } else if (val !== undefined) {
@@ -571,9 +595,9 @@ class Typeson {
         /**
          *
          * @param {string} keypath
-         * @param {*} value
-         * @param {object} stateObj
-         * @param {array} promisesData
+         * @param {Any} value
+         * @param {PlainObject} stateObj
+         * @param {GenericArray} promisesData
          * @param {boolean} plainObject
          * @param {boolean} resolvingTypesonPromise
          * @param {function} [runObserver]
@@ -666,7 +690,7 @@ class Typeson {
     }
 
     /**
-     * Also sync but throws on non-sync result
+     * Also sync but throws on non-sync result.
      * @param {*} obj
      * @param {object} stateObj
      * @param {object} opts
@@ -730,6 +754,10 @@ class Typeson {
         }
 
         const that = this;
+        /**
+         *
+         * @returns {void|TypesonPromise<void>}
+         */
         function revivePlainObjects () {
             // const references = [];
             // const reviveTypes = [];
@@ -757,8 +785,13 @@ class Typeson {
                 });
             });
             if (!plainObjectTypes.length) {
-                return;
+                return undefined;
             }
+            /**
+            * @typedef {PlainObject} PlainObjectType
+            * @property {string} keypath
+            * @property {string} type
+            */
             // Handle plain object revivers first so reference
             //   setting can use revived type (e.g., array instead
             //   of object); assumes revived has same structure
@@ -785,6 +818,8 @@ class Typeson {
                     if (!reviver) {
                         throw new Error('Unregistered type: ' + type);
                     }
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line standard/computed-property-even-spacing
                     val = reviver[
                         sync && reviver.revive
                             ? 'revive'
@@ -814,11 +849,11 @@ class Typeson {
         /**
          *
          * @param {string} keypath
-         * @param {*} value
+         * @param {Any} value
          * @param {?(Array|object)} target
          * @param {Array|object} [clone]
          * @param {string} [key]
-         * @returns {*}
+         * @returns {Any}
          */
         function _revive (keypath, value, target, clone, key) {
             if (ignore$Types && keypath === '$types') {
@@ -879,6 +914,8 @@ class Typeson {
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
                 }
+                // eslint-disable-next-line max-len
+                // eslint-disable-next-line standard/computed-property-even-spacing
                 return reviver[
                     sync && reviver.revive
                         ? 'revive'
@@ -889,6 +926,11 @@ class Typeson {
             }, value);
         }
 
+        /**
+         *
+         * @param {Any} retrn
+         * @returns {undefined|Any}
+         */
         function checkUndefined (retrn) {
             return hasConstructorOf(retrn, Undefined) ? undefined : retrn;
         }
@@ -925,10 +967,10 @@ class Typeson {
     }
 
     /**
-     * Also sync but throws on non-sync result
-     * @param {*} obj
+     * Also sync but throws on non-sync result.
+     * @param {Any} obj
      * @param {object} opts
-     * @returns {*}
+     * @returns {Any}
      */
     reviveSync (obj, opts) {
         return this.revive(obj, {
@@ -937,7 +979,7 @@ class Typeson {
     }
 
     /**
-    * @param {*} obj
+    * @param {Any} obj
     * @param {object} opts
     * @returns {Promise} Resolves to `*`
     */
@@ -950,8 +992,8 @@ class Typeson {
     /**
      * Register types.
      * For examples on how to use this method, see
-     *   {@link https://github.com/dfahlander/typeson-registry/tree/master/types}
-     * @param {Array.<Object.<string,Function[]>>} typeSpecSets - Types and
+     *   {@link https://github.com/dfahlander/typeson-registry/tree/master/types}.
+     * @param {object.<string,Function[]>[]} typeSpecSets - Types and
      *   their functions [test, encapsulate, revive];
      * @param {object} opts
      * @returns {Typeson}
@@ -961,7 +1003,7 @@ class Typeson {
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             // Allow arrays of arrays of arrays...
             if (isArray(typeSpec)) {
-                return typeSpec.map(R, this);
+                return typeSpec.map((typSpec) => R(typSpec), this);
             }
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
@@ -995,7 +1037,7 @@ class Typeson {
                     const Class = spec;
                     spec = {
                         test: (x) => x && x.constructor === Class,
-                        replace: (x) => Object.assign({}, x),
+                        replace: (x) => ({...x}),
                         revive: (x) => Object.assign(
                             Object.create(Class.prototype), x
                         )

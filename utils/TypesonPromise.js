@@ -6,7 +6,10 @@
  *   extends Promise` and add a string tag for detection
  * @param {function} f
  */
-class TypesonPromise{constructor(f){this.p=new Promise(f)}} // eslint-disable-line block-spacing, space-before-function-paren, space-before-blocks, space-infix-ops, semi
+// eslint-disable-next-line max-len
+// eslint-disable-next-line block-spacing, space-before-function-paren, space-before-blocks, space-infix-ops, semi, promise/avoid-new
+class TypesonPromise{constructor(f){this.p=new Promise(f)}}
+// eslint-disable-next-line max-len
 // class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
 
 // Note: core-js-bundle provides a `Symbol` polyfill
@@ -23,13 +26,13 @@ if (typeof Symbol !== 'undefined') {
  */
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
     return new TypesonPromise((typesonResolve, typesonReject) => {
+        // eslint-disable-next-line promise/catch-or-return
         this.p.then(function (res) {
+            // eslint-disable-next-line promise/always-return
             typesonResolve(onFulfilled ? onFulfilled(res) : res);
-        }, (r) => {
-            this.p['catch'](function (res) {
-                return onRejected ? onRejected(res) : Promise.reject(res);
-            }).then(typesonResolve, typesonReject);
-        });
+        }).catch(function (res) {
+            return onRejected ? onRejected(res) : Promise.reject(res);
+        }).then(typesonResolve, typesonReject);
     });
 };
 
@@ -43,7 +46,7 @@ TypesonPromise.prototype.catch = function (onRejected) {
 };
 /**
  *
- * @param {} v
+ * @param {Any} v
  * @returns {TypesonPromise}
  */
 TypesonPromise.resolve = function (v) {
@@ -53,7 +56,7 @@ TypesonPromise.resolve = function (v) {
 };
 /**
  *
- * @param {} v
+ * @param {Any} v
  * @returns {TypesonPromise}
  */
 TypesonPromise.reject = function (v) {
@@ -61,7 +64,7 @@ TypesonPromise.reject = function (v) {
         typesonReject(v);
     });
 };
-['all', 'race'].map(function (meth) {
+['all', 'race'].forEach(function (meth) {
     /**
      *
      * @param {Promise[]} promArr
@@ -69,6 +72,7 @@ TypesonPromise.reject = function (v) {
      */
     TypesonPromise[meth] = function (promArr) {
         return new TypesonPromise(function (typesonResolve, typesonReject) {
+            // eslint-disable-next-line promise/catch-or-return
             Promise[meth](promArr.map((prom) => {
                 return prom.p;
             })).then(typesonResolve, typesonReject);

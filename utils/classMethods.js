@@ -1,11 +1,11 @@
-const {toString} = {},
+const {toString: toStr} = {},
     hasOwn = ({}.hasOwnProperty),
     getProto = Object.getPrototypeOf,
     fnToString = hasOwn.toString;
 
 /**
  *
- * @param {*} v
+ * @param {Any} v
  * @param {boolean} catchCheck
  * @returns {boolean}
  */
@@ -17,17 +17,17 @@ function isThenable (v, catchCheck) {
 
 /**
  *
- * @param {*} val
+ * @param {Any} val
  * @returns {string}
  */
 function toStringTag (val) {
-    return toString.call(val).slice(8, -1);
+    return toStr.call(val).slice(8, -1);
 }
 
 /**
  * This function is dependent on both constructors
  *   being identical so any minimization is expected of both.
- * @param {*} a
+ * @param {Any} a
  * @param {function} b
  * @returns {boolean}
  */
@@ -49,7 +49,7 @@ function hasConstructorOf (a, b) {
 
 /**
  *
- * @param {*} val
+ * @param {Any} val
  * @returns {boolean}
  */
 function isPlainObject (val) { // Mirrors jQuery's
@@ -67,7 +67,7 @@ function isPlainObject (val) { // Mirrors jQuery's
 
 /**
  *
- * @param {*} val
+ * @param {Any} val
  * @returns {boolean}
  */
 function isUserObject (val) {
@@ -84,7 +84,7 @@ function isUserObject (val) {
 
 /**
  *
- * @param {*} v
+ * @param {Any} v
  * @returns {boolean}
  */
 function isObject (v) {
@@ -97,7 +97,7 @@ function isObject (v) {
  * @returns {string}
  */
 function escapeKeyPathComponent (keyPathComponent) {
-    return keyPathComponent.replace(/~/g, '~0').replace(/\./g, '~1');
+    return keyPathComponent.replace(/~/gu, '~0').replace(/\./gu, '~1');
 }
 
 /**
@@ -106,13 +106,13 @@ function escapeKeyPathComponent (keyPathComponent) {
  * @returns {string}
  */
 function unescapeKeyPathComponent (keyPathComponent) {
-    return keyPathComponent.replace(/~1/g, '.').replace(/~0/g, '~');
+    return keyPathComponent.replace(/~1/gu, '.').replace(/~0/gu, '~');
 }
 
 /**
- * @param {object|array} obj
+ * @param {PlainObject|GenericArray} obj
  * @param {string} keyPath
- * @returns {*}
+ * @returns {Any}
  */
 function getByKeyPath (obj, keyPath) {
     if (keyPath === '') {
@@ -120,6 +120,7 @@ function getByKeyPath (obj, keyPath) {
     }
     const period = keyPath.indexOf('.');
     if (period > -1) {
+        // eslint-disable-next-line standard/computed-property-even-spacing
         const innerObj = obj[
             unescapeKeyPathComponent(keyPath.substr(0, period))
         ];
@@ -130,12 +131,20 @@ function getByKeyPath (obj, keyPath) {
     return obj[unescapeKeyPathComponent(keyPath)];
 }
 
+/**
+ *
+ * @param {PlainObject} obj
+ * @param {string} keyPath
+ * @param {Any} value
+ * @returns {Any}
+ */
 function setAtKeyPath (obj, keyPath, value) {
     if (keyPath === '') {
         return value;
     }
     const period = keyPath.indexOf('.');
     if (period > -1) {
+        // eslint-disable-next-line standard/computed-property-even-spacing
         const innerObj = obj[
             unescapeKeyPathComponent(keyPath.substr(0, period))
         ];
@@ -148,13 +157,16 @@ function setAtKeyPath (obj, keyPath, value) {
 /**
  *
  * @param {external:JSON} value
- * @returns {"null"|"array"|"undefined"|"boolean"|"number"|"string"|"object"|"symbol"}
+ * @returns {"null"|"array"|"undefined"|"boolean"|"number"|"string"|
+ *  "object"|"symbol"}
  */
 function getJSONType (value) {
-    return value === null ? 'null' : (
-        Array.isArray(value)
-            ? 'array'
-            : typeof value);
+    return value === null
+        ? 'null'
+        : (
+            Array.isArray(value)
+                ? 'array'
+                : typeof value);
 }
 
 export {

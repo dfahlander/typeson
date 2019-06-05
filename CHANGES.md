@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## ?
+
+- Linting: Switch to more rigorous config (ash-nazg); jsdoc, etc.
+
 ## 5.13.0
 
 - Enhancement: Add ESM dist format (and use in test and

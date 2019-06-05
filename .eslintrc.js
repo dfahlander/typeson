@@ -1,6 +1,5 @@
-{
-  "extends": "standard",
-  "plugins": ["compat"],
+module.exports = {
+  "extends": "ash-nazg/sauron-node",
   "parserOptions": {
       "sourceType": "module"
   },
@@ -23,16 +22,13 @@
       ]
   },
   "rules": {
-    "compat/compat": "error",
-    "semi": [2, "always"],
     "indent": ["error", 4, {"outerIIFEBody": 0}],
-    "object-property-newline": 0,
-    "one-var": 0,
-    "no-var": 2,
-    "prefer-const": 2,
-    "object-curly-spacing": ["error", "never"],
-    "standard/computed-property-even-spacing": 0,
-    "curly": ["error", "all"],
-    "max-len": ["error", {"ignorePattern": "eslint-disable-line|@link|@returns"}]
+    // Todo: Reenable when apparent bug fixed
+    'unicorn/no-unsafe-regex': 0,
+    // Todo: Reenable when PR fix may address
+    'jsdoc/check-types': 0,
+    // Todo: Reenable and fix/inline-disable
+    'promise/prefer-await-to-then': 0,
+    'promise/prefer-await-to-callbacks': 0
   }
-}
+};

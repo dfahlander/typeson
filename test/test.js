@@ -1,3 +1,5 @@
+/* eslint-disable no-console, no-restricted-syntax,
+    jsdoc/require-jsdoc, no-empty-function, no-shadow */
 import '../node_modules/core-js-bundle/minified.js';
 import '../node_modules/regenerator-runtime/runtime.js';
 
@@ -66,10 +68,10 @@ function assert (x, msg) {
         );
     }
     console.log(msg);
-};
+}
 function run (tests) {
     if (!tests.length) {
-        return;
+        return undefined;
     }
     const test = tests.splice(0, 1)[0];
     console.log(' ');
@@ -99,7 +101,7 @@ const tests = [function shouldSupportBasicTypes () {
     const date = new Date();
     const input = {
         a: 'a', b: 2, c () {}, d: false, e: null,
-        f: Symbol('symbol'), g: [], h: date, i: /apa/gi
+        f: Symbol('symbol'), g: [], h: date, i: /apa/gui
     };
     res = roundtrip(input);
     assert(res !== input, 'Object is a clone, not a reference');
@@ -175,7 +177,7 @@ const tests = [function shouldSupportBasicTypes () {
     valSwitch(true);
     valSwitch(false);
     test(
-        {$: {}, $types: {$: {'': 'val', 'cyc': '#'}, '#': 'a1', '': 'b1'}},
+        {$: {}, $types: {$: {'': 'val', cyc: '#'}, '#': 'a1', '': 'b1'}},
         function (result) {
             assert(
                 typeof result.$ === 'object' &&
@@ -295,42 +297,42 @@ const tests = [function shouldSupportBasicTypes () {
     );
 }, function shouldHandlePathSeparatorsInObjects () {
     const input = {
-        'aaa': {
+        aaa: {
             bbb: new Date(91000000000)
         },
         'aaa.bbb': 2,
 
-        'lll': {
+        lll: {
             mmm: 3
         },
         'lll.mmm': new Date(92000000000),
 
         'qqq.rrr': 4,
-        'qqq': {
+        qqq: {
             rrr: new Date(93000000000)
         },
 
-        'yyy': {
+        yyy: {
             zzz: 5
         },
         'yyy.zzz': new Date(94000000000),
 
-        'allNormal1': {
+        allNormal1: {
             a: 100
         },
         'allNormal1.a': 200,
 
-        'allTyped1': {
+        allTyped1: {
             a: new Date(95000000000)
         },
         'allTyped1.a': new Date(96000000000),
 
         'allNormal2.b': 400,
-        'allNormal2': {
+        allNormal2: {
             b: 500
         },
 
-        'allTyped2': {
+        allTyped2: {
             b: new Date(97000000000)
         },
         'allTyped2.b': new Date(98000000000),
@@ -444,7 +446,7 @@ const tests = [function shouldSupportBasicTypes () {
     // console.log (tson.match(/Kalle/g).length);
     console.log(tson);
     assert(
-        tson.match(/Kalle/g).length === 1,
+        tson.match(/Kalle/gu).length === 1,
         "TSON should only contain one 'Kalle'. The others should " +
             'just reference the first'
     );
@@ -521,7 +523,7 @@ const tests = [function shouldSupportBasicTypes () {
     // shouldSupportArrays
     //
     const res = roundtrip([1, new Date(), 3]);
-    assert(res instanceof Array, 'Result should be an array');
+    assert(Array.isArray(res), 'Result should be an array');
     assert(res.length === 3, 'Should have length 3');
     assert(res[2] === 3, 'Third item should be 3');
 }, function shouldSupportIntermediateTypes () {
@@ -532,9 +534,9 @@ const tests = [function shouldSupportBasicTypes () {
         .register(globalTypeson.types)
         .register({
             CustomDate: [
-                x => x instanceof CustomDate,
-                cd => cd._date,
-                date => new CustomDate(date)
+                (x) => x instanceof CustomDate,
+                (cd) => cd._date,
+                (date) => new CustomDate(date)
             ]
         });
     const date = new Date();
@@ -574,9 +576,9 @@ const tests = [function shouldSupportBasicTypes () {
         .register(globalTypeson.types)
         .register({
             CustomDate: [
-                x => x instanceof CustomDate,
-                cd => ({_date: cd.getRealDate(), name: cd.name}),
-                obj => new CustomDate(obj._date, obj.name)
+                (x) => x instanceof CustomDate,
+                (cd) => ({_date: cd.getRealDate(), name: cd.name}),
+                (obj) => new CustomDate(obj._date, obj.name)
             ]
         });
     const tson = typeson.stringify(input, null, 2);
@@ -609,9 +611,9 @@ const tests = [function shouldSupportBasicTypes () {
 
     let TSON = new Typeson().register({
         Custom: [
-            x => x instanceof Custom,
-            s => false,
-            f => new Custom()
+            (x) => x instanceof Custom,
+            (s) => false,
+            (f) => new Custom()
         ]
     });
     let tson = TSON.stringify(new Custom());
@@ -624,9 +626,9 @@ const tests = [function shouldSupportBasicTypes () {
 
     TSON = new Typeson().register({
         Custom: [
-            x => x instanceof Custom,
-            s => 42,
-            f => new Custom()
+            (x) => x instanceof Custom,
+            (s) => 42,
+            (f) => new Custom()
         ]
     });
     tson = TSON.stringify(new Custom());
@@ -639,9 +641,9 @@ const tests = [function shouldSupportBasicTypes () {
 
     TSON = new Typeson().register({
         Custom: [
-            x => x instanceof Custom,
-            s => 'foo',
-            f => new Custom()
+            (x) => x instanceof Custom,
+            (s) => 'foo',
+            (f) => new Custom()
         ]
     });
     tson = TSON.stringify(new Custom());
@@ -658,9 +660,9 @@ const tests = [function shouldSupportBasicTypes () {
     }
     const typeson = new Typeson().register({
         Custom: [
-            x => x instanceof Custom,
-            c => ({val: c.val, $types: c.$types}),
-            o => new Custom(o.val, o.$types)
+            (x) => x instanceof Custom,
+            (c) => ({val: c.val, $types: c.$types}),
+            (o) => new Custom(o.val, o.$types)
         ]
     });
     const input = new Custom('bar', 'foo');
@@ -864,13 +866,15 @@ const tests = [function shouldSupportBasicTypes () {
             back[2] === input[2] &&
             back[1] instanceof APromiseUser &&
                 back[1].a === 5,
-            'Should have resolved the one nested promise value');
+            'Should have resolved the one nested promise value'
+        );
         // console.log(str);
         assert(
             str === '<span>aaa</span><span>5</span><span>bbb</span>',
             'Should have allowed us to run the callback asynchronously ' +
                 '(where we can substitute a placeholder)'
         );
+        return undefined;
     });
     assert(
         str === '<span>aaa</span><span>' + placeholderText +
@@ -969,7 +973,7 @@ const tests = [function shouldSupportBasicTypes () {
     assert(back.b === 5, 'Should have kept property');
     assert(back.nonenum === 100, 'Should have kept non-enumerable property');
     assert(
-        back.propertyIsEnumerable('nonenum'),
+        {}.propertyIsEnumerable.call(back, 'nonenum'),
         'Non-enumerable property should now be enumerable'
     );
 }, function shouldAllowSinglePromiseResolution () {
@@ -983,6 +987,7 @@ const tests = [function shouldSupportBasicTypes () {
         console.log(tson);
         const back = typeson.parse(tson);
         assert(back === 25, 'Should have resolved the one promise value');
+        return undefined;
     });
 }, function shouldAllowSingleNestedPromiseResolution () {
     function APromiseUser (a) { this.a = a; }
@@ -1015,7 +1020,9 @@ const tests = [function shouldSupportBasicTypes () {
         assert(
             back instanceof APromiseUser &&
                 back.a === 555,
-            'Should have resolved the one nested promise value');
+            'Should have resolved the one nested promise value'
+        );
+        return undefined;
     });
 }, function shouldAllowMultiplePromiseResolution () {
     const typeson = new Typeson();
@@ -1036,6 +1043,7 @@ const tests = [function shouldSupportBasicTypes () {
             'Should have resolved multiple promise values (and ' +
                 'in the proper order)'
         );
+        return undefined;
     });
 }, function shouldAllowNestedPromiseResolution () {
     function APromiseUser (a) { this.a = a; }
@@ -1097,6 +1105,7 @@ const tests = [function shouldSupportBasicTypes () {
             'Should have resolved multiple nested promise ' +
                 'values (and in the proper order)'
         );
+        return undefined;
     });
 }, function shouldAllowForcingOfAsyncReturn () {
     const typeson = new Typeson({sync: false, throwOnBadSyncType: false});
@@ -1109,6 +1118,7 @@ const tests = [function shouldSupportBasicTypes () {
             'Should allow async to be forced even without ' +
                 'async return values'
         );
+        return undefined;
     });
 }, function shouldWorkWithPromiseUtilities () {
     function makePromises () {
@@ -1120,15 +1130,20 @@ const tests = [function shouldSupportBasicTypes () {
         const y = Typeson.Promise.resolve(400);
         return [x, y];
     }
+    // eslint-disable-next-line promise/avoid-new
     return new Promise(function (resolve, reject) {
+        // eslint-disable-next-line promise/catch-or-return
         Typeson.Promise.all(makePromises()).then(function (results) {
             assert(
+                // eslint-disable-next-line promise/always-return
                 results[0] === 30 && results[1] === 400,
                 'Should work with Promise.all'
             );
         }).then(function () {
+            // eslint-disable-next-line promise/no-nesting
             return Typeson.Promise.race(
                 makePromises()
+            // eslint-disable-next-line promise/always-return
             ).then(function (results) {
                 assert(results === 400, 'Should work with Promise.race');
                 resolve();
@@ -1149,6 +1164,7 @@ const tests = [function shouldSupportBasicTypes () {
         });
         return [x, y];
     }
+    // eslint-disable-next-line promise/avoid-new
     return new Promise(function (resolve, reject) {
         makeRejectedPromises()[0].then(null, function (errCode) {
             assert(
@@ -1226,6 +1242,7 @@ const tests = [function shouldSupportBasicTypes () {
     return typeson.stringify(mya).then(function (result) {
         const back = typeson.parse(result, null, {sync: true});
         assert(back.prop === 500, 'Example of MyAsync should work'); // 500
+        return undefined;
     });
 }, function shouldWorkWithAsyncStringify () {
     function MyAsync (prop) {
@@ -1263,6 +1280,7 @@ const tests = [function shouldSupportBasicTypes () {
             'Example of synchronously-resolved simple object should ' +
                 'work with async API'
         );
+        return undefined;
     });
 }, function shouldWorkWithAsyncEncapsulate () {
     function MyAsync (prop) {
@@ -1301,6 +1319,7 @@ const tests = [function shouldSupportBasicTypes () {
             'Example of synchronously-resolved simple object should ' +
                 'work with async API'
         );
+        return undefined;
     });
 }, function shouldTransmitStateThroughReplacersAndRevivers () {
     function ReplaceReviver (obj) {
@@ -1378,7 +1397,7 @@ const tests = [function shouldSupportBasicTypes () {
 }, function shouldRetrieveRootTypeName () {
     let runCount = 0;
     const typeson = new Typeson({
-        encapsulateObserver: (o) => {
+        encapsulateObserver (o) {
             runCount++;
         }
     }).register({
