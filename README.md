@@ -414,7 +414,7 @@ has highest priority during match testing). If a number is given, it will be use
 
 An object that maps a type-name to a specification of how to test, encapsulate and revive that type.
 
-`{TypeName => constructor-function | [tester, encapsulator, reviver] | specObject = {test: function, replace: function, revive: function, testPlainObjects: boolean=false}}` or an array of such structures.
+`{TypeName => constructor-function | [tester, encapsulator, reviver] | specObject = {test: function, replace: function, replaceAsync: function, revive: function, reviveAsync: function, testPlainObjects: boolean=false}}` or an array of such structures.
 
 Please note that if an array is supplied, the tester (and upon matching, the encapsulator)
 execute in a last-in, first out order. (Calls to `register` can set `fallback` to `true` to
