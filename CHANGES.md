@@ -3,6 +3,7 @@
 ## ?
 
 - Linting: Switch to more rigorous config (ash-nazg); jsdoc, etc.
+- npm: Update devDeps
 
 ## 5.13.0
 
