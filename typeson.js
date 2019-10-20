@@ -49,7 +49,7 @@ function nestedPathsFirst (a, b) {
  * Typeson resolves cyclic references by default. Can also be extended to
  * support custom types using the register() method.
  *
- * @constructor
+ * @class
  * @param {{cyclic: boolean}} [options] - if cyclic (default true),
  *   cyclic references will be handled gracefully.
  */
@@ -816,8 +816,6 @@ class Typeson {
                     if (!reviver) {
                         throw new Error('Unregistered type: ' + type);
                     }
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line standard/computed-property-even-spacing
                     val = reviver[
                         sync && reviver.revive
                             ? 'revive'
@@ -912,8 +910,6 @@ class Typeson {
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
                 }
-                // eslint-disable-next-line max-len
-                // eslint-disable-next-line standard/computed-property-even-spacing
                 return reviver[
                     sync && reviver.revive
                         ? 'revive'
@@ -1001,7 +997,7 @@ class Typeson {
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             // Allow arrays of arrays of arrays...
             if (isArray(typeSpec)) {
-                return typeSpec.map((typSpec) => R(typSpec), this);
+                return typeSpec.map((typSpec) => R(typSpec));
             }
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
@@ -1088,7 +1084,7 @@ class Typeson {
  * We keep this function minimized so if using two instances of this
  * library, where one is minimized and one is not, it will still work
  * with `hasConstructorOf`.
- * @constructor
+ * @class
  */
 class Undefined{} // eslint-disable-line space-before-blocks
 

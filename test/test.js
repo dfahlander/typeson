@@ -492,6 +492,7 @@ const tests = [function shouldSupportBasicTypes () {
         'array member contains self'
     );
 }, function shouldResolveCyclicObjectMembers () {
+    // eslint-disable-next-line sonarjs/prefer-object-literal
     const recursive = {};
     recursive.b = recursive;
     const recursiveContainer = {a: recursive};

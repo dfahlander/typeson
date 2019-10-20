@@ -120,13 +120,12 @@ function getByKeyPath (obj, keyPath) {
     }
     const period = keyPath.indexOf('.');
     if (period > -1) {
-        // eslint-disable-next-line standard/computed-property-even-spacing
         const innerObj = obj[
-            unescapeKeyPathComponent(keyPath.substr(0, period))
+            unescapeKeyPathComponent(keyPath.slice(0, period))
         ];
         return innerObj === undefined
             ? undefined
-            : getByKeyPath(innerObj, keyPath.substr(period + 1));
+            : getByKeyPath(innerObj, keyPath.slice(period + 1));
     }
     return obj[unescapeKeyPathComponent(keyPath)];
 }
@@ -144,11 +143,10 @@ function setAtKeyPath (obj, keyPath, value) {
     }
     const period = keyPath.indexOf('.');
     if (period > -1) {
-        // eslint-disable-next-line standard/computed-property-even-spacing
         const innerObj = obj[
-            unescapeKeyPathComponent(keyPath.substr(0, period))
+            unescapeKeyPathComponent(keyPath.slice(0, period))
         ];
-        return setAtKeyPath(innerObj, keyPath.substr(period + 1), value);
+        return setAtKeyPath(innerObj, keyPath.slice(period + 1), value);
     }
     obj[unescapeKeyPathComponent(keyPath)] = value;
     return obj;
