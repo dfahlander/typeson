@@ -2,8 +2,9 @@
 
 ## ?
 
-- Linting: Switch to more rigorous config (ash-nazg); jsdoc, etc.
-- npm: Update devDeps
+- Linting (ESLint): Switch to more rigorous config (ash-nazg); jsdoc, etc.
+- Linting (ESLint): add any html to linting
+- npm: Update devDeps/peerDeps
 
 ## 5.13.0
 
