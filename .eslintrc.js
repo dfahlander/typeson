@@ -55,6 +55,7 @@ module.exports = {
     'jsdoc/check-types': 0,
     // Todo: Reenable and fix/inline-disable
     'promise/prefer-await-to-then': 0,
-    'promise/prefer-await-to-callbacks': 0
+    'promise/prefer-await-to-callbacks': 0,
+    'jsdoc/check-values': ['error', {"allowedLicenses":true}]
   }
 };
