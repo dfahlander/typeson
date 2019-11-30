@@ -1022,10 +1022,10 @@ convert-source-map@^1.7.0:
   dependencies:
     safe-buffer "~5.1.1"
 
-core-js-bundle@^3.4.2:
-  version "3.4.2"
-  resolved "https://registry.yarnpkg.com/core-js-bundle/-/core-js-bundle-3.4.2.tgz#a59eae8dfe21c86211ca31ff93199154481fa0a9"
-  integrity sha512-Y8qJqRF/Zqrd5FtPyEID8ZIMydyoOtpQU8l+3BCICviJkkgL0KtQQS+k+k8s+KcuqJrOHWIAWxJfIu2xTqpNVA==
+core-js-bundle@^3.4.5:
+  version "3.4.5"
+  resolved "https://registry.yarnpkg.com/core-js-bundle/-/core-js-bundle-3.4.5.tgz#a5d7b688e8eb5f08322e1fe03bccbaf3e97018c8"
+  integrity sha512-RxIIYceeKEtLFC9/3MpsyhxtZRj7NBZARaWPdfUj8uQlkHEkdS5QY3n25JrkKZahll+KoyFuc3NtITqLFG9Q+w==
 
 core-js-compat@^3.1.1:
   version "3.4.1"
@@ -1210,10 +1210,10 @@ eslint-ast-utils@^1.1.0:
     lodash.get "^4.4.2"
     lodash.zip "^4.2.0"
 
-eslint-config-ash-nazg@^12.0.0:
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-ash-nazg/-/eslint-config-ash-nazg-12.0.0.tgz#6b56b51b4b9de5ef23b227cea4f26cf3bac0537c"
-  integrity sha512-1+RGSF5DDa0BFxfouYYyGvGbPh9S8pRvtxNdJqtikvurVXYYfruYyisCcfr4ODBSLU3NRMzLuGf1Der0FxfB9A==
+eslint-config-ash-nazg@^13.0.0:
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-ash-nazg/-/eslint-config-ash-nazg-13.0.0.tgz#1b6be02a72881009b356f8d8c3f5b87e3d418d8f"
+  integrity sha512-NYiYpkH0aIHRwi/+tCjaB3Myt7f1n+6+2m3blIYMPm0LwXCzqWPVWF4POUGK7aWO6YdrRt0vHPRDgcyhuqxw+g==
 
 eslint-config-standard@^14.1.0:
   version "14.1.0"
@@ -1299,10 +1299,10 @@ eslint-plugin-import@^2.18.2:
     read-pkg-up "^2.0.0"
     resolve "^1.11.0"
 
-eslint-plugin-jsdoc@^18.1.4:
-  version "18.1.4"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-18.1.4.tgz#462b49f17acf3cc29b15c0eb124caaadf39be128"
-  integrity sha512-X3jXbAZAFwr2xZXpz8cyozDuu9ea2eWf8qiIgmgUbAo3vs8xWL0g4hVmCo/Pwg5T2qL6/+iksY3m+xjmd8NAig==
+eslint-plugin-jsdoc@^18.1.5:
+  version "18.1.5"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-18.1.5.tgz#bdab6f2ae1ee37b4acdb997d1ad24c3023881dd1"
+  integrity sha512-dfq1YA0z2WaosgbEX3QPf37TDUcrfcRRjJ0HBgJYuA4XIV2ICe7dFxhJ8halIlKL4VNhUZ5GMKO1r0CPRvBN0g==
   dependencies:
     comment-parser "^0.7.0"
     debug "^4.1.1"
@@ -1366,10 +1366,10 @@ eslint-plugin-standard@^4.0.1:
   resolved "https://registry.yarnpkg.com/eslint-plugin-standard/-/eslint-plugin-standard-4.0.1.tgz#ff0519f7ffaff114f76d1bd7c3996eef0f6e20b4"
   integrity sha512-v/KBnfyaOMPmZc/dmc6ozOdWqekGp7bBGq4jLAecEfPGmfKiWS4sA8sC0LqiV9w5qmXAtXVn4M3p1jSyhY85SQ==
 
-eslint-plugin-unicorn@^13.0.0:
-  version "13.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-unicorn/-/eslint-plugin-unicorn-13.0.0.tgz#3d73a17cc34ade1aaa02655ae78bbd8a2053fa81"
-  integrity sha512-9CQk0v74vQpETMt6iqNgjf3IbWEFhrT0sjaLnjkl9SF3rJH6ZL9f7H42BXJ6LPENQR97QzhrIvB8VG0nD05wxQ==
+eslint-plugin-unicorn@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-unicorn/-/eslint-plugin-unicorn-14.0.0.tgz#ea029443f415fbbf6e68a202d572c91fe483453a"
+  integrity sha512-hbW0Tl/TixLIpeObsrdYl01XTud3HZzNd705AjUzJCMcQFRc2jmL+IeD7uue/Nw8HaP2qwoWW1LldHxz7XvwVg==
   dependencies:
     ci-info "^2.0.0"
     clean-regexp "^1.0.0"
@@ -1383,6 +1383,7 @@ eslint-plugin-unicorn@^13.0.0:
     lodash.topairs "^4.3.0"
     lodash.upperfirst "^4.3.1"
     read-pkg-up "^7.0.0"
+    regexp-tree "^0.1.16"
     regexpp "^3.0.0"
     reserved-words "^0.1.2"
     safe-regex "^2.1.1"
@@ -1432,10 +1433,10 @@ eslint-visitor-keys@^1.0.0, eslint-visitor-keys@^1.1.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-1.1.0.tgz#e2a82cea84ff246ad6fb57f9bde5b46621459ec2"
   integrity sha512-8y9YjtM1JBJU/A9Kc+SbaOV4y29sSWckBwMHa+FGtVj5gN/sbnKDf6xJUl+8g7FAij9LVaP8C24DUiH/f/2Z9A==
 
-eslint@^6.7.0:
-  version "6.7.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-6.7.0.tgz#766162e383b236e61d873697f82c3a3e41392020"
-  integrity sha512-dQpj+PaHKHfXHQ2Imcw5d853PTvkUGbHk/MR68KQUl98EgKDCdh4vLRH1ZxhqeQjQFJeg8fgN0UwmNhN3l8dDQ==
+eslint@^6.7.1:
+  version "6.7.1"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-6.7.1.tgz#269ccccec3ef60ab32358a44d147ac209154b919"
+  integrity sha512-UWzBS79pNcsDSxgxbdjkmzn/B6BhsXMfUaOHnNwyE8nD+Q6pyT96ow2MccVayUTV4yMid4qLhMiQaywctRkBLA==
   dependencies:
     "@babel/code-frame" "^7.0.0"
     ajv "^6.10.0"
@@ -2671,7 +2672,7 @@ regenerator-transform@^0.14.0:
   dependencies:
     private "^0.1.6"
 
-regexp-tree@~0.1.1:
+regexp-tree@^0.1.16, regexp-tree@~0.1.1:
   version "0.1.16"
   resolved "https://registry.yarnpkg.com/regexp-tree/-/regexp-tree-0.1.16.tgz#0715feadb6f766aad7eac5ef4287d2c39acf2fc5"
   integrity sha512-nXWhGJLTWLNdhWF1uqoXQgAOgv8mQGpgXTOk8BWp08YMOKCtn74VoyOJ+AXZ68Dj50Myd+msYs+aGRBzWJ5dJA==
@@ -2812,10 +2813,10 @@ rollup-pluginutils@^2.0.1, rollup-pluginutils@^2.6.0, rollup-pluginutils@^2.8.1:
   dependencies:
     estree-walker "^0.6.1"
 
-rollup@1.27.4:
-  version "1.27.4"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-1.27.4.tgz#5bca607a10c99c034288de9f9c756f9fe1a08431"
-  integrity sha512-UaGNOIax/Ixfd92CAAanUilx2RSkkwEfC1lCTw1eL5Re6NURWgX66ARZt5+3px4kYnpSwzyOot4r18c2b+QgJQ==
+rollup@1.27.5:
+  version "1.27.5"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-1.27.5.tgz#d100fb0ffd8353575cb2057152547b9abfddfe59"
+  integrity sha512-8rfVdzuTg2kt8ObD9LNJpEwUN7B6lsl3sHc5fddtgICpLjpYeSf4m2+RftBzcCaBTMi1iYX3Ez8zFT4Gj2nJjg==
   dependencies:
     "@types/estree" "*"
     "@types/node" "*"
