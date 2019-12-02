@@ -997,7 +997,7 @@ class Typeson {
         [].concat(typeSpecSets).forEach(function R (typeSpec) {
             // Allow arrays of arrays of arrays...
             if (isArray(typeSpec)) {
-                return typeSpec.map((typSpec) => R(typSpec));
+                return typeSpec.map(R, this);
             }
             typeSpec && keys(typeSpec).forEach(function (typeId) {
                 if (typeId === '#') {
