@@ -1210,10 +1210,10 @@ eslint-ast-utils@^1.1.0:
     lodash.get "^4.4.2"
     lodash.zip "^4.2.0"
 
-eslint-config-ash-nazg@^13.0.0:
-  version "13.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-ash-nazg/-/eslint-config-ash-nazg-13.0.0.tgz#1b6be02a72881009b356f8d8c3f5b87e3d418d8f"
-  integrity sha512-NYiYpkH0aIHRwi/+tCjaB3Myt7f1n+6+2m3blIYMPm0LwXCzqWPVWF4POUGK7aWO6YdrRt0vHPRDgcyhuqxw+g==
+eslint-config-ash-nazg@^13.1.0:
+  version "13.1.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-ash-nazg/-/eslint-config-ash-nazg-13.1.0.tgz#b4c2e3215dfc78e187c5b3e20896bbb4393b92fd"
+  integrity sha512-xHaLzYqoKkYD0CXchTIQkeIcpdiHhmQuigSPFasuEPE0QrUKSYod91Btf+uApXkQ48CEuHngmgGm9R4xirfwsg==
 
 eslint-config-standard@^14.1.0:
   version "14.1.0"
@@ -1299,7 +1299,7 @@ eslint-plugin-import@^2.18.2:
     read-pkg-up "^2.0.0"
     resolve "^1.11.0"
 
-eslint-plugin-jsdoc@^18.3.0:
+eslint-plugin-jsdoc@^18.4.0:
   version "18.4.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-18.4.0.tgz#36c9ac7f42a248efe1fd5c45ffb99b10af3ea5ac"
   integrity sha512-K1CG9Acmp1OtAOqhf5axjuEOUFyLW7LZlTs5up6FWWZXSniGWmEhlD755/iQEA+KDL5xBVbue1gtlV52OZSNng==
