@@ -1,6 +1,6 @@
 # typeson CHANGES
 
-## ?
+## 5.14.0
 
 - Fix: Ensure `this` is defined with old-style function-based type specs
 - Fix: Ensure `Undefined` and `TypesonPromise` revivers are correctly
