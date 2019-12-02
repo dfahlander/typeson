@@ -2,8 +2,13 @@
 
 ## ?
 
+- Fix: Ensure `this` is defined with old-style function-based type specs
+- Fix: Ensure `Undefined` and `TypesonPromise` revivers are correctly
+    detected (independent of minification or Babelification).
 - Linting (ESLint): Switch to more rigorous config (ash-nazg); jsdoc, etc.
 - Linting (ESLint): add any html to linting
+- Maintenance: Add `.editorconfig`
+- Testing: Add coverage
 - npm: Update devDeps/peerDeps
 
 ## 5.13.0
