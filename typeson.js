@@ -1088,6 +1088,8 @@ class Typeson {
  */
 class Undefined{} // eslint-disable-line space-before-blocks
 
+Undefined.__typeson__type__ = 'TypesonUndefined';
+
 // The following provide classes meant to avoid clashes with other values
 
 // To insist `undefined` should be added

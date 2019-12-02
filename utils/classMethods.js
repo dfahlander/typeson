@@ -43,8 +43,19 @@ function hasConstructorOf (a, b) {
     if (typeof Ctor !== 'function') {
         return b === null;
     }
-    return typeof Ctor === 'function' && b !== null &&
-        fnToString.call(Ctor) === fnToString.call(b);
+    if (typeof Ctor === 'function' && b === Ctor) {
+        return true;
+    }
+    if (typeof Ctor === 'function' && b !== null &&
+        fnToString.call(Ctor) === fnToString.call(b)) {
+        return true;
+    }
+    if (typeof Ctor === 'function' && typeof b === 'function' &&
+        typeof Ctor.__typeson__type__ === 'string' &&
+        Ctor.__typeson__type__ === b.__typeson__type__) {
+        return true;
+    }
+    return false;
 }
 
 /**

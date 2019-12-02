@@ -12,6 +12,8 @@ class TypesonPromise{constructor(f){this.p=new Promise(f)}}
 // eslint-disable-next-line max-len
 // class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
 
+TypesonPromise.__typeson__type__ = 'TypesonPromise';
+
 // Note: core-js-bundle provides a `Symbol` polyfill
 if (typeof Symbol !== 'undefined') {
     // Ensure `isUserObject` will return `false` for `TypesonPromise`
