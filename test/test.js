@@ -3,7 +3,7 @@
 import '../node_modules/core-js-bundle/minified.js';
 import '../node_modules/regenerator-runtime/runtime.js';
 
-import Typeson from '../dist/typeson-esm.js';
+import Typeson from '../instrumented/typeson-esm.js';
 import * as B64 from
     '../node_modules/base64-arraybuffer-es6/dist/base64-arraybuffer-es.js';
 

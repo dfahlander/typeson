@@ -4,3 +4,6 @@
 *.log
 test/test-polyglot.js
 /ignore
+.nyc_output
+instrumented
+coverage

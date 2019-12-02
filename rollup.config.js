@@ -1,5 +1,6 @@
 import babel from 'rollup-plugin-babel';
 import {terser} from 'rollup-plugin-terser';
+import istanbul from 'rollup-plugin-istanbul';
 
 /**
  * @external RollupConfig
@@ -11,13 +12,15 @@ import {terser} from 'rollup-plugin-terser';
  * @param {PlainObject} config
  * @param {boolean} config.minifying
  * @param {string} [config.format='umd'} = {}]
+ * @param {boolean} [config.test=false]
  * @returns {external:RollupConfig}
  */
-function getRollupObject ({minifying, format = 'umd'} = {}) {
+function getRollupObject ({minifying, format = 'umd', coverage = false} = {}) {
+    const base = coverage ? 'instrumented' : 'dist';
     const nonMinified = {
         input: 'typeson.js',
         output: {
-            file: `dist/typeson${
+            file: `${base}/typeson${
                 (format === 'cjs'
                     ? '-commonjs2'
                     : format === 'umd'
@@ -28,9 +31,9 @@ function getRollupObject ({minifying, format = 'umd'} = {}) {
             format,
             name: 'Typeson'
         },
-        plugins: [
+        plugins: (coverage ? [istanbul()] : []).concat([
             babel()
-        ]
+        ])
     };
     if (minifying) {
         nonMinified.plugins.push(
@@ -52,5 +55,6 @@ export default [
     getRollupObject({minifying: false, format: 'umd'}),
     getRollupObject({minifying: true, format: 'esm'}),
     getRollupObject({minifying: false, format: 'esm'}),
-    getRollupObject({minifying: true, format: 'cjs'})
+    getRollupObject({minifying: true, format: 'cjs'}),
+    getRollupObject({minifying: false, format: 'esm', coverage: true})
 ];

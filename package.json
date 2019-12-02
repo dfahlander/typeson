@@ -11,8 +11,14 @@
     "start": "static -p 8092",
     "rollup": "rollup -c",
     "browser-test": "npm run rollup && npm run eslint && open-cli http://localhost:8092/test/ && npm start",
+    "open-coverage": "open-cli http://localhost:8092/coverage/ && npm start",
     "node-test": "node -r esm test/test.js",
+    "node-test-cov": "rm -Rf node_modules/.cache/esm && nyc --reporter=html --reporter=text node -r esm test/test.js",
+    "test-cov": "npm run rollup && npm run eslint && npm run node-test-cov",
     "test": "npm run rollup && npm run eslint && npm run node-test"
+  },
+  "nyc": {
+    "exclude": ["instrumented/**", "test/**"]
   },
   "repository": {
     "type": "git",
@@ -67,10 +73,12 @@
     "eslint-plugin-unicorn": "^14.0.1",
     "esm": "^3.2.25",
     "node-static": "0.7.11",
+    "nyc": "^14.1.1",
     "open-cli": "^5.0.0",
     "regenerator-runtime": "^0.13.3",
     "rollup": "1.27.7",
     "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-istanbul": "^2.0.1",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-terser": "^5.1.2",
     "typescript": "^3.7.2"
