@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 5.14.1
+
+- Fix: Ensure pointing to existent main CJS file (minified)
+
 ## 5.14.0
 
 - Fix: Ensure `this` is defined with old-style function-based type specs

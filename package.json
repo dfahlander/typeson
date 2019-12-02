@@ -1,8 +1,8 @@
 {
   "name": "typeson",
-  "version": "5.14.0",
+  "version": "5.14.1",
   "description": "Preserves types over JSON, BSON or socket.io",
-  "main": "./dist/typeson-commonjs2.js",
+  "main": "./dist/typeson-commonjs2.min.js",
   "browser": "./dist/typeson.js",
   "module": "./dist/typeson-esm.js",
   "scripts": {
