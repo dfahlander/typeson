@@ -450,6 +450,7 @@ class Typeson {
                     null,
                     runObserver
                 );
+
             let clone;
             if (replaced !== value) {
                 ret = replaced;
@@ -461,12 +462,6 @@ class Typeson {
                 ) {
                     clone = new Array(value.length);
                     observerData = {clone};
-                } else if (isPlainObj || stateObj.iterateIn === 'object') {
-                    clone = {};
-                    if (stateObj.addLength) {
-                        clone.length = value.length;
-                    }
-                    observerData = {clone};
                 } else if (keypath === '' &&
                     hasConstructorOf(value, TypesonPromise)
                 ) {
@@ -475,6 +470,21 @@ class Typeson {
                         undefined, undefined, stateObj.type
                     ]);
                     ret = value;
+                } else if (
+                    (
+                        !['function', 'symbol'].includes(typeof value) &&
+                        !('toJSON' in value) &&
+                        !hasConstructorOf(value, TypesonPromise) &&
+                        !hasConstructorOf(value, Promise)
+                    ) ||
+                    isPlainObj ||
+                    stateObj.iterateIn === 'object'
+                ) {
+                    clone = {};
+                    if (stateObj.addLength) {
+                        clone.length = value.length;
+                    }
+                    observerData = {clone};
                 } else {
                     ret = value; // Only clone vanilla objects and arrays
                 }

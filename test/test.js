@@ -1464,6 +1464,33 @@ const tests = [function shouldSupportBasicTypes () {
         back[7][0] === back,
         'Preserves circular references'
     );
+}, function shouldAllowUnknownStringTags () {
+    const map = {
+        map: {
+            test (x) { return Typeson.toStringTag(x) === 'Map'; },
+            replace (mp) { return [...mp.entries()]; },
+            revive (entries) { return new Map(entries); }
+        }
+    };
+
+    const typeson = new Typeson().register([map]);
+
+    const a = {
+        __raw_map: new Map(),
+        [Symbol.toStringTag]: 'a'
+    };
+
+    const tson = typeson.stringify(a, null, 2);
+    // console.log('tson', tson);
+    const back = typeson.parse(tson);
+
+    assert(
+        back.__raw_map instanceof Map,
+        'Revives `Map` on class with Symbol.toStringTag'
+    );
+
+    // Todo: Need to implement Symbol iteration
+    // assert(back[Symbol.toStringTag] === 'a', 'Revives `Symbol.toStringTag`');
 }];
 
 (async () => {
