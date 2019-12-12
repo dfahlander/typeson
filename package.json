@@ -18,7 +18,10 @@
     "test": "npm run rollup && npm run eslint && npm run node-test"
   },
   "nyc": {
-    "exclude": ["instrumented/**", "test/**"]
+    "exclude": [
+      "instrumented/**",
+      "test/**"
+    ]
   },
   "repository": {
     "type": "git",
