@@ -3,3 +3,4 @@ dist
 ignore
 instrumented
 coverage
+node_modules
