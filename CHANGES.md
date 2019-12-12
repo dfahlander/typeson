@@ -1,5 +1,14 @@
 # typeson CHANGES
 
+## ?
+
+- Fix: When checking for "null" constructor, return `true` if object created
+    by `Object.create(null)`. This fix only impacts direct use of
+    `Typeson.hasConstructorOf`. When internally used in Typeson (or
+    `typeson-registry`), it never uses a `null` second argument.
+- Testing: Coverage improvements
+- npm: Update devDeps, peerDep (core-js-bundle)
+
 ## 5.15.0
 
 - Enhancement: Allow cloning during encapsulation of (non-registered)

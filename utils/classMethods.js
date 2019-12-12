@@ -37,7 +37,7 @@ function hasConstructorOf (a, b) {
     }
     const proto = getProto(a);
     if (!proto) {
-        return false;
+        return b === null;
     }
     const Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
     if (typeof Ctor !== 'function') {

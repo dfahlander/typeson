@@ -1540,6 +1540,37 @@ const tests = [function shouldSupportBasicTypes () {
     assert(Typeson.isUserObject(d), 'Object literal is a user object');
     assert(Typeson.isUserObject(e), 'Instance of user class is a user object');
     assert(!Typeson.isUserObject(f), 'RegExp is not a user object');
+}, function shouldAllowHasConstructorOfToWork () {
+    function B () {}
+    const a = Object.create(null);
+    assert(
+        Typeson.hasConstructorOf(a, null),
+        'Object with null prototype has a "null" constructor'
+    );
+
+    B.prototype = a;
+    const c = new B();
+    assert(
+        Typeson.hasConstructorOf(c, null),
+        'Object with null prototype has a "null" ancestor constructor'
+    );
+
+    const d = function () { /* Twin */ };
+    const e = new function () { /* Twin */ }();
+    assert(
+        Typeson.hasConstructorOf(e, d),
+        'Object has constructor that is identical to another when stringified'
+    );
+
+    class Undefined {}
+    Undefined.__typeson__type__ = 'TypesonUndefined';
+    const undef = new Undefined();
+
+    assert(
+        Typeson.hasConstructorOf(undef, Typeson.Undefined),
+        'Instance of Typeson.Undefined has constructor identical ' +
+            'to Typeson.Undefined despite inconsistent stringification'
+    );
 }];
 
 (async () => {
