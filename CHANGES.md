@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## 5.15.0
+
+- Enhancement: Allow cloning during encapsulation of (non-registered)
+    classes using `Symbol.toStringTag` (#17)
+
 ## 5.14.1
 
 - Fix: Ensure pointing to existent main CJS file (minified)
