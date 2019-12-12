@@ -1445,12 +1445,12 @@ const tests = [function shouldSupportBasicTypes () {
     arr[9] = {arr};
     arr.b = 'ddd';
     arr[-2] = 'eee';
+    arr[9].f = [[arr]];
+
     const tson = typeson.stringify(arr, null, 2);
     // console.log('tson', tson);
     const back = typeson.parse(tson);
     // console.log('back', back);
-    // console.log('back[6]', Array.isArray(back[6]));
-    // console.log('back[9].arr', Array.isArray(back[9].arr));
     assert(
         back[0] === 3 && back[3] === '4' && back[4] === 5,
         'Preserves regular array indexes'
@@ -1461,8 +1461,16 @@ const tests = [function shouldSupportBasicTypes () {
     );
     assert(
         back[6] === back &&
-        back[7][0] === back,
-        'Preserves circular references'
+        back[7][0] === back &&
+        Array.isArray(back),
+        'Preserves circular array references'
+    );
+
+    assert(
+        Array.isArray(back[9].arr), 'Preserves cyclic array on object'
+    );
+    assert(
+        back[9].f[0][0] === back, 'Preserves nested cyclic array'
     );
 }, function shouldAllowUnknownStringTags () {
     const map = {
