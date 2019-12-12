@@ -968,11 +968,27 @@ const tests = [function shouldSupportBasicTypes () {
         value: 100
     });
 
-    const tson = typeson.stringify(a);
+    let tson = typeson.stringify(a);
     console.log(tson);
-    const back = typeson.parse(tson);
+    let back = typeson.parse(tson);
     assert(back.b === 5, 'Should have kept property');
     assert(back.nonenum === 100, 'Should have kept non-enumerable property');
+    assert(
+        {}.propertyIsEnumerable.call(back, 'nonenum'),
+        'Non-enumerable property should now be enumerable'
+    );
+
+    const x = Object.create(null);
+    x.b = 7;
+    Object.defineProperty(x, 'nonenum', {
+        enumerable: false,
+        value: 50
+    });
+    tson = typeson.stringify(x);
+    console.log(tson);
+    back = typeson.parse(tson);
+    assert(back.b === 7, 'Should have kept property');
+    assert(back.nonenum === 50, 'Should have kept non-enumerable property');
     assert(
         {}.propertyIsEnumerable.call(back, 'nonenum'),
         'Non-enumerable property should now be enumerable'
