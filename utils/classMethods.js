@@ -4,7 +4,7 @@ const {toString: toStr} = {},
     fnToString = hasOwn.toString;
 
 /**
- *
+ * Second argument not in use internally, but provided for utility.
  * @param {Any} v
  * @param {boolean} catchCheck
  * @returns {boolean}

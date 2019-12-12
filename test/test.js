@@ -1491,6 +1491,9 @@ const tests = [function shouldSupportBasicTypes () {
 
     // Todo: Need to implement Symbol iteration
     // assert(back[Symbol.toStringTag] === 'a', 'Revives `Symbol.toStringTag`');
+}, function shouldAllowSecondArgumentToIsThenableWork () {
+    const thenable = Typeson.isThenable(Promise.resolve(), true);
+    assert(thenable, 'Promise found to have catch');
 }];
 
 (async () => {
