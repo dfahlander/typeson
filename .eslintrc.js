@@ -12,6 +12,7 @@ module.exports = {
           "Error",
           "JSON",
           "Map",
+          "Object.create",
           "Object.defineProperty",
           "Object.entries",
           "Object.getPrototypeOf",

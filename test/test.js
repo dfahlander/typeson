@@ -1502,6 +1502,28 @@ const tests = [function shouldSupportBasicTypes () {
 }, function shouldAllowSecondArgumentToIsThenableWork () {
     const thenable = Typeson.isThenable(Promise.resolve(), true);
     assert(thenable, 'Promise found to have catch');
+}, function shouldAllowIsUserObjectToWork () {
+    class A {
+
+    }
+    class B extends A {}
+
+    const a = null;
+    const b = [];
+    const c = Object.create(null);
+    const d = {};
+    const e = new B();
+    const f = /test/u;
+
+    assert(!Typeson.isUserObject(a), 'null is not a user object');
+    assert(!Typeson.isUserObject(b), 'Array is not a user object');
+    assert(
+        Typeson.isUserObject(c),
+        'Object with null prototype is a user object'
+    );
+    assert(Typeson.isUserObject(d), 'Object literal is a user object');
+    assert(Typeson.isUserObject(e), 'Instance of user class is a user object');
+    assert(!Typeson.isUserObject(f), 'RegExp is not a user object');
 }];
 
 (async () => {
