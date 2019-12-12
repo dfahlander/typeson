@@ -15,6 +15,7 @@ class TypesonPromise{constructor(f){this.p=new Promise(f)}}
 TypesonPromise.__typeson__type__ = 'TypesonPromise';
 
 // Note: core-js-bundle provides a `Symbol` polyfill
+/* istanbul ignore else */
 if (typeof Symbol !== 'undefined') {
     // Ensure `isUserObject` will return `false` for `TypesonPromise`
     TypesonPromise.prototype[Symbol.toStringTag] = 'TypesonPromise';
