@@ -4,10 +4,26 @@
         <meta charset="utf-8" />
         <title>Typeson Tests</title>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
-
-        <script type="module" src="./test.js"></script>
+        <link rel="stylesheet" href="../node_modules/mocha/mocha.css"/>
     </head>
     <body>
         <h1>Typeson Tests</h1>
+        <div id="mocha"></div>
+
+        <!-- Test Environment -->
+        <script src="../node_modules/mocha/mocha.js"></script>
+        <script src="../node_modules/chai/chai.js"></script>
+        <!-- <script src="../node_modules/sinon/pkg/sinon-no-sourcemaps.js"></script> -->
+
+        <script type="module">
+        /* globals chai */
+        window.expect = chai.expect;
+        window.assert = chai.assert;
+        mocha.setup({ui: 'bdd', timeout: 5000});
+        </script>
+        <script type="module" src="./test.js"></script>
+        <script type="module">
+        mocha.run();
+        </script>
     </body>
 </html>

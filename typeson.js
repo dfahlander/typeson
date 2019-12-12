@@ -1,4 +1,4 @@
-/* eslint-disable node/no-unsupported-features/es-syntax, no-shadow */
+/* eslint-disable no-shadow */
 /**
  * Typeson - JSON with types
  * @license The MIT License (MIT)

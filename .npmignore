@@ -5,5 +5,4 @@ test/
 !typeson.js
 !LICENSE-MIT.txt
 /ignore
-instrumented
 coverage

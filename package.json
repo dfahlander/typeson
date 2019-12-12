@@ -10,17 +10,18 @@
     "eslint": "eslint --ext js,md,html .",
     "start": "static -p 8092",
     "rollup": "rollup -c",
-    "browser-test": "npm run rollup && npm run eslint && open-cli http://localhost:8092/test/ && npm start",
+    "open-test": "open-cli http://localhost:8092/test/ && npm start",
+    "browser-test": "npm run rollup && npm run eslint && npm run open-test",
     "open-coverage": "open-cli http://localhost:8092/coverage/ && npm start",
-    "node-test": "node -r esm test/test.js",
-    "node-test-cov": "rm -Rf node_modules/.cache/esm && nyc --reporter=html --reporter=text node -r esm test/test.js",
-    "test-cov": "npm run rollup && npm run eslint && npm run node-test-cov",
-    "test": "npm run rollup && npm run eslint && npm run node-test"
+    "mocha": "mocha --require esm --require test/bootstrap/node test/test.js",
+    "mocha-cov": "rm -Rf node_modules/.cache/esm && nyc --reporter=html --reporter=text npm run mocha",
+    "test-cov": "npm run rollup && npm run eslint && npm run mocha-cov",
+    "test": "npm run rollup && npm run eslint && npm run mocha"
   },
   "nyc": {
     "exclude": [
-      "instrumented/**",
-      "test/**"
+      "test/**",
+      "node_modules/**"
     ]
   },
   "repository": {
@@ -45,7 +46,9 @@
     "url": "https://github.com/dfahlander/typeson/issues"
   },
   "homepage": "https://github.com/dfahlander/typeson#readme",
-  "engines": {},
+  "engines": {
+      "node": ">=0.1.14"
+  },
   "peerDependencies": {
     "core-js-bundle": "^3.5.0",
     "regenerator-runtime": "^0.13.3"
@@ -57,6 +60,7 @@
     "@mysticatea/eslint-plugin": "^13.0.0",
     "@rollup/plugin-replace": "^2.2.1",
     "base64-arraybuffer-es6": "^0.5.0",
+    "chai": "^4.2.0",
     "core-js-bundle": "^3.5.0",
     "eslint": "^6.7.2",
     "eslint-config-ash-nazg": "^13.1.0",
@@ -75,13 +79,13 @@
     "eslint-plugin-standard": "^4.0.1",
     "eslint-plugin-unicorn": "^14.0.1",
     "esm": "^3.2.25",
+    "mocha": "^6.2.2",
     "node-static": "0.7.11",
     "nyc": "^14.1.1",
     "open-cli": "^5.0.0",
     "regenerator-runtime": "^0.13.3",
     "rollup": "1.27.11",
     "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-istanbul": "^2.0.1",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-terser": "^5.1.3",
     "typescript": "^3.7.3"

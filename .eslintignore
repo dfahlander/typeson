@@ -1,6 +1,5 @@
 test/test-polyglot.js
 dist
 ignore
-instrumented
 coverage
 node_modules
