@@ -70,10 +70,7 @@ function roundtrip (x) {
 }
 
 describe('Typeson', function () {
-    it('shouldSupportBasicTypes', () => {
-        //
-        // shouldSupportBasicTypes
-        //
+    it('should support basic types', () => {
         let res = roundtrip({});
         assert(Object.keys(res).length === 0, 'Result should be empty');
         const date = new Date();
@@ -99,7 +96,7 @@ describe('Typeson', function () {
             'regex only treated as empty object by default'
         );
     });
-    it('shouldResolveNestedObjects', () => {
+    it('should resolve nested objects', () => {
         const input = {a: [{subA: 5}, [6, 7]], b: {subB: {c: 8}}};
         const res = roundtrip(input);
         assert(res.a[0].subA === 5, 'Object within array');
@@ -107,7 +104,7 @@ describe('Typeson', function () {
         assert(res.a[1][1] === 7, 'Array within array');
         assert(res.b.subB.c === 8, 'Object within object');
     });
-    it('shouldSupportObjectAPI', () => {
+    it('should support object API', () => {
         const typeson = new Typeson().register({
             Date: {
                 test (x) { return x instanceof Date; },
@@ -124,7 +121,7 @@ describe('Typeson', function () {
             'Date value'
         );
     });
-    it('shouldSupportObjectsContainingInternallyUsedProperties', () => {
+    it('should support objects containing internally used properties', () => {
         function test (data, cb) {
             const tson = typeson.stringify(data, null, 2);
             log(tson);
@@ -246,41 +243,46 @@ describe('Typeson', function () {
             );
         });
     });
-    it('disallowsHashType', () => {
-        let caught = false;
-        try {
-            new Typeson().register({'#': [
-                function () {}, function () {}, function () {}
-            ]});
-        } catch (err) {
-            caught = true;
-        }
-        assert(
-            caught,
-            "Should throw on attempting to register the reserved 'type', '#'"
-        );
-    });
-    it('disallowsJSONTypeNames', () => {
-        const ok = [
-            'null', 'boolean', 'number', 'string', 'array', 'object'
-        ].every((type) => {
+
+    describe('Type error checking', () => {
+        it('disallows hash type', () => {
             let caught = false;
             try {
-                new Typeson().register({
-                    [type]: [function () {}, function () {}, function () {}]
-                });
+                new Typeson().register({'#': [
+                    function () {}, function () {}, function () {}
+                ]});
             } catch (err) {
                 caught = true;
             }
-            return caught;
+            assert(
+                caught,
+                'Should throw on attempting to register the ' +
+                    "reserved 'type', '#'"
+            );
         });
-        assert(
-            ok,
-            'Should throw on attempting to register the reserved JSON ' +
-                'object type names'
-        );
+        it('disallows JSON type names', () => {
+            const ok = [
+                'null', 'boolean', 'number', 'string', 'array', 'object'
+            ].every((type) => {
+                let caught = false;
+                try {
+                    new Typeson().register({
+                        [type]: [function () {}, function () {}, function () {}]
+                    });
+                } catch (err) {
+                    caught = true;
+                }
+                return caught;
+            });
+            assert(
+                ok,
+                'Should throw on attempting to register the reserved JSON ' +
+                    'object type names'
+            );
+        });
     });
-    it('shouldHandlePathSeparatorsInObjects', () => {
+
+    it('should handle path separators in objects', () => {
         const input = {
             aaa: {
                 bbb: new Date(91000000000)
@@ -399,133 +401,142 @@ describe('Typeson', function () {
             'Find properties with escaped and unescaped characters'
         );
     });
-    it('shouldResolveCyclics', () => {
-        //
-        // shouldResolveCyclics
-        //
-        const data = {list: []};
-        for (let i = 0; i < 10; ++i) {
-            data.list.push({
-                name: 'name' + i,
-                parent: data.list,
-                root: data,
-                children: []
-            });
-        }
-        data.list[3].children = [data.list[0], data.list[1]];
 
-        const tson = typeson.stringify(data, null, 2);
-        // log(tson);
-        const result = typeson.parse(tson);
+    describe('Cyclics', () => {
+        it('should resolve cyclics', () => {
+            const data = {list: []};
+            for (let i = 0; i < 10; ++i) {
+                data.list.push({
+                    name: 'name' + i,
+                    parent: data.list,
+                    root: data,
+                    children: []
+                });
+            }
+            data.list[3].children = [data.list[0], data.list[1]];
 
-        assert(result.list.length === 10, 'result.list.length should be 10');
-        assert(
-            result.list[3].children.length === 2,
-            'result.list[3] should have 2 children'
-        );
-        assert(
-            result.list[3].children[0] === result.list[0],
-            'First child of result.list[3] should be result.list[0]'
-        );
+            const tson = typeson.stringify(data, null, 2);
+            // log(tson);
+            const result = typeson.parse(tson);
+
+            assert(
+                result.list.length === 10,
+                'result.list.length should be 10'
+            );
+            assert(
+                result.list[3].children.length === 2,
+                'result.list[3] should have 2 children'
+            );
+            assert(
+                result.list[3].children[0] === result.list[0],
+                'First child of result.list[3] should be result.list[0]'
+            );
+        });
+        it('should resolve cyclics 2', () => {
+            const kalle = {name: 'Kalle', age: 33};
+            const input = [kalle, kalle, kalle];
+            const tson = typeson.stringify(input);
+            // log (tson.match(/Kalle/g).length);
+            log(tson);
+            assert(
+                tson.match(/Kalle/gu).length === 1,
+                "TSON should only contain one 'Kalle'. The others should " +
+                    'just reference the first'
+            );
+            const result = typeson.parse(tson);
+            assert(
+                result[0] === result[1] && result[1] === result[2],
+                'The resulting object should also just have references ' +
+                    'to the same object'
+            );
+        });
+        it('should resolve cyclic arrays', () => {
+            const recursive = [];
+            recursive.push(recursive);
+            let tson = typeson.stringify(recursive);
+            let result = typeson.parse(tson);
+            assert(result === result[0], 'array directly contains self');
+
+            const recursive2 = [];
+            recursive2.push([recursive2]);
+            tson = typeson.stringify(recursive2);
+            result = typeson.parse(tson);
+            assert(
+                result !== result[0] && result === result[0][0],
+                'array indirectly contains self'
+            );
+
+            const recursive3 = [recursive];
+            tson = typeson.stringify(recursive3);
+            log(tson);
+            result = typeson.parse(tson);
+            assert(
+                result !== result[0] && result !== result[0][0] &&
+                    result[0] === result[0][0],
+                'array member contains self'
+            );
+
+            const recursive4 = [1, recursive];
+            tson = typeson.stringify(recursive4);
+            log(tson);
+            result = typeson.parse(tson);
+            assert(
+                result !== result[1] && result !== result[1][0] &&
+                    result[1] === result[1][0],
+                'array member contains self'
+            );
+        });
+        it('should resolve cyclic object members', () => {
+            // eslint-disable-next-line sonarjs/prefer-object-literal
+            const recursive = {};
+            recursive.b = recursive;
+            const recursiveContainer = {a: recursive};
+            const tson = typeson.stringify(recursiveContainer);
+            log(tson);
+            const result = typeson.parse(tson);
+            assert(
+                result !== result.a && result !== result.b &&
+                    result.a === result.a.b,
+                'Object property contains self'
+            );
+        });
+        it('should not resolve cyclics if not wanted', () => {
+            const kalle = {name: 'Kalle', age: 33};
+            const input = [kalle, kalle, kalle];
+            const typeson = new Typeson({cyclic: false});
+            const tson = typeson.stringify(input);
+            const json = JSON.stringify(input);
+            assert(
+                tson === json,
+                'TSON should be identical to JSON because the input is ' +
+                    'simple and the cyclics of the input should be ignored'
+            );
+        });
+        it('should resolve cyclics in encapsulated objects', () => {
+            const buf = new ArrayBuffer(16);
+            const data = {
+                buf,
+                bar: {
+                    data: new DataView(buf, 8, 8)
+                }
+            };
+            const tson = typeson.stringify(data, null, 2);
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back.buf === back.bar.data.buffer,
+                'The buffers point to same object'
+            );
+        });
     });
-    it('shouldResolveCyclics2', () => {
-        //
-        // shouldResolveCyclics2
-        //
 
-        const kalle = {name: 'Kalle', age: 33};
-        const input = [kalle, kalle, kalle];
-        const tson = typeson.stringify(input);
-        // log (tson.match(/Kalle/g).length);
-        log(tson);
-        assert(
-            tson.match(/Kalle/gu).length === 1,
-            "TSON should only contain one 'Kalle'. The others should " +
-                'just reference the first'
-        );
-        const result = typeson.parse(tson);
-        assert(
-            result[0] === result[1] && result[1] === result[2],
-            'The resulting object should also just have references ' +
-                'to the same object'
-        );
-    });
-    it('shouldResolveCyclicArrays', () => {
-        const recursive = [];
-        recursive.push(recursive);
-        let tson = typeson.stringify(recursive);
-        let result = typeson.parse(tson);
-        assert(result === result[0], 'array directly contains self');
-
-        const recursive2 = [];
-        recursive2.push([recursive2]);
-        tson = typeson.stringify(recursive2);
-        result = typeson.parse(tson);
-        assert(
-            result !== result[0] && result === result[0][0],
-            'array indirectly contains self'
-        );
-
-        const recursive3 = [recursive];
-        tson = typeson.stringify(recursive3);
-        log(tson);
-        result = typeson.parse(tson);
-        assert(
-            result !== result[0] && result !== result[0][0] &&
-                result[0] === result[0][0],
-            'array member contains self'
-        );
-
-        const recursive4 = [1, recursive];
-        tson = typeson.stringify(recursive4);
-        log(tson);
-        result = typeson.parse(tson);
-        assert(
-            result !== result[1] && result !== result[1][0] &&
-                result[1] === result[1][0],
-            'array member contains self'
-        );
-    });
-    it('shouldResolveCyclicObjectMembers', () => {
-        // eslint-disable-next-line sonarjs/prefer-object-literal
-        const recursive = {};
-        recursive.b = recursive;
-        const recursiveContainer = {a: recursive};
-        const tson = typeson.stringify(recursiveContainer);
-        log(tson);
-        const result = typeson.parse(tson);
-        assert(
-            result !== result.a && result !== result.b &&
-                result.a === result.a.b,
-            'Object property contains self'
-        );
-    });
-    it('shouldNotResolveCyclicsIfNotWanted', () => {
-        //
-        // shouldNotResolveCyclicsIfNotWanted
-        //
-
-        const kalle = {name: 'Kalle', age: 33};
-        const input = [kalle, kalle, kalle];
-        const typeson = new Typeson({cyclic: false});
-        const tson = typeson.stringify(input);
-        const json = JSON.stringify(input);
-        assert(
-            tson === json,
-            'TSON should be identical to JSON because the input is ' +
-                'simple and the cyclics of the input should be ignored'
-        );
-    });
-    it('shouldSupportArrays', () => {
-        //
-        // shouldSupportArrays
-        //
+    it('should support arrays', () => {
         const res = roundtrip([1, new Date(), 3]);
         assert(Array.isArray(res), 'Result should be an array');
         assert(res.length === 3, 'Should have length 3');
         assert(res[2] === 3, 'Third item should be 3');
     });
-    it('shouldSupportIntermediateTypes', () => {
+    it('should support intermediate types', () => {
         function CustomDate (date) {
             this._date = date;
         }
@@ -549,10 +560,7 @@ describe('Typeson', function () {
             'Should have correct value'
         );
     });
-    it('shouldRunReplacersRecursively', () => {
-        //
-        // shouldRunReplacersRecursively
-        //
+    it('should run replacers recursively', () => {
         function CustomDate (date, name) {
             this._date = date;
             this.name = name;
@@ -598,7 +606,7 @@ describe('Typeson', function () {
             'The correct time is there'
         );
     });
-    it('shouldBeAbleToStringifyComplexObjectsAtRoot', () => {
+    it('should be able to stringify complex objects at root', () => {
         const x = roundtrip(new Date(3));
         assert(x instanceof Date, 'x should be a Date');
         assert(x.getTime() === 3, 'Time should be 3');
@@ -655,58 +663,56 @@ describe('Typeson', function () {
             'Custom type encapsulated in bool should work'
         );
     });
-    it('shouldBePossibleToEncapsulateObjectWithReserved$typesProperty', () => {
-        function Custom (val, $types) {
-            this.val = val;
-            this.$types = $types;
-        }
-        const typeson = new Typeson().register({
-            Custom: [
-                (x) => x instanceof Custom,
-                (c) => ({val: c.val, $types: c.$types}),
-                (o) => new Custom(o.val, o.$types)
-            ]
-        });
-        const input = new Custom('bar', 'foo');
+    it(
+        'should be possible to encapsulate object with reserved `$types` ' +
+        'property',
+        () => {
+            function Custom (val, $types) {
+                this.val = val;
+                this.$types = $types;
+            }
+            const typeson = new Typeson().register({
+                Custom: [
+                    (x) => x instanceof Custom,
+                    (c) => ({val: c.val, $types: c.$types}),
+                    (o) => new Custom(o.val, o.$types)
+                ]
+            });
+            const input = new Custom('bar', 'foo');
 
-        const tson = typeson.stringify(input);
-        log(tson);
-        const x = typeson.parse(tson);
-        assert(x instanceof Custom, 'Should get a Custom back');
-        assert(x.val === 'bar', 'Should have correct val value');
-        assert(x.$types === 'foo', 'Should have correct $types value');
-    });
-    it('shouldLeaveLeftOutType', () => {
+            const tson = typeson.stringify(input);
+            log(tson);
+            const x = typeson.parse(tson);
+            assert(x instanceof Custom, 'Should get a Custom back');
+            assert(x.val === 'bar', 'Should have correct val value');
+            assert(x.$types === 'foo', 'Should have correct $types value');
+        }
+    );
+    /*
+    // Todo?
+    it('should leave left out type', () => {
         // Uint8Buffer is not registered.
     });
-    it('shouldResolveCyclicsInEncapsulatedObjects', () => {
-        const buf = new ArrayBuffer(16);
-        const data = {
-            buf,
-            bar: {
-                data: new DataView(buf, 8, 8)
-            }
-        };
-        const tson = typeson.stringify(data, null, 2);
-        log(tson);
-        const back = typeson.parse(tson);
-        assert(
-            back.buf === back.bar.data.buffer,
-            'The buffers point to same object'
-        );
-    });
-    it('shouldSupportRegisteringAClassWithoutReplacerOrReviver', () => {
-        function MyClass () {}
-        const TSON = new Typeson().register({MyClass});
-        const x = new MyClass();
-        x.hello = 'world';
-        const tson = TSON.stringify(x);
-        log(tson);
-        const back = TSON.parse(tson);
-        assert(back instanceof MyClass, 'Should revive to a MyClass instance.');
-        assert(back.hello === 'world', 'Should have all properties there.');
-    });
-    it('shouldExecuteReplacersInProperOrder', () => {
+    */
+
+    it(
+        'should support registering a class without replacer or reviver',
+        () => {
+            function MyClass () {}
+            const TSON = new Typeson().register({MyClass});
+            const x = new MyClass();
+            x.hello = 'world';
+            const tson = TSON.stringify(x);
+            log(tson);
+            const back = TSON.parse(tson);
+            assert(
+                back instanceof MyClass,
+                'Should revive to a MyClass instance.'
+            );
+            assert(back.hello === 'world', 'Should have all properties there.');
+        }
+    );
+    it('should execute replacers in proper order', () => {
         function Person () {}
         const john = new Person();
         const typeson = new Typeson().register([
@@ -725,178 +731,187 @@ describe('Typeson', function () {
             'Should execute replacers in proper order'
         );
     });
-    it('shouldRunEncapsulateObserverSync', () => {
-        const expected = '{\n' +
-    '    time: 959000000000\n' +
-    '    vals: [\n' +
-    '        0: null\n' +
-    '        1: undefined\n' +
-    '        2: 5\n' +
-    '        3: str\n' +
-    '    ]\n' +
-    '    cyclicInput: #\n' +
-    '}\n';
-        let str = '';
-        let indentFactor = 0;
-        const indent = function () {
-            return new Array(indentFactor * 4 + 1).join(' ');
-        };
-        const typeson = new Typeson({
-            encapsulateObserver (o) {
-                if (o.typeDetected || o.replacing) {
-                    return;
-                }
-                const isObject = o.value && typeof o.value === 'object';
-                const isArray = Array.isArray(o.value);
-                if (o.end) {
-                    indentFactor--;
-                    str += indent() + (isArray ? ']' : '}') + '\n';
-                    return;
-                }
-                if (!('replaced' in o)) {
-                    if (isArray) {
-                        if (!('clone' in o)) {
-                            return;
-                        }
-                        str += indent() +
-                            (o.keypath ? o.keypath + ': ' : '') +
-                            '[\n';
-                        indentFactor++;
+
+    describe('encapsulateObserver', () => {
+        it('should run encapsulateObserver sync', () => {
+            const expected = '{\n' +
+        '    time: 959000000000\n' +
+        '    vals: [\n' +
+        '        0: null\n' +
+        '        1: undefined\n' +
+        '        2: 5\n' +
+        '        3: str\n' +
+        '    ]\n' +
+        '    cyclicInput: #\n' +
+        '}\n';
+            let str = '';
+            let indentFactor = 0;
+            const indent = function () {
+                return new Array(indentFactor * 4 + 1).join(' ');
+            };
+            const typeson = new Typeson({
+                encapsulateObserver (o) {
+                    if (o.typeDetected || o.replacing) {
                         return;
                     }
-                    if (isObject) {
-                        if ('cyclicKeypath' in o) {
-                            o.value = '#' + o.cyclicKeypath;
-                        } else {
-                            str += indent() + '{\n';
+                    const isObject = o.value && typeof o.value === 'object';
+                    const isArray = Array.isArray(o.value);
+                    if (o.end) {
+                        indentFactor--;
+                        str += indent() + (isArray ? ']' : '}') + '\n';
+                        return;
+                    }
+                    if (!('replaced' in o)) {
+                        if (isArray) {
+                            if (!('clone' in o)) {
+                                return;
+                            }
+                            str += indent() +
+                                (o.keypath ? o.keypath + ': ' : '') +
+                                '[\n';
                             indentFactor++;
                             return;
                         }
+                        if (isObject) {
+                            if ('cyclicKeypath' in o) {
+                                o.value = '#' + o.cyclicKeypath;
+                            } else {
+                                str += indent() + '{\n';
+                                indentFactor++;
+                                return;
+                            }
+                        }
+                    } else if (isObject) {
+                        // Special type that hasn't been finally resolved yet
+                        return;
                     }
-                } else if (isObject) {
-                    // Special type that hasn't been finally resolved yet
-                    return;
+                    const idx = o.keypath.lastIndexOf('.') + 1;
+                    str += indent() + o.keypath.slice(idx) + ': ' +
+                        ('replaced' in o ? o.replaced : o.value) + '\n';
                 }
-                const idx = o.keypath.lastIndexOf('.') + 1;
-                str += indent() + o.keypath.slice(idx) + ': ' +
-                    ('replaced' in o ? o.replaced : o.value) + '\n';
-            }
-        })
-            .register(globalTypeson.types);
-        const input = {
-            time: new Date(959000000000),
-            vals: [null, undefined, 5, 'str']
-        };
-        input.cyclicInput = input;
-        /* const tson = */ typeson.encapsulate(input);
-        // log(str);
-        // log(expected);
-        assert(
-            str === expected,
-            'Observer able to reduce JSON to expected string'
-        );
-    });
-    it('encapsulateObserverShouldObserveTypes', () => {
-        const actual = [];
-        const expected = [
-            'object', 'Date', 'array', 'null', 'undefined', 'number', 'string'
-        ];
-        const typeson = new Typeson({
-            encapsulateObserver (o) {
-                if (o.typeDetected || o.replacing) {
-                    return;
-                }
-                if (o.cyclic !== 'readonly' && !o.end) {
-                    actual.push(o.type);
-                }
-            }
-        }).register({
-            Date: [
-                function (x) { return x instanceof Date; },
-                function (date) { return date.getTime(); },
-                function (time) { return new Date(time); }
-            ]
-        });
-        const input = {
-            time: new Date(959000000000),
-            vals: [null, undefined, 5, 'str']
-        };
-        /* const tson = */ typeson.encapsulate(input);
-        assert(
-            actual.length === expected.length &&
-                actual.every((type, i) => type === expected[i]),
-            'Should report primitive and compound types'
-        );
-    });
-    it('shouldRunEncapsulateObserverAsync', () => {
-        let str = '';
-        const placeholderText = '(Please wait for the value...)';
-        function APromiseUser (a) { this.a = a; }
-        const typeson = new Typeson({
-            encapsulateObserver (o) {
-                if (o.typeDetected || o.replacing) {
-                    return;
-                }
-
-                const isObject = o.value && typeof o.value === 'object';
-                const isArray = Array.isArray(o.value);
-                if (o.resolvingTypesonPromise) {
-                    const idx = str.indexOf(placeholderText);
-                    const start = str.slice(0, idx);
-                    const end = str.slice(idx + placeholderText.length);
-                    str = start + o.value + end;
-                } else if (o.awaitingTypesonPromise) {
-                    str += '<span>' + placeholderText + '</span>';
-                } else if (!isObject && !isArray) {
-                    str += '<span>' + o.value + '</span>';
-                }
-            }
-        }).register({
-            Date: [
-                function (x) { return x instanceof Date; },
-                function (date) { return date.getTime(); },
-                function (time) { return new Date(time); }
-            ],
-            PromiseUser: [
-                function (x) { return x instanceof APromiseUser; },
-                function (o) {
-                    return new Typeson.Promise(function (res) {
-                        setTimeout(function () {
-                            res(o.a);
-                        }, 300);
-                    });
-                },
-                function (val) { return new APromiseUser(val); }
-            ]
-        });
-        const input = ['aaa', new APromiseUser(5), 'bbb'];
-
-        const prom = typeson.encapsulateAsync(input).then(function (encaps) {
-            const back = typeson.parse(JSON.stringify(encaps));
-            assert(
-                back[0] === input[0] &&
-                back[2] === input[2] &&
-                back[1] instanceof APromiseUser &&
-                    back[1].a === 5,
-                'Should have resolved the one nested promise value'
-            );
+            })
+                .register(globalTypeson.types);
+            const input = {
+                time: new Date(959000000000),
+                vals: [null, undefined, 5, 'str']
+            };
+            input.cyclicInput = input;
+            /* const tson = */ typeson.encapsulate(input);
             // log(str);
+            // log(expected);
             assert(
-                str === '<span>aaa</span><span>5</span><span>bbb</span>',
-                'Should have allowed us to run the callback asynchronously ' +
-                    '(where we can substitute a placeholder)'
+                str === expected,
+                'Observer able to reduce JSON to expected string'
             );
-            return undefined;
         });
-        assert(
-            str === '<span>aaa</span><span>' + placeholderText +
-                '</span><span>bbb</span>',
-            'Should have allowed us to run the callback synchronously ' +
-                '(where we add a placeholder)'
-        );
-        return prom;
+        it('encapsulateObserver should observe types', () => {
+            const actual = [];
+            const expected = [
+                'object', 'Date', 'array', 'null',
+                'undefined', 'number', 'string'
+            ];
+            const typeson = new Typeson({
+                encapsulateObserver (o) {
+                    if (o.typeDetected || o.replacing) {
+                        return;
+                    }
+                    if (o.cyclic !== 'readonly' && !o.end) {
+                        actual.push(o.type);
+                    }
+                }
+            }).register({
+                Date: [
+                    function (x) { return x instanceof Date; },
+                    function (date) { return date.getTime(); },
+                    function (time) { return new Date(time); }
+                ]
+            });
+            const input = {
+                time: new Date(959000000000),
+                vals: [null, undefined, 5, 'str']
+            };
+            /* const tson = */ typeson.encapsulate(input);
+            assert(
+                actual.length === expected.length &&
+                    actual.every((type, i) => type === expected[i]),
+                'Should report primitive and compound types'
+            );
+        });
+        it('should run encapsulateObserver async', () => {
+            let str = '';
+            const placeholderText = '(Please wait for the value...)';
+            function APromiseUser (a) { this.a = a; }
+            const typeson = new Typeson({
+                encapsulateObserver (o) {
+                    if (o.typeDetected || o.replacing) {
+                        return;
+                    }
+
+                    const isObject = o.value && typeof o.value === 'object';
+                    const isArray = Array.isArray(o.value);
+                    if (o.resolvingTypesonPromise) {
+                        const idx = str.indexOf(placeholderText);
+                        const start = str.slice(0, idx);
+                        const end = str.slice(idx + placeholderText.length);
+                        str = start + o.value + end;
+                    } else if (o.awaitingTypesonPromise) {
+                        str += '<span>' + placeholderText + '</span>';
+                    } else if (!isObject && !isArray) {
+                        str += '<span>' + o.value + '</span>';
+                    }
+                }
+            }).register({
+                Date: [
+                    function (x) { return x instanceof Date; },
+                    function (date) { return date.getTime(); },
+                    function (time) { return new Date(time); }
+                ],
+                PromiseUser: [
+                    function (x) { return x instanceof APromiseUser; },
+                    function (o) {
+                        return new Typeson.Promise(function (res) {
+                            setTimeout(function () {
+                                res(o.a);
+                            }, 300);
+                        });
+                    },
+                    function (val) { return new APromiseUser(val); }
+                ]
+            });
+            const input = ['aaa', new APromiseUser(5), 'bbb'];
+
+            const prom = typeson.encapsulateAsync(input).then(
+                function (encaps) {
+                    const back = typeson.parse(JSON.stringify(encaps));
+                    assert(
+                        back[0] === input[0] &&
+                        back[2] === input[2] &&
+                        back[1] instanceof APromiseUser &&
+                            back[1].a === 5,
+                        'Should have resolved the one nested promise value'
+                    );
+                    // log(str);
+                    assert(
+                        str === '<span>aaa</span><span>5</span>' +
+                                '<span>bbb</span>',
+                        'Should have allowed us to run the callback ' +
+                            'asynchronously (where we can substitute a ' +
+                                'placeholder)'
+                    );
+                    return undefined;
+                }
+            );
+            assert(
+                str === '<span>aaa</span><span>' + placeholderText +
+                    '</span><span>bbb</span>',
+                'Should have allowed us to run the callback synchronously ' +
+                    '(where we add a placeholder)'
+            );
+            return prom;
+        });
     });
-    it('shouldAllowIterateIn', () => {
+
+    it('should allow iterateIn', () => {
         function A (a) {
             this.a = a;
         }
@@ -946,7 +961,7 @@ describe('Typeson', function () {
             !('b' in back), "'b' property won't survive array stringification"
         );
     });
-    it('executingToJSON', () => {
+    it('executing toJSON', () => {
         function A () {}
         A.prototype.toJSON = function () { return 'abcd'; };
         let typeson = new Typeson();
@@ -966,7 +981,7 @@ describe('Typeson', function () {
         back = typeson.parse(tson);
         assert(back === 'abcd', 'Should have executed `toJSON`');
     });
-    it('shouldAllowPlainObjectReplacements', () => {
+    it('should allow plain object replacements', () => {
         const typeson = new Typeson().register({
             plainObj: {
                 testPlainObjects: true,
@@ -1016,142 +1031,366 @@ describe('Typeson', function () {
             'Non-enumerable property should now be enumerable'
         );
     });
-    it('shouldAllowSinglePromiseResolution', () => {
-        const typeson = new Typeson();
-        const x = new Typeson.Promise(function (res) {
-            setTimeout(function () {
-                res(25);
-            }, 500);
-        });
-        return typeson.stringifyAsync(x).then(function (tson) {
-            log(tson);
-            const back = typeson.parse(tson);
-            assert(back === 25, 'Should have resolved the one promise value');
-            return undefined;
-        });
-    });
-    it('shouldAllowSingleNestedPromiseResolution', () => {
-        function APromiseUser (a) { this.a = a; }
-        const typeson = new Typeson().register({
-            Date: [
-                function (x) { return x instanceof Date; },
-                function (date) { return date.getTime(); },
-                function (time) { return new Date(time); }
-            ],
-            PromiseUser: [
-                function (x) { return x instanceof APromiseUser; },
-                function (o) {
-                    return new Typeson.Promise(function (res) {
-                        setTimeout(function () {
-                            res(o.a);
-                        }, 300);
-                    });
-                },
-                function (val) { return new APromiseUser(val); }
-            ]
-        });
-        const x = new Typeson.Promise(function (res) {
-            setTimeout(function () {
-                res(new APromiseUser(555));
-            }, 1200);
-        });
-        return typeson.stringifyAsync(x).then(function (tson) {
-            log(tson);
-            const back = typeson.parse(tson);
-            assert(
-                back instanceof APromiseUser &&
-                    back.a === 555,
-                'Should have resolved the one nested promise value'
-            );
-            return undefined;
-        });
-    });
-    it('shouldAllowMultiplePromiseResolution', () => {
-        const typeson = new Typeson();
-        const x = [
-            Typeson.Promise.resolve(5),
-            100,
-            new Typeson.Promise(function (res) {
+    describe('Typeson.Promise', () => {
+        it('should allow single Promise resolution', () => {
+            const typeson = new Typeson();
+            const x = new Typeson.Promise(function (res) {
                 setTimeout(function () {
                     res(25);
                 }, 500);
-            })
-        ];
-        return typeson.stringifyAsync(x).then(function (tson) {
-            log(tson);
-            const back = typeson.parse(tson);
-            assert(
-                back[0] === 5 && back[1] === 100 && back[2] === 25,
-                'Should have resolved multiple promise values (and ' +
-                    'in the proper order)'
-            );
-            return undefined;
+            });
+            return typeson.stringifyAsync(x).then(function (tson) {
+                log(tson);
+                const back = typeson.parse(tson);
+                assert(
+                    back === 25,
+                    'Should have resolved the one promise value'
+                );
+                return undefined;
+            });
         });
-    });
-    it('shouldAllowNestedPromiseResolution', () => {
-        function APromiseUser (a) { this.a = a; }
-        const typeson = new Typeson().register({
-            Date: [
-                function (x) { return x instanceof Date; },
-                function (date) { return date.getTime(); },
-                function (time) { return new Date(time); }
-            ],
-            PromiseUser: [
-                function (x) { return x instanceof APromiseUser; },
-                function (o) {
-                    return new Typeson.Promise(function (res) {
-                        setTimeout(function () {
-                            res(o.a);
-                        }, 300);
-                    });
-                },
-                function (val) { return new APromiseUser(val); }
-            ]
-        });
-        const x = [
-            Typeson.Promise.resolve(5),
-            100,
-            new Typeson.Promise(function (res) {
-                setTimeout(function () {
-                    res(25);
-                }, 500);
-            }),
-            new Typeson.Promise(function (res) {
-                setTimeout(function () {
-                    res(Typeson.Promise.resolve(5));
-                });
-            }).then(function (r) {
-                return new Typeson.Promise(function (res) {
-                    setTimeout(function () {
-                        res(r + 90);
-                    }, 10);
-                });
-            }),
-            Typeson.Promise.resolve(new Date()),
-            new Typeson.Promise(function (res) {
+        it('should allow single nested Promise resolution', () => {
+            function APromiseUser (a) { this.a = a; }
+            const typeson = new Typeson().register({
+                Date: [
+                    function (x) { return x instanceof Date; },
+                    function (date) { return date.getTime(); },
+                    function (time) { return new Date(time); }
+                ],
+                PromiseUser: [
+                    function (x) { return x instanceof APromiseUser; },
+                    function (o) {
+                        return new Typeson.Promise(function (res) {
+                            setTimeout(function () {
+                                res(o.a);
+                            }, 300);
+                        });
+                    },
+                    function (val) { return new APromiseUser(val); }
+                ]
+            });
+            const x = new Typeson.Promise(function (res) {
                 setTimeout(function () {
                     res(new APromiseUser(555));
+                }, 1200);
+            });
+            return typeson.stringifyAsync(x).then(function (tson) {
+                log(tson);
+                const back = typeson.parse(tson);
+                assert(
+                    back instanceof APromiseUser &&
+                        back.a === 555,
+                    'Should have resolved the one nested promise value'
+                );
+                return undefined;
+            });
+        });
+        it('should allow multiple Promise resolution', () => {
+            const typeson = new Typeson();
+            const x = [
+                Typeson.Promise.resolve(5),
+                100,
+                new Typeson.Promise(function (res) {
+                    setTimeout(function () {
+                        res(25);
+                    }, 500);
+                })
+            ];
+            return typeson.stringifyAsync(x).then(function (tson) {
+                log(tson);
+                const back = typeson.parse(tson);
+                assert(
+                    back[0] === 5 && back[1] === 100 && back[2] === 25,
+                    'Should have resolved multiple promise values (and ' +
+                        'in the proper order)'
+                );
+                return undefined;
+            });
+        });
+        it('should allow nested Promise resolution', () => {
+            function APromiseUser (a) { this.a = a; }
+            const typeson = new Typeson().register({
+                Date: [
+                    function (x) { return x instanceof Date; },
+                    function (date) { return date.getTime(); },
+                    function (time) { return new Date(time); }
+                ],
+                PromiseUser: [
+                    function (x) { return x instanceof APromiseUser; },
+                    function (o) {
+                        return new Typeson.Promise(function (res) {
+                            setTimeout(function () {
+                                res(o.a);
+                            }, 300);
+                        });
+                    },
+                    function (val) { return new APromiseUser(val); }
+                ]
+            });
+            const x = [
+                Typeson.Promise.resolve(5),
+                100,
+                new Typeson.Promise(function (res) {
+                    setTimeout(function () {
+                        res(25);
+                    }, 500);
+                }),
+                new Typeson.Promise(function (res) {
+                    setTimeout(function () {
+                        res(Typeson.Promise.resolve(5));
+                    });
+                }).then(function (r) {
+                    return new Typeson.Promise(function (res) {
+                        setTimeout(function () {
+                            res(r + 90);
+                        }, 10);
+                    });
+                }),
+                Typeson.Promise.resolve(new Date()),
+                new Typeson.Promise(function (res) {
+                    setTimeout(function () {
+                        res(new APromiseUser(555));
+                    });
+                })
+            ];
+            return typeson.stringifyAsync(x).then(function (tson) {
+                log(tson);
+                const back = typeson.parse(tson);
+                assert(
+                    back[0] === 5 &&
+                        back[1] === 100 &&
+                        back[2] === 25 &&
+                        back[3] === 95 &&
+                        back[4] instanceof Date &&
+                        back[5] instanceof APromiseUser &&
+                        back[5].a === 555,
+                    'Should have resolved multiple nested promise ' +
+                        'values (and in the proper order)'
+                );
+                return undefined;
+            });
+        });
+
+        it('should work with Promise utilities', () => {
+            function makePromises () {
+                const x = new Typeson.Promise(function (res) {
+                    setTimeout(function () {
+                        res(30);
+                    }, 50);
                 });
-            })
-        ];
-        return typeson.stringifyAsync(x).then(function (tson) {
-            log(tson);
-            const back = typeson.parse(tson);
-            assert(
-                back[0] === 5 &&
-                    back[1] === 100 &&
-                    back[2] === 25 &&
-                    back[3] === 95 &&
-                    back[4] instanceof Date &&
-                    back[5] instanceof APromiseUser &&
-                    back[5].a === 555,
-                'Should have resolved multiple nested promise ' +
-                    'values (and in the proper order)'
-            );
-            return undefined;
+                const y = Typeson.Promise.resolve(400);
+                return [x, y];
+            }
+            // eslint-disable-next-line promise/avoid-new
+            return new Promise(function (resolve, reject) {
+                // eslint-disable-next-line promise/catch-or-return
+                Typeson.Promise.all(makePromises()).then(function (results) {
+                    assert(
+                        // eslint-disable-next-line promise/always-return
+                        results[0] === 30 && results[1] === 400,
+                        'Should work with Promise.all'
+                    );
+                }).then(function () {
+                    // eslint-disable-next-line promise/no-nesting
+                    return Typeson.Promise.race(
+                        makePromises()
+                    // eslint-disable-next-line promise/always-return
+                    ).then(function (results) {
+                        assert(
+                            results === 400,
+                            'Should work with Promise.race'
+                        );
+                        resolve();
+                    });
+                });
+            });
+        });
+        it('should properly handle Promise rejections', () => {
+            function makeRejectedPromises () {
+                const x = new Typeson.Promise(function (res, rej) {
+                    setTimeout(function () {
+                        rej(30);
+                    }, 50);
+                });
+                const y = new Typeson.Promise(function (res, rej) {
+                    setTimeout(function () {
+                        res(500);
+                    }, 500);
+                });
+                return [x, y];
+            }
+            // eslint-disable-next-line promise/avoid-new
+            return new Promise(function (resolve, reject) {
+                makeRejectedPromises()[0].then(null, function (errCode) {
+                    assert(
+                        errCode === 30,
+                        '`Typeson.Promise` should work with ' +
+                        '`then(null, onRejected)`'
+                    );
+                    return Typeson.Promise.reject(400);
+                }).catch(function (errCode) {
+                    assert(
+                        errCode === 400,
+                        '`Typeson.Promise` should work with `catch`'
+                    );
+                    return Typeson.Promise.all(makeRejectedPromises());
+                }).catch(function (errCode) {
+                    assert(
+                        errCode === 30,
+                        'Promise.all should work with rejected promises'
+                    );
+                    return Typeson.Promise.race(makeRejectedPromises());
+                }).catch(function (errCode) {
+                    assert(
+                        errCode === 30,
+                        'Promise.race should work with rejected promises'
+                    );
+                    return new Typeson.Promise(function () {
+                        throw new Error('Sync throw');
+                    });
+                }).catch(function (err) {
+                    assert(
+                        err.message === 'Sync throw',
+                        'Typeson.Promise should work with synchronous throws'
+                    );
+                    return Typeson.Promise.resolve(55);
+                }).then(null, function () {
+                    throw new Error('Should not reach here');
+                }).then(function (res) {
+                    assert(
+                        res === 55,
+                        'Typeson.Promises should bypass `then` ' +
+                        'without `onResolved`'
+                    );
+                    return Typeson.Promise.reject(33);
+                }).then(function () {
+                    throw new Error('Should not reach here');
+                }).catch(function (errCode) {
+                    assert(
+                        errCode === 33,
+                        'Typeson.Promises should bypass `then` when rejecting'
+                    );
+                    resolve();
+                });
+            });
+        });
+        it('async README example', () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson({sync: false}).register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    function (data) {
+                        return new MyAsync(data);
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            return typeson.stringify(mya).then(function (result) {
+                const back = typeson.parse(result, null, {sync: true});
+                assert(
+                    back.prop === 500,
+                    'Example of MyAsync should work'
+                );
+                return undefined;
+            });
+        });
+        it('should work with stringifyAsync', () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    function (data) {
+                        return new MyAsync(data);
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            return typeson.stringifyAsync(mya).then(function (result) {
+                const back = typeson.parse(result);
+                assert(
+                    back.prop === 500,
+                    'Example of MyAsync should work'
+                );
+                return typeson.stringifyAsync({prop: 5}, null, null, {
+                    throwOnBadSyncType: false
+                });
+            }).then(function (result) {
+                const back = typeson.parse(result);
+                assert(
+                    back.prop === 5,
+                    'Example of synchronously-resolved simple object should ' +
+                        'work with async API'
+                );
+                return undefined;
+            });
+        });
+        it('should work with encapsulateAsync', () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    function (data) {
+                        return new MyAsync(data);
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            return typeson.encapsulateAsync(mya).then(function (result) {
+                assert(
+                    result.$ === 500 && result.$types.$[''] === 'myAsyncType',
+                    'Example of MyAsync should work'
+                );
+                return typeson.encapsulateAsync({prop: 5}, null, {
+                    throwOnBadSyncType: false
+                });
+            }).then(function (result) {
+                assert(
+                    result.prop === 5,
+                    'Example of synchronously-resolved simple object should ' +
+                        'work with async API'
+                );
+                return undefined;
+            });
         });
     });
-    it('shouldAllowForcingOfAsyncReturn', () => {
+
+    it('should allow forcing of async return', () => {
         const typeson = new Typeson({sync: false, throwOnBadSyncType: false});
         const x = 5;
         return typeson.stringify(x).then(function (tson) {
@@ -1165,214 +1404,8 @@ describe('Typeson', function () {
             return undefined;
         });
     });
-    it('shouldWorkWithPromiseUtilities', () => {
-        function makePromises () {
-            const x = new Typeson.Promise(function (res) {
-                setTimeout(function () {
-                    res(30);
-                }, 50);
-            });
-            const y = Typeson.Promise.resolve(400);
-            return [x, y];
-        }
-        // eslint-disable-next-line promise/avoid-new
-        return new Promise(function (resolve, reject) {
-            // eslint-disable-next-line promise/catch-or-return
-            Typeson.Promise.all(makePromises()).then(function (results) {
-                assert(
-                    // eslint-disable-next-line promise/always-return
-                    results[0] === 30 && results[1] === 400,
-                    'Should work with Promise.all'
-                );
-            }).then(function () {
-                // eslint-disable-next-line promise/no-nesting
-                return Typeson.Promise.race(
-                    makePromises()
-                // eslint-disable-next-line promise/always-return
-                ).then(function (results) {
-                    assert(results === 400, 'Should work with Promise.race');
-                    resolve();
-                });
-            });
-        });
-    });
-    it('shouldProperlyHandlePromiseExceptions', () => {
-        function makeRejectedPromises () {
-            const x = new Typeson.Promise(function (res, rej) {
-                setTimeout(function () {
-                    rej(30);
-                }, 50);
-            });
-            const y = new Typeson.Promise(function (res, rej) {
-                setTimeout(function () {
-                    res(500);
-                }, 500);
-            });
-            return [x, y];
-        }
-        // eslint-disable-next-line promise/avoid-new
-        return new Promise(function (resolve, reject) {
-            makeRejectedPromises()[0].then(null, function (errCode) {
-                assert(
-                    errCode === 30,
-                    '`Typeson.Promise` should work with ' +
-                    '`then(null, onRejected)`'
-                );
-                return Typeson.Promise.reject(400);
-            }).catch(function (errCode) {
-                assert(
-                    errCode === 400,
-                    '`Typeson.Promise` should work with `catch`'
-                );
-                return Typeson.Promise.all(makeRejectedPromises());
-            }).catch(function (errCode) {
-                assert(
-                    errCode === 30,
-                    'Promise.all should work with rejected promises'
-                );
-                return Typeson.Promise.race(makeRejectedPromises());
-            }).catch(function (errCode) {
-                assert(
-                    errCode === 30,
-                    'Promise.race should work with rejected promises'
-                );
-                return new Typeson.Promise(function () {
-                    throw new Error('Sync throw');
-                });
-            }).catch(function (err) {
-                assert(
-                    err.message === 'Sync throw',
-                    'Typeson.Promise should work with synchronous throws'
-                );
-                return Typeson.Promise.resolve(55);
-            }).then(null, function () {
-                throw new Error('Should not reach here');
-            }).then(function (res) {
-                assert(
-                    res === 55,
-                    'Typeson.Promises should bypass `then` without `onResolved`'
-                );
-                return Typeson.Promise.reject(33);
-            }).then(function () {
-                throw new Error('Should not reach here');
-            }).catch(function (errCode) {
-                assert(
-                    errCode === 33,
-                    'Typeson.Promises should bypass `then` when rejecting'
-                );
-                resolve();
-            });
-        });
-    });
-    it('asyncREADMEExample', () => {
-        function MyAsync (prop) {
-            this.prop = prop;
-        }
 
-        const typeson = new Typeson({sync: false}).register({
-            myAsyncType: [
-                function (x) { return x instanceof MyAsync; },
-                function (o) {
-                    return new Typeson.Promise(function (resolve, reject) {
-                        // Do something more useful in real code
-                        setTimeout(function () {
-                            resolve(o.prop);
-                        }, 800);
-                    });
-                },
-                function (data) {
-                    return new MyAsync(data);
-                }
-            ]
-        });
-
-        const mya = new MyAsync(500);
-        return typeson.stringify(mya).then(function (result) {
-            const back = typeson.parse(result, null, {sync: true});
-            assert(back.prop === 500, 'Example of MyAsync should work'); // 500
-            return undefined;
-        });
-    });
-    it('shouldWorkWithAsyncStringify', () => {
-        function MyAsync (prop) {
-            this.prop = prop;
-        }
-
-        const typeson = new Typeson().register({
-            myAsyncType: [
-                function (x) { return x instanceof MyAsync; },
-                function (o) {
-                    return new Typeson.Promise(function (resolve, reject) {
-                        // Do something more useful in real code
-                        setTimeout(function () {
-                            resolve(o.prop);
-                        }, 800);
-                    });
-                },
-                function (data) {
-                    return new MyAsync(data);
-                }
-            ]
-        });
-
-        const mya = new MyAsync(500);
-        return typeson.stringifyAsync(mya).then(function (result) {
-            const back = typeson.parse(result);
-            assert(back.prop === 500, 'Example of MyAsync should work'); // 500
-            return typeson.stringifyAsync({prop: 5}, null, null, {
-                throwOnBadSyncType: false
-            });
-        }).then(function (result) {
-            const back = typeson.parse(result);
-            assert(
-                back.prop === 5,
-                'Example of synchronously-resolved simple object should ' +
-                    'work with async API'
-            );
-            return undefined;
-        });
-    });
-    it('shouldWorkWithAsyncEncapsulate', () => {
-        function MyAsync (prop) {
-            this.prop = prop;
-        }
-
-        const typeson = new Typeson().register({
-            myAsyncType: [
-                function (x) { return x instanceof MyAsync; },
-                function (o) {
-                    return new Typeson.Promise(function (resolve, reject) {
-                        // Do something more useful in real code
-                        setTimeout(function () {
-                            resolve(o.prop);
-                        }, 800);
-                    });
-                },
-                function (data) {
-                    return new MyAsync(data);
-                }
-            ]
-        });
-
-        const mya = new MyAsync(500);
-        return typeson.encapsulateAsync(mya).then(function (result) {
-            assert(
-                result.$ === 500 && result.$types.$[''] === 'myAsyncType',
-                'Example of MyAsync should work'
-            );
-            return typeson.encapsulateAsync({prop: 5}, null, {
-                throwOnBadSyncType: false
-            });
-        }).then(function (result) {
-            assert(
-                result.prop === 5,
-                'Example of synchronously-resolved simple object should ' +
-                    'work with async API'
-            );
-            return undefined;
-        });
-    });
-    it('shouldTransmitStateThroughReplacersAndRevivers', () => {
+    it('should transmit state through replacers and revivers', () => {
         function ReplaceReviver (obj) {
             Object.defineProperty(this, 'obj', {
                 enumerable: false,
@@ -1433,7 +1466,7 @@ describe('Typeson', function () {
             'Should not confuse objects where only value is the same'
         );
     });
-    it('shouldRetrieveSpecialTypeNames', () => {
+    it('should retrieve special type names', () => {
         const typeson = new Typeson().register({
             Date: {
                 test (x) { return x instanceof Date; },
@@ -1449,7 +1482,7 @@ describe('Typeson', function () {
             'Should only return (unique) special type names'
         );
     });
-    it('shouldRetrieveRootTypeName', () => {
+    it('should retrieve root type name', () => {
         let runCount = 0;
         const typeson = new Typeson({
             encapsulateObserver (o) {
@@ -1474,7 +1507,7 @@ describe('Typeson', function () {
             'Should not iterate through the array structure'
         );
     });
-    it('shouldAllowSerializingArraysToObjects', () => {
+    it('should allow serializing arrays to objects', () => {
         const typeson = new Typeson().register({
             arraysToObjects: {
                 testPlainObjects: true,
@@ -1534,7 +1567,7 @@ describe('Typeson', function () {
             back[9].f[0][0] === back, 'Preserves nested cyclic array'
         );
     });
-    it('shouldAllowUnknownStringTags', () => {
+    it('should allow unknown string tags', () => {
         const map = {
             map: {
                 test (x) { return Typeson.toStringTag(x) === 'Map'; },
@@ -1565,25 +1598,42 @@ describe('Typeson', function () {
         //     'Revives `Symbol.toStringTag`'
         // );
     });
-    it('shouldAllowSecondArgumentToIsThenableWork', () => {
+});
+
+describe('Typeson.isThenable', () => {
+    it('should detect `catch` upon second argument being `true`', () => {
         const thenable = Typeson.isThenable(Promise.resolve(), true);
         assert(thenable, 'Promise found to have catch');
     });
-    it('shouldAllowIsUserObjectToWork', () => {
+    it(
+        'should detect missing `catch` upon second argument being `true`',
+        () => {
+            const notThenable = Typeson.isThenable({then () {}}, true);
+            assert(!notThenable, 'Object not found with a catch');
+        }
+    );
+});
+
+describe('Typeson.isUserObject', () => {
+    it('should detect non-user objects', () => {
+        const a = null;
+        const b = [];
+        const c = /test/u;
+
+        assert(!Typeson.isUserObject(a), 'null is not a user object');
+        assert(!Typeson.isUserObject(b), 'Array is not a user object');
+        assert(!Typeson.isUserObject(c), 'RegExp is not a user object');
+    });
+    it('should detect user objects', () => {
         class A {
 
         }
         class B extends A {}
 
-        const a = null;
-        const b = [];
         const c = Object.create(null);
         const d = {};
         const e = new B();
-        const f = /test/u;
 
-        assert(!Typeson.isUserObject(a), 'null is not a user object');
-        assert(!Typeson.isUserObject(b), 'Array is not a user object');
         assert(
             Typeson.isUserObject(c),
             'Object with null prototype is a user object'
@@ -1593,23 +1643,30 @@ describe('Typeson', function () {
             Typeson.isUserObject(e),
             'Instance of user class is a user object'
         );
-        assert(!Typeson.isUserObject(f), 'RegExp is not a user object');
     });
-    it('shouldAllowHasConstructorOfToWork', () => {
-        function B () {}
-        const a = Object.create(null);
-        assert(
-            Typeson.hasConstructorOf(a, null),
-            'Object with null prototype has a "null" constructor'
-        );
+});
 
-        B.prototype = a;
-        const c = new B();
-        assert(
-            Typeson.hasConstructorOf(c, null),
-            'Object with null prototype has a "null" ancestor constructor'
-        );
+describe('Typeson.hasConstructorOf', () => {
+    it(
+        'should detect whether an object has a "null" constructor ' +
+        '(i.e., `null` prototype)',
+        () => {
+            function B () {}
+            const a = Object.create(null);
+            assert(
+                Typeson.hasConstructorOf(a, null),
+                'Object with null prototype has a "null" constructor'
+            );
 
+            B.prototype = a;
+            const c = new B();
+            assert(
+                Typeson.hasConstructorOf(c, null),
+                'Object with null prototype has a "null" ancestor constructor'
+            );
+        }
+    );
+    it('should detect whether an object is of a particular constructor', () => {
         const d = function () { /* Twin */ };
         const e = new function () { /* Twin */ }();
         assert(
