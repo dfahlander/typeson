@@ -2145,6 +2145,22 @@ describe('Typeson.specialTypeNames', () => {
             'Should only return (unique) special type names'
         );
     });
+    it('should return false if no special type names found', () => {
+        const typeson = new Typeson().register({
+            Date: {
+                test (x) { return x instanceof Date; },
+                replace (date) { return date.getTime(); },
+                revive (time) { return new Date(time); }
+            }
+        });
+        const typeNames = typeson.specialTypeNames([
+            5
+        ]);
+        assert(
+            typeNames === false,
+            'Should return `false` on failing to find any special type names'
+        );
+    });
 });
 
 describe('Typeson.rootTypeName', () => {
