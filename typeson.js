@@ -21,14 +21,16 @@ const {keys} = Object,
     ];
 
 /**
- *
+ * Handle plain object revivers first so reference setting can use
+ * revived type (e.g., array instead of object); assumes revived
+ * has same structure or will otherwise break subsequent references.
  * @param {PlainObjectType} a
  * @param {PlainObjectType} b
  * @returns {1|-1|boolean}
  */
 function nestedPathsFirst (a, b) {
-    let as = a.keypath.match(/\./gu);
-    let bs = a.keypath.match(/\./gu);
+    let as = a.keypath.match(/\./gu) || 0;
+    let bs = b.keypath.match(/\./gu) || 0;
     if (as) {
         as = as.length;
     }
@@ -633,7 +635,7 @@ class Typeson {
                         //   the need to revive it.
                         const existing = types[keypath];
                         // type can comprise an array of types (see test
-                        //   `shouldSupportIntermediateTypes`)
+                        //   "should support intermediate types")
                         types[keypath] = existing
                             ? [type].concat(existing)
                             : type;
@@ -843,10 +845,6 @@ class Typeson {
             * @property {string} keypath
             * @property {string} type
             */
-            // Handle plain object revivers first so reference
-            //   setting can use revived type (e.g., array instead
-            //   of object); assumes revived has same structure
-            //   or will otherwise break subsequent references
             return plainObjectTypes.sort(nestedPathsFirst).reduce(
                 function reducer (possibleTypesonPromise, {
                     keypath, type

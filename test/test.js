@@ -702,6 +702,8 @@ describe('Typeson', function () {
         });
         const arr = new Array(10);
         arr[0] = 3;
+        arr[2] = {arr};
+        arr[2].f = [[arr]];
         arr[3] = '4';
         arr[4] = 5;
         arr[6] = arr;
@@ -731,10 +733,77 @@ describe('Typeson', function () {
         );
 
         assert(
+            Array.isArray(back[2].arr), 'Preserves cyclic array on object'
+        );
+        assert(
             Array.isArray(back[9].arr), 'Preserves cyclic array on object'
         );
         assert(
+            back[2].f[0][0] === back, 'Preserves nested cyclic array'
+        );
+        assert(
             back[9].f[0][0] === back, 'Preserves nested cyclic array'
+        );
+    });
+    it('should allow serializing arrays to objects', () => {
+        const typeson = new Typeson().register({
+            arraysToObjects: {
+                testPlainObjects: true,
+                test (x, stateObj) {
+                    if (Array.isArray(x)) {
+                        stateObj.iterateIn = 'object';
+                        stateObj.addLength = true;
+                        return true;
+                    }
+                    return false;
+                },
+                revive (o) {
+                    const arr = [];
+                    // No map here as may be a sparse array (including
+                    //   with `length` set)
+                    Object.entries(o).forEach(([key, val]) => {
+                        arr[key] = val;
+                    });
+                    return arr;
+                }
+            }
+        });
+        const arr = new Array(10);
+        arr[2] = {arr};
+        arr[2].f = [[arr]];
+
+        const tson = typeson.stringify(arr, null, 2);
+        log(tson);
+        const tsonStringifiedSomehowWithNestedTypesFirst = `
+        {
+          "2": {
+            "arr": "#",
+            "f": {
+              "0": {
+                "0": "#",
+                "length": 1
+              },
+              "length": 1
+            }
+          },
+          "length": 10,
+          "$types": {
+            "2.f.0.0": "#",
+            "": "arraysToObjects",
+            "2.arr": "#",
+            "2.f.0": "arraysToObjects",
+            "2.f": "arraysToObjects"
+          }
+        }
+
+        `;
+        const back = typeson.parse(tsonStringifiedSomehowWithNestedTypesFirst);
+        // log('back', back);
+        assert(
+            Array.isArray(back[2].arr), 'Preserves cyclic array on object'
+        );
+        assert(
+            back[2].f[0][0] === back, 'Preserves nested cyclic array'
         );
     });
     it('should allow unknown string tags', () => {
