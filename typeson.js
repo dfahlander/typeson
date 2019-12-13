@@ -381,7 +381,7 @@ class Typeson {
                             value,
                             TypesonPromise
                         )
-                    }, type !== undefined ? {type} : {}));
+                    }, {type}));
                 }
                 : null;
             if (['string', 'boolean', 'number', 'undefined'].includes(
