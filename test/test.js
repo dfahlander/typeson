@@ -959,6 +959,44 @@ describe('Typeson', function () {
             !('b' in back), "'b' property won't survive array stringification"
         );
     });
+    it('should allow `iterateUnsetNumeric`', () => {
+        const sparseUndefined = [
+            {
+                sparseArrays: {
+                    testPlainObjects: true,
+                    test (x) { return Array.isArray(x); },
+                    replace (a, stateObj) {
+                        stateObj.iterateUnsetNumeric = true;
+                        return a;
+                    }
+                }
+            },
+            {
+                sparseUndefined: {
+                    test (x, stateObj) {
+                        return typeof x === 'undefined' &&
+                            stateObj.ownKeys === false;
+                    },
+                    replace (n) { return 0; },
+                    // Will avoid adding anything
+                    revive (s) { return undefined; }
+                }
+            }
+        ];
+        const typeson = new Typeson().register([sparseUndefined]);
+
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+        const arr = [, 5, , , 6, ];
+        const tson = typeson.stringify(arr);
+        log(tson);
+        const back = typeson.parse(tson);
+        assert(!('0' in back), 'Undefined at index 0');
+        assert(back[1] === 5 && back[4] === 6, 'Set values restored');
+        assert(!('2' in back), 'Undefined at index 2');
+        assert(!('3' in back), 'Undefined at index 3');
+        assert(!('5' in back), 'Undefined at index 5');
+    });
     it('executing toJSON', () => {
         function A () {}
         A.prototype.toJSON = function () { return 'abcd'; };
