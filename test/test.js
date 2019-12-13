@@ -769,6 +769,67 @@ describe('Typeson', function () {
         // );
     });
 
+    it('should throw upon attempt to parse type that is not registered', () => {
+        const map = {
+            map: {
+                test (x) { return Typeson.toStringTag(x) === 'Map'; },
+                replace (mp) { return [...mp.entries()]; },
+                revive (entries) { return new Map(entries); }
+            }
+        };
+
+        const typeson = new Typeson().register([map]);
+
+        const a = {
+            someMap: new Map()
+        };
+
+        const tson = typeson.stringify(a, null, 2);
+        // log('tson', tson);
+
+        const newTypeson = new Typeson();
+
+        assert.throws(
+            () => {
+                newTypeson.parse(tson);
+            },
+            Error,
+            'Unregistered type: map',
+            'Typeson instance without type'
+        );
+    });
+
+    it(
+        'should throw upon attempt to parse type that is not registered ' +
+        '(plain objects)',
+        () => {
+            const typeson = new Typeson().register([{
+                mySyncType: {
+                    testPlainObjects: true,
+                    test (x) { return 'prop' in x; },
+                    replace (o) { return o.prop; },
+                    revive (data) { return {prop: data}; }
+                }
+            }]);
+
+            const obj = {prop: 52};
+
+            const tson = typeson.stringify(obj, null, 2);
+            // log('tson', tson);
+
+            const newTypeson = new Typeson();
+
+            assert.throws(
+                () => {
+                    newTypeson.parse(tson);
+                },
+                Error,
+                'Unregistered type: mySyncType',
+                'Typeson instance without type'
+            );
+        }
+    );
+
     describe('Type error checking', () => {
         it('disallows hash type', () => {
             assert.throws(

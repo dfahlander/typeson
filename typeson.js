@@ -783,7 +783,7 @@ class Typeson {
                     return reducer(v, type);
                 });
             }
-            const [reviver] = that.revivers[type];
+            const [reviver] = that.revivers[type] || [];
             if (!reviver) {
                 throw new Error('Unregistered type: ' + type);
             }
@@ -826,7 +826,7 @@ class Typeson {
                     return;
                 }
                 [].concat(type).forEach(function (type) {
-                    const [, {plain}] = that.revivers[type];
+                    const [, {plain}] = that.revivers[type] || [null, {}];
                     if (!plain) {
                         // reviveTypes.push({keypath, type});
                         return;
