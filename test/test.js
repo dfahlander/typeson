@@ -2059,6 +2059,37 @@ describe('Typeson', function () {
             const back = await typeson.reviveAsync(encapsAsync);
             assert(back === undefined, 'Returns `undefined`');
         });
+
+        it(
+            'should revive with `Promise` returned by `reviveAsync`',
+            async () => {
+                const typeson = new Typeson().register({
+                    undefinedType: {
+                        test (x) {
+                            return x === undefined;
+                        },
+                        replaceAsync (o) {
+                            return new Typeson.Promise((resolve, reject) => {
+                                // Do something more useful in real code
+                                setTimeout(function () {
+                                    resolve(null);
+                                }, 800);
+                            });
+                        },
+                        reviveAsync (data) {
+                            // Do something more useful in real code
+                            return Promise.resolve(5);
+                        }
+                    }
+                });
+
+                const mya = undefined;
+                const encapsAsync = await typeson.encapsulateAsync(mya);
+                const back = await typeson.reviveAsync(encapsAsync);
+                log(typeof back);
+                assert(back === 5, 'Resolves to `5`');
+            }
+        );
     });
 });
 
