@@ -1034,6 +1034,35 @@ describe('Typeson', function () {
             );
         });
 
+        it('should silently ignore nullish spec', () => {
+            function Person () {}
+            function Dog () {}
+            const john = new Person();
+
+            const typeson = new Typeson();
+            typeson.register([
+                {
+                    classFinder: [
+                        (x) => x instanceof Person, () => 'person found'
+                    ],
+                    badType: null
+                }
+            ]);
+            typeson.register([
+                {
+                    anotherBadType: null,
+                    anotherClassFinder: [
+                        (x) => x instanceof Dog, () => 'dog found'
+                    ]
+                }
+            ]);
+            const clonedData = typeson.parse(typeson.stringify(john));
+            assert(
+                clonedData === 'person found',
+                'Should find item despite nullish specs'
+            );
+        });
+
         it('should allow replacing previously registered replacer', () => {
             function Person () {}
             const john = new Person();

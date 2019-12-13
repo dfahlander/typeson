@@ -7,6 +7,7 @@
     `Typeson.hasConstructorOf`. When internally used in Typeson (or
     `typeson-registry`), it never uses a `null` second argument.
 - Fix: Throw proper error upon missing reviver
+- Fix: Ensure nullish spec is silently ignored
 - Enhancement: Add `engines` (also used in Unicorn linting rule)
 - Enhancement: Throw clear message for missing revivers of expected type
 - Testing: Coverage improvements; use mocha and chai

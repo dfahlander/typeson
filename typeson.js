@@ -1035,6 +1035,9 @@ class Typeson {
                     );
                 }
                 let spec = typeSpec[typeId];
+                if (!spec) {
+                    return;
+                }
                 const replacers = spec.testPlainObjects
                     ? this.plainObjectReplacers
                     : this.nonplainObjectReplacers;
@@ -1046,9 +1049,6 @@ class Typeson {
                     replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
                     delete this.revivers[typeId];
                     delete this.types[typeId];
-                }
-                if (!spec) {
-                    return;
                 }
                 if (typeof spec === 'function') {
                     // Support registering just a class without replacer/reviver
