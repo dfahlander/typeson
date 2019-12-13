@@ -1536,9 +1536,9 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
-                myAsyncType: [
-                    function (x) { return x instanceof MyAsync; },
-                    function (o) {
+                myAsyncType: {
+                    test (x) { return x instanceof MyAsync; },
+                    replaceAsync (o) {
                         return new Typeson.Promise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
@@ -1546,13 +1546,13 @@ describe('Typeson', function () {
                             }, 800);
                         });
                     },
-                    function (data) {
+                    reviveAsync (data) {
                         // Do something more useful in real code
                         return new Typeson.Promise(function (resolve, reject) {
                             resolve(new MyAsync(data));
                         });
                     }
-                ]
+                }
             });
 
             const mya = new MyAsync(500);
@@ -1569,16 +1569,16 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
-                mySyncType: [
-                    function (x) { return x instanceof MySync; },
-                    function (o) {
+                mySyncType: {
+                    test (x) { return x instanceof MySync; },
+                    replace (o) {
                         return o.prop;
                     },
-                    function (data) {
+                    reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
                     }
-                ]
+                }
             });
 
             const mys = new MySync(500);
