@@ -246,16 +246,14 @@ describe('Typeson', function () {
 
     describe('Type error checking', () => {
         it('disallows hash type', () => {
-            let caught = false;
-            try {
-                new Typeson().register({'#': [
-                    function () {}, function () {}, function () {}
-                ]});
-            } catch (err) {
-                caught = true;
-            }
-            assert(
-                caught,
+            assert.throws(
+                () => {
+                    new Typeson().register({'#': [
+                        function () {}, function () {}, function () {}
+                    ]});
+                },
+                null,
+                null,
                 'Should throw on attempting to register the ' +
                     "reserved 'type', '#'"
             );
@@ -1348,6 +1346,7 @@ describe('Typeson', function () {
                 return undefined;
             });
         });
+
         it('should work with encapsulateAsync', () => {
             function MyAsync (prop) {
                 this.prop = prop;
