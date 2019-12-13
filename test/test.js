@@ -1477,6 +1477,58 @@ describe('Typeson', function () {
                 typeson.encapsulateAsync(mys);
             });
         });
+
+        it('should throw with non-sync result to stringifySync', () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    function (data) {
+                        return new MyAsync(data);
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            assert.throws(() => {
+                // eslint-disable-next-line no-sync
+                typeson.stringifySync(mya);
+            });
+        });
+
+        it('should throw with sync result to stringifyAsync', () => {
+            function MySync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MySync; },
+                    function (o) {
+                        return o.prop;
+                    },
+                    function (data) {
+                        return new MySync(data);
+                    }
+                ]
+            });
+
+            const mys = new MySync(500);
+            assert.throws(() => {
+                typeson.stringifyAsync(mys);
+            });
+        });
     });
 
     it('should allow forcing of async return', () => {
