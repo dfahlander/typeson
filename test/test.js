@@ -244,43 +244,6 @@ describe('Typeson', function () {
         });
     });
 
-    describe('Type error checking', () => {
-        it('disallows hash type', () => {
-            assert.throws(
-                () => {
-                    new Typeson().register({'#': [
-                        function () {}, function () {}, function () {}
-                    ]});
-                },
-                TypeError,
-                '# cannot be used as a type name as it is reserved ' +
-                    'for cyclic objects',
-                'Should throw on attempting to register the ' +
-                    "reserved 'type', '#'"
-            );
-        });
-        it('disallows JSON type names', () => {
-            const ok = [
-                'null', 'boolean', 'number', 'string', 'array', 'object'
-            ].every((type) => {
-                let caught = false;
-                try {
-                    new Typeson().register({
-                        [type]: [function () {}, function () {}, function () {}]
-                    });
-                } catch (err) {
-                    caught = true;
-                }
-                return caught;
-            });
-            assert(
-                ok,
-                'Should throw on attempting to register the reserved JSON ' +
-                    'object type names'
-            );
-        });
-    });
-
     it('should handle path separators in objects', () => {
         const input = {
             aaa: {
@@ -399,134 +362,6 @@ describe('Typeson', function () {
                 res['B.'].getTime() === 99400000000,
             'Find properties with escaped and unescaped characters'
         );
-    });
-
-    describe('Cyclics', () => {
-        it('should resolve cyclics', () => {
-            const data = {list: []};
-            for (let i = 0; i < 10; ++i) {
-                data.list.push({
-                    name: 'name' + i,
-                    parent: data.list,
-                    root: data,
-                    children: []
-                });
-            }
-            data.list[3].children = [data.list[0], data.list[1]];
-
-            const tson = typeson.stringify(data, null, 2);
-            // log(tson);
-            const result = typeson.parse(tson);
-
-            assert(
-                result.list.length === 10,
-                'result.list.length should be 10'
-            );
-            assert(
-                result.list[3].children.length === 2,
-                'result.list[3] should have 2 children'
-            );
-            assert(
-                result.list[3].children[0] === result.list[0],
-                'First child of result.list[3] should be result.list[0]'
-            );
-        });
-        it('should resolve cyclics 2', () => {
-            const kalle = {name: 'Kalle', age: 33};
-            const input = [kalle, kalle, kalle];
-            const tson = typeson.stringify(input);
-            // log (tson.match(/Kalle/g).length);
-            log(tson);
-            assert(
-                tson.match(/Kalle/gu).length === 1,
-                "TSON should only contain one 'Kalle'. The others should " +
-                    'just reference the first'
-            );
-            const result = typeson.parse(tson);
-            assert(
-                result[0] === result[1] && result[1] === result[2],
-                'The resulting object should also just have references ' +
-                    'to the same object'
-            );
-        });
-        it('should resolve cyclic arrays', () => {
-            const recursive = [];
-            recursive.push(recursive);
-            let tson = typeson.stringify(recursive);
-            let result = typeson.parse(tson);
-            assert(result === result[0], 'array directly contains self');
-
-            const recursive2 = [];
-            recursive2.push([recursive2]);
-            tson = typeson.stringify(recursive2);
-            result = typeson.parse(tson);
-            assert(
-                result !== result[0] && result === result[0][0],
-                'array indirectly contains self'
-            );
-
-            const recursive3 = [recursive];
-            tson = typeson.stringify(recursive3);
-            log(tson);
-            result = typeson.parse(tson);
-            assert(
-                result !== result[0] && result !== result[0][0] &&
-                    result[0] === result[0][0],
-                'array member contains self'
-            );
-
-            const recursive4 = [1, recursive];
-            tson = typeson.stringify(recursive4);
-            log(tson);
-            result = typeson.parse(tson);
-            assert(
-                result !== result[1] && result !== result[1][0] &&
-                    result[1] === result[1][0],
-                'array member contains self'
-            );
-        });
-        it('should resolve cyclic object members', () => {
-            // eslint-disable-next-line sonarjs/prefer-object-literal
-            const recursive = {};
-            recursive.b = recursive;
-            const recursiveContainer = {a: recursive};
-            const tson = typeson.stringify(recursiveContainer);
-            log(tson);
-            const result = typeson.parse(tson);
-            assert(
-                result !== result.a && result !== result.b &&
-                    result.a === result.a.b,
-                'Object property contains self'
-            );
-        });
-        it('should not resolve cyclics if not wanted', () => {
-            const kalle = {name: 'Kalle', age: 33};
-            const input = [kalle, kalle, kalle];
-            const typeson = new Typeson({cyclic: false});
-            const tson = typeson.stringify(input);
-            const json = JSON.stringify(input);
-            assert(
-                tson === json,
-                'TSON should be identical to JSON because the input is ' +
-                    'simple and the cyclics of the input should be ignored'
-            );
-        });
-        it('should resolve cyclics in encapsulated objects', () => {
-            const buf = new ArrayBuffer(16);
-            const data = {
-                buf,
-                bar: {
-                    data: new DataView(buf, 8, 8)
-                }
-            };
-            const tson = typeson.stringify(data, null, 2);
-            log(tson);
-            const back = typeson.parse(tson);
-            assert(
-                back.buf === back.bar.data.buffer,
-                'The buffers point to same object'
-            );
-        });
     });
 
     it('should support arrays', () => {
@@ -694,60 +529,470 @@ describe('Typeson', function () {
     });
     */
 
-    it(
-        'should support registering a class without replacer or reviver',
-        () => {
-            function MyClass () {}
-            const TSON = new Typeson().register({MyClass});
-            const x = new MyClass();
-            x.hello = 'world';
-            const tson = TSON.stringify(x);
-            log(tson);
-            const back = TSON.parse(tson);
-            assert(
-                back instanceof MyClass,
-                'Should revive to a MyClass instance.'
-            );
-            assert(back.hello === 'world', 'Should have all properties there.');
-        }
-    );
-    it('should execute replacers in proper order', () => {
-        function Person () {}
-        const john = new Person();
-        const typeson = new Typeson().register([
-            {specificClassFinder: [
-                (x) => x instanceof Person, () => 'specific found'
-            ]},
-            {genericClassFinder: [
-                (x) => x && typeof x === 'object', () => 'general found'
-            ]}
-        ]);
-        const clonedData = typeson.parse(typeson.stringify(john));
+    it('executing toJSON', () => {
+        function A () {}
+        A.prototype.toJSON = function () { return 'abcd'; };
+        let typeson = new Typeson();
+        let a = new A(); // Encapsulated as is
+        let tson = typeson.stringify(a);
+        log(tson);
+        let back = typeson.parse(tson);
+        assert(back === 'abcd', 'Should have executed `toJSON`');
+
+        typeson = new Typeson();
+        // Plain object rebuilt during encapsulation including with `toJSON`
+        a = {
+            toJSON () { return 'abcd'; }
+        };
+        tson = typeson.stringify(a);
+        log(tson);
+        back = typeson.parse(tson);
+        assert(back === 'abcd', 'Should have executed `toJSON`');
+    });
+    it('should allow plain object replacements', () => {
+        const typeson = new Typeson().register({
+            plainObj: {
+                testPlainObjects: true,
+                test (x) {
+                    return 'nonenum' in x;
+                },
+                replace (o) {
+                    return {
+                        b: o.b,
+                        nonenum: o.nonenum
+                    };
+                }
+            }
+        });
+        const a = {b: 5};
+        Object.defineProperty(a, 'nonenum', {
+            enumerable: false,
+            value: 100
+        });
+
+        let tson = typeson.stringify(a);
+        log(tson);
+        let back = typeson.parse(tson);
+        assert(back.b === 5, 'Should have kept property');
         assert(
-            clonedData === 'general found',
-            'Should execute replacers in proper order'
+            back.nonenum === 100,
+            'Should have kept non-enumerable property'
+        );
+        assert(
+            {}.propertyIsEnumerable.call(back, 'nonenum'),
+            'Non-enumerable property should now be enumerable'
+        );
+
+        const x = Object.create(null);
+        x.b = 7;
+        Object.defineProperty(x, 'nonenum', {
+            enumerable: false,
+            value: 50
+        });
+        tson = typeson.stringify(x);
+        log(tson);
+        back = typeson.parse(tson);
+        assert(back.b === 7, 'Should have kept property');
+        assert(back.nonenum === 50, 'Should have kept non-enumerable property');
+        assert(
+            {}.propertyIsEnumerable.call(back, 'nonenum'),
+            'Non-enumerable property should now be enumerable'
         );
     });
 
-    it('should allow replacing previously registered replacer', () => {
-        function Person () {}
-        const john = new Person();
-        const typeson = new Typeson();
-        typeson.register([
-            {classFinder: [
-                (x) => x instanceof Person, () => 'found'
-            ]}
-        ]);
-        typeson.register(
-            [{classFinder: [
-                (x) => x instanceof Person, () => 'later found'
-            ]}]
-        );
-        const clonedData = typeson.parse(typeson.stringify(john));
+    it('should allow forcing of async return', () => {
+        const typeson = new Typeson({sync: false, throwOnBadSyncType: false});
+        const x = 5;
+        return typeson.stringify(x).then(function (tson) {
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back === 5,
+                'Should allow async to be forced even without ' +
+                    'async return values'
+            );
+            return undefined;
+        });
+    });
+
+    it('should transmit state through replacers and revivers', () => {
+        function ReplaceReviver (obj) {
+            Object.defineProperty(this, 'obj', {
+                enumerable: false,
+                value: obj
+            });
+        }
+        ReplaceReviver.prototype[Symbol.toStringTag] = 'ReplaceReviver';
+        const typeson = new Typeson().register({
+            replaceReviveContainer: {
+                test (x) {
+                    return Typeson.toStringTag(x) === 'ReplaceReviver';
+                },
+                replace (b, stateObj) {
+                    if (!stateObj.objs) {
+                        stateObj.objs = [];
+                    }
+                    const index = stateObj.objs.indexOf(b.obj);
+                    if (index > -1) {
+                        return {index};
+                    }
+                    stateObj.objs.push(b.obj);
+                    return {
+                        obj: b.obj
+                    };
+                },
+                revive (o, stateObj) {
+                    if (!stateObj.objs) {
+                        stateObj.objs = [];
+                    }
+                    if ('index' in o) {
+                        return stateObj.objs[o.index];
+                    }
+                    const rr = new ReplaceReviver(o.obj);
+                    stateObj.objs.push(rr);
+                    return rr;
+                }
+            }
+        });
+        const rrObj1 = {value: 10};
+        const rrObj2 = {value: 353};
+        const rrObjXYZ = {value: 10};
+
+        const rr1 = new ReplaceReviver(rrObj1);
+        const rr2 = new ReplaceReviver(rrObj2);
+        const rr3 = new ReplaceReviver(rrObj1);
+        const rrXYZ = new ReplaceReviver(rrObjXYZ);
+        const obj = {rr1, rr2, rr3, rrXYZ};
+        const tson = typeson.stringify(obj);
+        log(tson);
+        const back = typeson.parse(tson);
+        assert(back.rr1.obj.value === 10, 'Should preserve value (rr1)');
+        assert(back.rr2.obj.value === 353, 'Should preserve value (rr2)');
+        assert(back.rr3.obj.value === 10, 'Should preserve value (rr3)');
+        assert(back.rrXYZ.obj.value === 10, 'Should preserve value (rrXYZ)');
+        assert(back.rr1.obj === back.rr3.obj, 'Should preserve objects');
         assert(
-            clonedData === 'later found',
-            'Should replace previously registered replacer'
+            back.rr1.obj !== back.rrXYZ.obj,
+            'Should not confuse objects where only value is the same'
         );
+    });
+
+    it('should allow serializing arrays to objects', () => {
+        const typeson = new Typeson().register({
+            arraysToObjects: {
+                testPlainObjects: true,
+                test (x, stateObj) {
+                    if (Array.isArray(x)) {
+                        stateObj.iterateIn = 'object';
+                        stateObj.addLength = true;
+                        return true;
+                    }
+                    return false;
+                },
+                revive (o) {
+                    const arr = [];
+                    // No map here as may be a sparse array (including
+                    //   with `length` set)
+                    Object.entries(o).forEach(([key, val]) => {
+                        arr[key] = val;
+                    });
+                    return arr;
+                }
+            }
+        });
+        const arr = new Array(10);
+        arr[0] = 3;
+        arr[3] = '4';
+        arr[4] = 5;
+        arr[6] = arr;
+        arr[7] = [arr];
+        arr[9] = {arr};
+        arr.b = 'ddd';
+        arr[-2] = 'eee';
+        arr[9].f = [[arr]];
+
+        const tson = typeson.stringify(arr, null, 2);
+        // log('tson', tson);
+        const back = typeson.parse(tson);
+        // log('back', back);
+        assert(
+            back[0] === 3 && back[3] === '4' && back[4] === 5,
+            'Preserves regular array indexes'
+        );
+        assert(
+            back.b === 'ddd' && back[-2] === 'eee',
+            'Preserves non-numeric and non-positive-integer indexes'
+        );
+        assert(
+            back[6] === back &&
+            back[7][0] === back &&
+            Array.isArray(back),
+            'Preserves circular array references'
+        );
+
+        assert(
+            Array.isArray(back[9].arr), 'Preserves cyclic array on object'
+        );
+        assert(
+            back[9].f[0][0] === back, 'Preserves nested cyclic array'
+        );
+    });
+    it('should allow unknown string tags', () => {
+        const map = {
+            map: {
+                test (x) { return Typeson.toStringTag(x) === 'Map'; },
+                replace (mp) { return [...mp.entries()]; },
+                revive (entries) { return new Map(entries); }
+            }
+        };
+
+        const typeson = new Typeson().register([map]);
+
+        const a = {
+            __raw_map: new Map(),
+            [Symbol.toStringTag]: 'a'
+        };
+
+        const tson = typeson.stringify(a, null, 2);
+        // log('tson', tson);
+        const back = typeson.parse(tson);
+
+        assert(
+            back.__raw_map instanceof Map,
+            'Revives `Map` on class with Symbol.toStringTag'
+        );
+
+        // Todo: Need to implement Symbol iteration
+        // assert(
+        //     back[Symbol.toStringTag] === 'a',
+        //     'Revives `Symbol.toStringTag`'
+        // );
+    });
+
+    describe('Type error checking', () => {
+        it('disallows hash type', () => {
+            assert.throws(
+                () => {
+                    new Typeson().register({'#': [
+                        function () {}, function () {}, function () {}
+                    ]});
+                },
+                TypeError,
+                '# cannot be used as a type name as it is reserved ' +
+                    'for cyclic objects',
+                'Should throw on attempting to register the ' +
+                    "reserved 'type', '#'"
+            );
+        });
+        it('disallows JSON type names', () => {
+            const ok = [
+                'null', 'boolean', 'number', 'string', 'array', 'object'
+            ].every((type) => {
+                let caught = false;
+                try {
+                    new Typeson().register({
+                        [type]: [function () {}, function () {}, function () {}]
+                    });
+                } catch (err) {
+                    caught = true;
+                }
+                return caught;
+            });
+            assert(
+                ok,
+                'Should throw on attempting to register the reserved JSON ' +
+                    'object type names'
+            );
+        });
+    });
+
+    describe('Cyclics', () => {
+        it('should resolve cyclics', () => {
+            const data = {list: []};
+            for (let i = 0; i < 10; ++i) {
+                data.list.push({
+                    name: 'name' + i,
+                    parent: data.list,
+                    root: data,
+                    children: []
+                });
+            }
+            data.list[3].children = [data.list[0], data.list[1]];
+
+            const tson = typeson.stringify(data, null, 2);
+            // log(tson);
+            const result = typeson.parse(tson);
+
+            assert(
+                result.list.length === 10,
+                'result.list.length should be 10'
+            );
+            assert(
+                result.list[3].children.length === 2,
+                'result.list[3] should have 2 children'
+            );
+            assert(
+                result.list[3].children[0] === result.list[0],
+                'First child of result.list[3] should be result.list[0]'
+            );
+        });
+        it('should resolve cyclics 2', () => {
+            const kalle = {name: 'Kalle', age: 33};
+            const input = [kalle, kalle, kalle];
+            const tson = typeson.stringify(input);
+            // log (tson.match(/Kalle/g).length);
+            log(tson);
+            assert(
+                tson.match(/Kalle/gu).length === 1,
+                "TSON should only contain one 'Kalle'. The others should " +
+                    'just reference the first'
+            );
+            const result = typeson.parse(tson);
+            assert(
+                result[0] === result[1] && result[1] === result[2],
+                'The resulting object should also just have references ' +
+                    'to the same object'
+            );
+        });
+        it('should resolve cyclic arrays', () => {
+            const recursive = [];
+            recursive.push(recursive);
+            let tson = typeson.stringify(recursive);
+            let result = typeson.parse(tson);
+            assert(result === result[0], 'array directly contains self');
+
+            const recursive2 = [];
+            recursive2.push([recursive2]);
+            tson = typeson.stringify(recursive2);
+            result = typeson.parse(tson);
+            assert(
+                result !== result[0] && result === result[0][0],
+                'array indirectly contains self'
+            );
+
+            const recursive3 = [recursive];
+            tson = typeson.stringify(recursive3);
+            log(tson);
+            result = typeson.parse(tson);
+            assert(
+                result !== result[0] && result !== result[0][0] &&
+                    result[0] === result[0][0],
+                'array member contains self'
+            );
+
+            const recursive4 = [1, recursive];
+            tson = typeson.stringify(recursive4);
+            log(tson);
+            result = typeson.parse(tson);
+            assert(
+                result !== result[1] && result !== result[1][0] &&
+                    result[1] === result[1][0],
+                'array member contains self'
+            );
+        });
+        it('should resolve cyclic object members', () => {
+            // eslint-disable-next-line sonarjs/prefer-object-literal
+            const recursive = {};
+            recursive.b = recursive;
+            const recursiveContainer = {a: recursive};
+            const tson = typeson.stringify(recursiveContainer);
+            log(tson);
+            const result = typeson.parse(tson);
+            assert(
+                result !== result.a && result !== result.b &&
+                    result.a === result.a.b,
+                'Object property contains self'
+            );
+        });
+        it('should not resolve cyclics if not wanted', () => {
+            const kalle = {name: 'Kalle', age: 33};
+            const input = [kalle, kalle, kalle];
+            const typeson = new Typeson({cyclic: false});
+            const tson = typeson.stringify(input);
+            const json = JSON.stringify(input);
+            assert(
+                tson === json,
+                'TSON should be identical to JSON because the input is ' +
+                    'simple and the cyclics of the input should be ignored'
+            );
+        });
+        it('should resolve cyclics in encapsulated objects', () => {
+            const buf = new ArrayBuffer(16);
+            const data = {
+                buf,
+                bar: {
+                    data: new DataView(buf, 8, 8)
+                }
+            };
+            const tson = typeson.stringify(data, null, 2);
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back.buf === back.bar.data.buffer,
+                'The buffers point to same object'
+            );
+        });
+    });
+
+    describe('Replacer registration', () => {
+        it(
+            'should support registering a class without replacer or reviver',
+            () => {
+                function MyClass () {}
+                const TSON = new Typeson().register({MyClass});
+                const x = new MyClass();
+                x.hello = 'world';
+                const tson = TSON.stringify(x);
+                log(tson);
+                const back = TSON.parse(tson);
+                assert(
+                    back instanceof MyClass,
+                    'Should revive to a MyClass instance.'
+                );
+                assert(
+                    back.hello === 'world',
+                    'Should have all properties there.'
+                );
+            }
+        );
+        it('should execute replacers in proper order', () => {
+            function Person () {}
+            const john = new Person();
+            const typeson = new Typeson().register([
+                {specificClassFinder: [
+                    (x) => x instanceof Person, () => 'specific found'
+                ]},
+                {genericClassFinder: [
+                    (x) => x && typeof x === 'object', () => 'general found'
+                ]}
+            ]);
+            const clonedData = typeson.parse(typeson.stringify(john));
+            assert(
+                clonedData === 'general found',
+                'Should execute replacers in proper order'
+            );
+        });
+
+        it('should allow replacing previously registered replacer', () => {
+            function Person () {}
+            const john = new Person();
+            const typeson = new Typeson();
+            typeson.register([
+                {classFinder: [
+                    (x) => x instanceof Person, () => 'found'
+                ]}
+            ]);
+            typeson.register(
+                [{classFinder: [
+                    (x) => x instanceof Person, () => 'later found'
+                ]}]
+            );
+            const clonedData = typeson.parse(typeson.stringify(john));
+            assert(
+                clonedData === 'later found',
+                'Should replace previously registered replacer'
+            );
+        });
     });
 
     describe('encapsulateObserver', () => {
@@ -929,164 +1174,99 @@ describe('Typeson', function () {
         });
     });
 
-    it('should allow iterateIn', () => {
-        function A (a) {
-            this.a = a;
-        }
-        function createExtendingClass (a) {
-            function B (b, isArr) {
-                this[3] = 4;
-                this.b = b;
-                this.isArr = isArr;
+    describe('Iteration', () => {
+        it('should allow `iterateIn`', () => {
+            function A (a) {
+                this.a = a;
             }
-            B.prototype = new A(a);
-            return B;
-        }
-
-        const typeson = new Typeson().register({
-            iterateIn: {
-                test (x, stateObj) {
-                    if (x instanceof A) {
-                        stateObj.iterateIn = x.isArr ? 'array' : 'object';
-                        return true;
-                    }
-                    return false;
+            function createExtendingClass (a) {
+                function B (b, isArr) {
+                    this[3] = 4;
+                    this.b = b;
+                    this.isArr = isArr;
                 }
+                B.prototype = new A(a);
+                return B;
             }
-        });
 
-        const B = createExtendingClass(5);
-
-        let b = new B(7);
-        let tson = typeson.stringify(b);
-        log(tson);
-        let back = typeson.parse(tson);
-        assert(!Array.isArray(back), 'Is not an array');
-        assert(back[3] === 4, 'Has numeric property');
-        assert(back.a === 5, "Got inherited 'a' property");
-        assert(back.b === 7, "Got own 'b' property");
-
-        b = new B(8, true);
-        tson = typeson.stringify(b);
-        log(tson);
-        back = typeson.parse(tson);
-        assert(Array.isArray(back), 'Is an array');
-        assert(back[3] === 4, 'Has numeric property');
-        assert(
-            !('a' in back), "'a' property won't survive array stringification"
-        );
-        assert(
-            !('b' in back), "'b' property won't survive array stringification"
-        );
-    });
-    it('should allow `iterateUnsetNumeric`', () => {
-        const sparseUndefined = [
-            {
-                sparseArrays: {
-                    testPlainObjects: true,
-                    test (x) { return Array.isArray(x); },
-                    replace (a, stateObj) {
-                        stateObj.iterateUnsetNumeric = true;
-                        return a;
-                    }
-                }
-            },
-            {
-                sparseUndefined: {
+            const typeson = new Typeson().register({
+                iterateIn: {
                     test (x, stateObj) {
-                        return typeof x === 'undefined' &&
-                            stateObj.ownKeys === false;
-                    },
-                    replace (n) { return 0; },
-                    // Will avoid adding anything
-                    revive (s) { return undefined; }
+                        if (x instanceof A) {
+                            stateObj.iterateIn = x.isArr ? 'array' : 'object';
+                            return true;
+                        }
+                        return false;
+                    }
                 }
-            }
-        ];
-        const typeson = new Typeson().register([sparseUndefined]);
+            });
 
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-        const arr = [, 5, , , 6, ];
-        const tson = typeson.stringify(arr);
-        log(tson);
-        const back = typeson.parse(tson);
-        assert(!('0' in back), 'Undefined at index 0');
-        assert(back[1] === 5 && back[4] === 6, 'Set values restored');
-        assert(!('2' in back), 'Undefined at index 2');
-        assert(!('3' in back), 'Undefined at index 3');
-        assert(!('5' in back), 'Undefined at index 5');
-    });
-    it('executing toJSON', () => {
-        function A () {}
-        A.prototype.toJSON = function () { return 'abcd'; };
-        let typeson = new Typeson();
-        let a = new A(); // Encapsulated as is
-        let tson = typeson.stringify(a);
-        log(tson);
-        let back = typeson.parse(tson);
-        assert(back === 'abcd', 'Should have executed `toJSON`');
+            const B = createExtendingClass(5);
 
-        typeson = new Typeson();
-        // Plain object rebuilt during encapsulation including with `toJSON`
-        a = {
-            toJSON () { return 'abcd'; }
-        };
-        tson = typeson.stringify(a);
-        log(tson);
-        back = typeson.parse(tson);
-        assert(back === 'abcd', 'Should have executed `toJSON`');
-    });
-    it('should allow plain object replacements', () => {
-        const typeson = new Typeson().register({
-            plainObj: {
-                testPlainObjects: true,
-                test (x) {
-                    return 'nonenum' in x;
+            let b = new B(7);
+            let tson = typeson.stringify(b);
+            log(tson);
+            let back = typeson.parse(tson);
+            assert(!Array.isArray(back), 'Is not an array');
+            assert(back[3] === 4, 'Has numeric property');
+            assert(back.a === 5, "Got inherited 'a' property");
+            assert(back.b === 7, "Got own 'b' property");
+
+            b = new B(8, true);
+            tson = typeson.stringify(b);
+            log(tson);
+            back = typeson.parse(tson);
+            assert(Array.isArray(back), 'Is an array');
+            assert(back[3] === 4, 'Has numeric property');
+            assert(
+                !('a' in back),
+                "'a' property won't survive array stringification"
+            );
+            assert(
+                !('b' in back),
+                "'b' property won't survive array stringification"
+            );
+        });
+        it('should allow `iterateUnsetNumeric`', () => {
+            const sparseUndefined = [
+                {
+                    sparseArrays: {
+                        testPlainObjects: true,
+                        test (x) { return Array.isArray(x); },
+                        replace (a, stateObj) {
+                            stateObj.iterateUnsetNumeric = true;
+                            return a;
+                        }
+                    }
                 },
-                replace (o) {
-                    return {
-                        b: o.b,
-                        nonenum: o.nonenum
-                    };
+                {
+                    sparseUndefined: {
+                        test (x, stateObj) {
+                            return typeof x === 'undefined' &&
+                                stateObj.ownKeys === false;
+                        },
+                        replace (n) { return 0; },
+                        // Will avoid adding anything
+                        revive (s) { return undefined; }
+                    }
                 }
-            }
-        });
-        const a = {b: 5};
-        Object.defineProperty(a, 'nonenum', {
-            enumerable: false,
-            value: 100
-        });
+            ];
+            const typeson = new Typeson().register([sparseUndefined]);
 
-        let tson = typeson.stringify(a);
-        log(tson);
-        let back = typeson.parse(tson);
-        assert(back.b === 5, 'Should have kept property');
-        assert(
-            back.nonenum === 100,
-            'Should have kept non-enumerable property'
-        );
-        assert(
-            {}.propertyIsEnumerable.call(back, 'nonenum'),
-            'Non-enumerable property should now be enumerable'
-        );
-
-        const x = Object.create(null);
-        x.b = 7;
-        Object.defineProperty(x, 'nonenum', {
-            enumerable: false,
-            value: 50
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            const arr = [, 5, , , 6, ];
+            const tson = typeson.stringify(arr);
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(!('0' in back), 'Undefined at index 0');
+            assert(back[1] === 5 && back[4] === 6, 'Set values restored');
+            assert(!('2' in back), 'Undefined at index 2');
+            assert(!('3' in back), 'Undefined at index 3');
+            assert(!('5' in back), 'Undefined at index 5');
         });
-        tson = typeson.stringify(x);
-        log(tson);
-        back = typeson.parse(tson);
-        assert(back.b === 7, 'Should have kept property');
-        assert(back.nonenum === 50, 'Should have kept non-enumerable property');
-        assert(
-            {}.propertyIsEnumerable.call(back, 'nonenum'),
-            'Non-enumerable property should now be enumerable'
-        );
     });
+
     describe('Typeson.Promise', () => {
         it('should allow single Promise resolution', () => {
             const typeson = new Typeson();
@@ -1798,215 +1978,6 @@ describe('Typeson', function () {
             }, TypeError, 'Async method requested but no async sync reviver');
         });
     });
-
-    it('should allow forcing of async return', () => {
-        const typeson = new Typeson({sync: false, throwOnBadSyncType: false});
-        const x = 5;
-        return typeson.stringify(x).then(function (tson) {
-            log(tson);
-            const back = typeson.parse(tson);
-            assert(
-                back === 5,
-                'Should allow async to be forced even without ' +
-                    'async return values'
-            );
-            return undefined;
-        });
-    });
-
-    it('should transmit state through replacers and revivers', () => {
-        function ReplaceReviver (obj) {
-            Object.defineProperty(this, 'obj', {
-                enumerable: false,
-                value: obj
-            });
-        }
-        ReplaceReviver.prototype[Symbol.toStringTag] = 'ReplaceReviver';
-        const typeson = new Typeson().register({
-            replaceReviveContainer: {
-                test (x) {
-                    return Typeson.toStringTag(x) === 'ReplaceReviver';
-                },
-                replace (b, stateObj) {
-                    if (!stateObj.objs) {
-                        stateObj.objs = [];
-                    }
-                    const index = stateObj.objs.indexOf(b.obj);
-                    if (index > -1) {
-                        return {index};
-                    }
-                    stateObj.objs.push(b.obj);
-                    return {
-                        obj: b.obj
-                    };
-                },
-                revive (o, stateObj) {
-                    if (!stateObj.objs) {
-                        stateObj.objs = [];
-                    }
-                    if ('index' in o) {
-                        return stateObj.objs[o.index];
-                    }
-                    const rr = new ReplaceReviver(o.obj);
-                    stateObj.objs.push(rr);
-                    return rr;
-                }
-            }
-        });
-        const rrObj1 = {value: 10};
-        const rrObj2 = {value: 353};
-        const rrObjXYZ = {value: 10};
-
-        const rr1 = new ReplaceReviver(rrObj1);
-        const rr2 = new ReplaceReviver(rrObj2);
-        const rr3 = new ReplaceReviver(rrObj1);
-        const rrXYZ = new ReplaceReviver(rrObjXYZ);
-        const obj = {rr1, rr2, rr3, rrXYZ};
-        const tson = typeson.stringify(obj);
-        log(tson);
-        const back = typeson.parse(tson);
-        assert(back.rr1.obj.value === 10, 'Should preserve value (rr1)');
-        assert(back.rr2.obj.value === 353, 'Should preserve value (rr2)');
-        assert(back.rr3.obj.value === 10, 'Should preserve value (rr3)');
-        assert(back.rrXYZ.obj.value === 10, 'Should preserve value (rrXYZ)');
-        assert(back.rr1.obj === back.rr3.obj, 'Should preserve objects');
-        assert(
-            back.rr1.obj !== back.rrXYZ.obj,
-            'Should not confuse objects where only value is the same'
-        );
-    });
-    it('should retrieve special type names', () => {
-        const typeson = new Typeson().register({
-            Date: {
-                test (x) { return x instanceof Date; },
-                replace (date) { return date.getTime(); },
-                revive (time) { return new Date(time); }
-            }
-        });
-        const typeNames = typeson.specialTypeNames([
-            5, new Date(), 'str', new Date()
-        ]);
-        assert(
-            typeNames.length === 1 && typeNames[0] === 'Date',
-            'Should only return (unique) special type names'
-        );
-    });
-    it('should retrieve root type name', () => {
-        let runCount = 0;
-        const typeson = new Typeson({
-            encapsulateObserver (o) {
-                runCount++;
-            }
-        }).register({
-            Date: {
-                test (x) { return x instanceof Date; },
-                replace (date) { return date.getTime(); },
-                revive (time) { return new Date(time); }
-            }
-        });
-        const rootTypeName = typeson.rootTypeName([
-            5, new Date(), 'str', new Date()
-        ]);
-        assert(
-            rootTypeName === 'array',
-            'Should return the single root type name'
-        );
-        assert(
-            runCount === 1,
-            'Should not iterate through the array structure'
-        );
-    });
-    it('should allow serializing arrays to objects', () => {
-        const typeson = new Typeson().register({
-            arraysToObjects: {
-                testPlainObjects: true,
-                test (x, stateObj) {
-                    if (Array.isArray(x)) {
-                        stateObj.iterateIn = 'object';
-                        stateObj.addLength = true;
-                        return true;
-                    }
-                    return false;
-                },
-                revive (o) {
-                    const arr = [];
-                    // No map here as may be a sparse array (including
-                    //   with `length` set)
-                    Object.entries(o).forEach(([key, val]) => {
-                        arr[key] = val;
-                    });
-                    return arr;
-                }
-            }
-        });
-        const arr = new Array(10);
-        arr[0] = 3;
-        arr[3] = '4';
-        arr[4] = 5;
-        arr[6] = arr;
-        arr[7] = [arr];
-        arr[9] = {arr};
-        arr.b = 'ddd';
-        arr[-2] = 'eee';
-        arr[9].f = [[arr]];
-
-        const tson = typeson.stringify(arr, null, 2);
-        // log('tson', tson);
-        const back = typeson.parse(tson);
-        // log('back', back);
-        assert(
-            back[0] === 3 && back[3] === '4' && back[4] === 5,
-            'Preserves regular array indexes'
-        );
-        assert(
-            back.b === 'ddd' && back[-2] === 'eee',
-            'Preserves non-numeric and non-positive-integer indexes'
-        );
-        assert(
-            back[6] === back &&
-            back[7][0] === back &&
-            Array.isArray(back),
-            'Preserves circular array references'
-        );
-
-        assert(
-            Array.isArray(back[9].arr), 'Preserves cyclic array on object'
-        );
-        assert(
-            back[9].f[0][0] === back, 'Preserves nested cyclic array'
-        );
-    });
-    it('should allow unknown string tags', () => {
-        const map = {
-            map: {
-                test (x) { return Typeson.toStringTag(x) === 'Map'; },
-                replace (mp) { return [...mp.entries()]; },
-                revive (entries) { return new Map(entries); }
-            }
-        };
-
-        const typeson = new Typeson().register([map]);
-
-        const a = {
-            __raw_map: new Map(),
-            [Symbol.toStringTag]: 'a'
-        };
-
-        const tson = typeson.stringify(a, null, 2);
-        // log('tson', tson);
-        const back = typeson.parse(tson);
-
-        assert(
-            back.__raw_map instanceof Map,
-            'Revives `Map` on class with Symbol.toStringTag'
-        );
-
-        // Todo: Need to implement Symbol iteration
-        // assert(
-        //     back[Symbol.toStringTag] === 'a',
-        //     'Revives `Symbol.toStringTag`'
-        // );
-    });
 });
 
 describe('Typeson.isThenable', () => {
@@ -2092,6 +2063,53 @@ describe('Typeson.hasConstructorOf', () => {
             Typeson.hasConstructorOf(undef, Typeson.Undefined),
             'Instance of Typeson.Undefined has constructor identical ' +
                 'to Typeson.Undefined despite inconsistent stringification'
+        );
+    });
+});
+
+describe('Typeson.specialTypeNames', () => {
+    it('should retrieve special type names', () => {
+        const typeson = new Typeson().register({
+            Date: {
+                test (x) { return x instanceof Date; },
+                replace (date) { return date.getTime(); },
+                revive (time) { return new Date(time); }
+            }
+        });
+        const typeNames = typeson.specialTypeNames([
+            5, new Date(), 'str', new Date()
+        ]);
+        assert(
+            typeNames.length === 1 && typeNames[0] === 'Date',
+            'Should only return (unique) special type names'
+        );
+    });
+});
+
+describe('Typeson.rootTypeName', () => {
+    it('should retrieve root type name', () => {
+        let runCount = 0;
+        const typeson = new Typeson({
+            encapsulateObserver (o) {
+                runCount++;
+            }
+        }).register({
+            Date: {
+                test (x) { return x instanceof Date; },
+                replace (date) { return date.getTime(); },
+                revive (time) { return new Date(time); }
+            }
+        });
+        const rootTypeName = typeson.rootTypeName([
+            5, new Date(), 'str', new Date()
+        ]);
+        assert(
+            rootTypeName === 'array',
+            'Should return the single root type name'
+        );
+        assert(
+            runCount === 1,
+            'Should not iterate through the array structure'
         );
     });
 });
