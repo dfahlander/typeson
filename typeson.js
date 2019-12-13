@@ -799,9 +799,9 @@ class Typeson {
             return reviver[
                 sync && reviver.revive
                     ? 'revive'
-                    : !sync && reviver.reviveAsync
-                        ? 'reviveAsync'
-                        : 'revive'
+                    // : !sync && reviver.reviveAsync
+                    : 'reviveAsync'
+                    // : 'revive'
             ](val, stateObj);
         }
 
