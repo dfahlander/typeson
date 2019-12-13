@@ -762,6 +762,49 @@ class Typeson {
         }
 
         const that = this;
+
+        /**
+         * @callback RevivalReducer
+         * @param {Any} value
+         * @param {string} type
+         * @returns {Any}
+         */
+
+        /**
+         *
+         * @param {string} type
+         * @param {Any} val
+         * @param {RevivalReducer} reducer [description]
+         * @returns {[type]} [description]
+         */
+        function executeReviver (type, val, reducer) {
+            if (hasConstructorOf(val, TypesonPromise)) {
+                return val.then((v) => { // TypesonPromise here too
+                    return reducer(v, type);
+                });
+            }
+            const [reviver] = that.revivers[type];
+            if (!reviver) {
+                throw new Error('Unregistered type: ' + type);
+            }
+            if (!sync && !('reviveAsync' in reviver)) {
+                throw new TypeError(
+                    'Async method requested but no async sync reviver'
+                );
+            } else if (!('revive' in reviver)) {
+                throw new TypeError(
+                    'Sync method requested but no sync reviver'
+                );
+            }
+            return reviver[
+                sync && reviver.revive
+                    ? 'revive'
+                    : !sync && reviver.reviveAsync
+                        ? 'reviveAsync'
+                        : 'revive'
+            ](val, stateObj);
+        }
+
         /**
          *
          * @returns {void|TypesonPromise<void>}
@@ -817,32 +860,7 @@ class Typeson {
                         });
                     }
                     let val = getByKeyPath(obj, keypath);
-                    if (hasConstructorOf(val, TypesonPromise)) {
-                        return val.then((v) => { // TypesonPromise here too
-                            return reducer(v, type);
-                        });
-                    }
-                    const [reviver] = that.revivers[type];
-                    if (!reviver) {
-                        throw new Error('Unregistered type: ' + type);
-                    }
-
-                    if (!sync && !('reviveAsync' in reviver)) {
-                        throw new TypeError(
-                            'Async method requested but no async sync reviver'
-                        );
-                    } else if (!('revive' in reviver)) {
-                        throw new TypeError(
-                            'Sync method requested but no sync reviver'
-                        );
-                    }
-                    val = reviver[
-                        sync && reviver.revive
-                            ? 'revive'
-                            : !sync && reviver.reviveAsync
-                                ? 'reviveAsync'
-                                : 'revive'
-                    ](val, stateObj);
+                    val = executeReviver(type, val, reducer);
 
                     if (val === undefined) {
                         return undefined;
@@ -920,32 +938,9 @@ class Typeson {
                 }
                 return ret;
             }
+
             return [].concat(type).reduce(function reducer (val, type) {
-                if (hasConstructorOf(val, TypesonPromise)) {
-                    return val.then((v) => { // TypesonPromise here too
-                        return reducer(v, type);
-                    });
-                }
-                const [reviver] = that.revivers[type];
-                if (!reviver) {
-                    throw new Error('Unregistered type: ' + type);
-                }
-                if (!sync && !('reviveAsync' in reviver)) {
-                    throw new TypeError(
-                        'Async method requested but no async sync reviver'
-                    );
-                } else if (!('revive' in reviver)) {
-                    throw new TypeError(
-                        'Sync method requested but no sync reviver'
-                    );
-                }
-                return reviver[
-                    sync && reviver.revive
-                        ? 'revive'
-                        : !sync && reviver.reviveAsync
-                            ? 'reviveAsync'
-                            : 'revive'
-                ](val, stateObj);
+                return executeReviver(type, val, reducer);
             }, value);
         }
 
