@@ -1454,6 +1454,29 @@ describe('Typeson', function () {
                 typeson.encapsulateSync(mya);
             });
         });
+
+        it('should throw with sync result to encapsulateAsync', () => {
+            function MySync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MySync; },
+                    function (o) {
+                        return o.prop;
+                    },
+                    function (data) {
+                        return new MySync(data);
+                    }
+                ]
+            });
+
+            const mys = new MySync(500);
+            assert.throws(() => {
+                typeson.encapsulateAsync(mys);
+            });
+        });
     });
 
     it('should allow forcing of async return', () => {
