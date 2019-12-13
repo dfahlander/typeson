@@ -1387,6 +1387,35 @@ describe('Typeson', function () {
                 return undefined;
             });
         });
+
+        it('should throw with non-sync result to encapsulateSync', () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    function (data) {
+                        return new MyAsync(data);
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            assert.throws(() => {
+                // eslint-disable-next-line no-sync
+                typeson.encapsulateSync(mya);
+            });
+        });
     });
 
     it('should allow forcing of async return', () => {
