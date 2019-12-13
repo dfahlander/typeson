@@ -723,11 +723,30 @@ describe('Typeson', function () {
             ]}
         ]);
         const clonedData = typeson.parse(typeson.stringify(john));
-        // Todo: Change the expected result to 'specific found' if
-        //   reimplementing in non-reverse order
         assert(
             clonedData === 'general found',
             'Should execute replacers in proper order'
+        );
+    });
+
+    it('should allow replacing previously registered replacer', () => {
+        function Person () {}
+        const john = new Person();
+        const typeson = new Typeson();
+        typeson.register([
+            {classFinder: [
+                (x) => x instanceof Person, () => 'found'
+            ]}
+        ]);
+        typeson.register(
+            [{classFinder: [
+                (x) => x instanceof Person, () => 'later found'
+            ]}]
+        );
+        const clonedData = typeson.parse(typeson.stringify(john));
+        assert(
+            clonedData === 'later found',
+            'Should replace previously registered replacer'
         );
     });
 
