@@ -1456,6 +1456,37 @@ describe('Typeson', function () {
             }, TypeError, 'Sync method requested but async result obtained');
         });
 
+        it('should throw with non-sync result to parseSync', () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return o.prop;
+                    },
+                    function (data) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(new MyAsync(data));
+                            }, 800);
+                        });
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            // eslint-disable-next-line no-sync
+            const smya = typeson.stringifySync(mya);
+            assert.throws(() => {
+                // eslint-disable-next-line no-sync
+                typeson.parseSync(smya);
+            }, TypeError, 'Sync method requested but async result obtained');
+        });
+
         it('should throw with sync result to encapsulateAsync', () => {
             function MySync (prop) {
                 this.prop = prop;
@@ -1658,6 +1689,36 @@ describe('Typeson', function () {
             const encapsSync = typeson.encapsulateSync(mys);
             assert.throws(() => {
                 typeson.reviveAsync(encapsSync);
+            }, TypeError, 'Async method requested but sync result obtained');
+        });
+
+        it('should throw with sync result to parseAsync', () => {
+            function MySync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                mySyncType: {
+                    test (x) { return x instanceof MySync; },
+                    replace (o) {
+                        return o.prop;
+                    },
+                    revive (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    },
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    }
+                }
+            });
+
+            const mys = new MySync(500);
+            // eslint-disable-next-line no-sync
+            const stringSync = typeson.stringifySync(mys);
+            assert.throws(() => {
+                typeson.parseAsync(stringSync);
             }, TypeError, 'Async method requested but sync result obtained');
         });
 
