@@ -1034,6 +1034,54 @@ describe('Typeson', function () {
             );
         });
 
+        it('should execute replacers with `fallback` in proper order', () => {
+            function Person () {}
+            const john = new Person();
+            const typeson = new Typeson();
+            typeson.register([
+                {specificClassFinder: [
+                    (x) => x instanceof Person, () => 'specific found'
+                ]}
+            ]);
+
+            typeson.register([
+                {genericClassFinder: [
+                    (x) => x && typeof x === 'object', () => 'general found'
+                ]}
+            ], {
+                fallback: 0
+            });
+            const clonedData = typeson.parse(typeson.stringify(john));
+            assert(
+                clonedData === 'specific found',
+                'Should execute replacers in proper order'
+            );
+        });
+
+        it('should execute replacers with `fallback` in proper order', () => {
+            function Person () {}
+            const john = new Person();
+            const typeson = new Typeson();
+            typeson.register([
+                {specificClassFinder: [
+                    (x) => x instanceof Person, () => 'specific found'
+                ]}
+            ]);
+
+            typeson.register([
+                {genericClassFinder: [
+                    (x) => x && typeof x === 'object', () => 'general found'
+                ]}
+            ], {
+                fallback: true
+            });
+            const clonedData = typeson.parse(typeson.stringify(john));
+            assert(
+                clonedData === 'specific found',
+                'Should execute replacers in proper order'
+            );
+        });
+
         it('should silently ignore nullish spec', () => {
             function Person () {}
             function Dog () {}
