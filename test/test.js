@@ -65,7 +65,7 @@ const globalTypeson = typeson;
 
 function roundtrip (x) {
     const tson = typeson.stringify(x, null, 2);
-    // log(tson);
+    log(tson);
     return typeson.parse(tson);
 }
 
@@ -114,7 +114,7 @@ describe('Typeson', function () {
         });
         const date = new Date();
         const tson = typeson.stringify(date, null, 2);
-        // log(tson);
+        log(tson);
         const back = typeson.parse(tson);
         assert(
             back instanceof Date && back.toString() === date.toString(),
@@ -678,7 +678,14 @@ describe('Typeson', function () {
     });
 
     it('should allow serializing arrays to objects', () => {
-        const typeson = new Typeson().register({
+        let endIterateIn;
+        const typeson = new Typeson({
+            encapsulateObserver (o) {
+                if (o.endIterateIn) {
+                    endIterateIn = true;
+                }
+            }
+        }).register({
             arraysToObjects: {
                 testPlainObjects: true,
                 test (x, stateObj) {
@@ -714,9 +721,11 @@ describe('Typeson', function () {
         arr[9].f = [[arr]];
 
         const tson = typeson.stringify(arr, null, 2);
-        // log('tson', tson);
+        log('tson', tson);
+        assert(endIterateIn, 'Observes `endIterateIn` state');
+
         const back = typeson.parse(tson);
-        // log('back', back);
+        log('back', back);
         assert(
             back[0] === 3 && back[3] === '4' && back[4] === 5,
             'Preserves regular array indexes'
@@ -798,7 +807,7 @@ describe('Typeson', function () {
 
         `;
         const back = typeson.parse(tsonStringifiedSomehowWithNestedTypesFirst);
-        // log('back', back);
+        log('back', back);
         assert(
             Array.isArray(back[2].arr), 'Preserves cyclic array on object'
         );
@@ -823,7 +832,7 @@ describe('Typeson', function () {
         };
 
         const tson = typeson.stringify(a, null, 2);
-        // log('tson', tson);
+        log('tson', tson);
         const back = typeson.parse(tson);
 
         assert(
@@ -854,7 +863,7 @@ describe('Typeson', function () {
         };
 
         const tson = typeson.stringify(a, null, 2);
-        // log('tson', tson);
+        log('tson', tson);
 
         const newTypeson = new Typeson();
 
@@ -884,7 +893,7 @@ describe('Typeson', function () {
             const obj = {prop: 52};
 
             const tson = typeson.stringify(obj, null, 2);
-            // log('tson', tson);
+            log('tson', tson);
 
             const newTypeson = new Typeson();
 
@@ -950,7 +959,7 @@ describe('Typeson', function () {
             data.list[3].children = [data.list[0], data.list[1]];
 
             const tson = typeson.stringify(data, null, 2);
-            // log(tson);
+            log(tson);
             const result = typeson.parse(tson);
 
             assert(
@@ -970,7 +979,7 @@ describe('Typeson', function () {
             const kalle = {name: 'Kalle', age: 33};
             const input = [kalle, kalle, kalle];
             const tson = typeson.stringify(input);
-            // log (tson.match(/Kalle/g).length);
+            log(tson.match(/Kalle/gu).length);
             log(tson);
             assert(
                 tson.match(/Kalle/gu).length === 1,
@@ -1293,8 +1302,8 @@ describe('Typeson', function () {
             };
             input.cyclicInput = input;
             /* const tson = */ typeson.encapsulate(input);
-            // log(str);
-            // log(expected);
+            log(str);
+            log(expected);
             assert(
                 str === expected,
                 'Observer able to reduce JSON to expected string'
@@ -1386,7 +1395,7 @@ describe('Typeson', function () {
                             back[1].a === 5,
                         'Should have resolved the one nested promise value'
                     );
-                    // log(str);
+                    log(str);
                     assert(
                         str === '<span>aaa</span><span>5</span>' +
                                 '<span>bbb</span>',
@@ -1484,19 +1493,41 @@ describe('Typeson', function () {
                     }
                 }
             ];
-            const typeson = new Typeson().register([sparseUndefined]);
+            let endIterateUnsetNumeric;
+            let typeson = new Typeson({
+                encapsulateObserver (o) {
+                    if (o.endIterateUnsetNumeric) {
+                        endIterateUnsetNumeric = true;
+                    }
+                }
+            }).register([sparseUndefined]);
 
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            const arr = [, 5, , , 6, ];
-            const tson = typeson.stringify(arr);
+            let arr = [, 5, , , 6, ];
+            let tson = typeson.stringify(arr);
             log(tson);
-            const back = typeson.parse(tson);
+            assert(
+                endIterateUnsetNumeric,
+                'Observer should get `endIterateUnsetNumeric`'
+            );
+            let back = typeson.parse(tson);
             assert(!('0' in back), 'Undefined at index 0');
             assert(back[1] === 5 && back[4] === 6, 'Set values restored');
             assert(!('2' in back), 'Undefined at index 2');
             assert(!('3' in back), 'Undefined at index 3');
             assert(!('5' in back), 'Undefined at index 5');
+
+            // Once again for coverage of absent observer and
+            //  nested keypath
+            typeson = new Typeson().register([sparseUndefined]);
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            arr = {a: [, 5, , , 6, ]};
+            tson = typeson.stringify(arr);
+            log(tson);
+            back = typeson.parse(tson);
+            assert(!('0' in back.a), 'Undefined at index 0');
         });
     });
 
