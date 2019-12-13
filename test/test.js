@@ -1357,249 +1357,7 @@ describe('Typeson', function () {
         });
     });
 
-    describe('Typeson.Promise', () => {
-        it('should allow single Promise resolution', () => {
-            const typeson = new Typeson();
-            const x = new Typeson.Promise(function (res) {
-                setTimeout(function () {
-                    res(25);
-                }, 500);
-            });
-            return typeson.stringifyAsync(x).then(function (tson) {
-                log(tson);
-                const back = typeson.parse(tson);
-                assert(
-                    back === 25,
-                    'Should have resolved the one promise value'
-                );
-                return undefined;
-            });
-        });
-        it('should allow single nested Promise resolution', () => {
-            function APromiseUser (a) { this.a = a; }
-            const typeson = new Typeson().register({
-                Date: [
-                    function (x) { return x instanceof Date; },
-                    function (date) { return date.getTime(); },
-                    function (time) { return new Date(time); }
-                ],
-                PromiseUser: [
-                    function (x) { return x instanceof APromiseUser; },
-                    function (o) {
-                        return new Typeson.Promise(function (res) {
-                            setTimeout(function () {
-                                res(o.a);
-                            }, 300);
-                        });
-                    },
-                    function (val) { return new APromiseUser(val); }
-                ]
-            });
-            const x = new Typeson.Promise(function (res) {
-                setTimeout(function () {
-                    res(new APromiseUser(555));
-                }, 1200);
-            });
-            return typeson.stringifyAsync(x).then(function (tson) {
-                log(tson);
-                const back = typeson.parse(tson);
-                assert(
-                    back instanceof APromiseUser &&
-                        back.a === 555,
-                    'Should have resolved the one nested promise value'
-                );
-                return undefined;
-            });
-        });
-        it('should allow multiple Promise resolution', () => {
-            const typeson = new Typeson();
-            const x = [
-                Typeson.Promise.resolve(5),
-                100,
-                new Typeson.Promise(function (res) {
-                    setTimeout(function () {
-                        res(25);
-                    }, 500);
-                })
-            ];
-            return typeson.stringifyAsync(x).then(function (tson) {
-                log(tson);
-                const back = typeson.parse(tson);
-                assert(
-                    back[0] === 5 && back[1] === 100 && back[2] === 25,
-                    'Should have resolved multiple promise values (and ' +
-                        'in the proper order)'
-                );
-                return undefined;
-            });
-        });
-        it('should allow nested Promise resolution', () => {
-            function APromiseUser (a) { this.a = a; }
-            const typeson = new Typeson().register({
-                Date: [
-                    function (x) { return x instanceof Date; },
-                    function (date) { return date.getTime(); },
-                    function (time) { return new Date(time); }
-                ],
-                PromiseUser: [
-                    function (x) { return x instanceof APromiseUser; },
-                    function (o) {
-                        return new Typeson.Promise(function (res) {
-                            setTimeout(function () {
-                                res(o.a);
-                            }, 300);
-                        });
-                    },
-                    function (val) { return new APromiseUser(val); }
-                ]
-            });
-            const x = [
-                Typeson.Promise.resolve(5),
-                100,
-                new Typeson.Promise(function (res) {
-                    setTimeout(function () {
-                        res(25);
-                    }, 500);
-                }),
-                new Typeson.Promise(function (res) {
-                    setTimeout(function () {
-                        res(Typeson.Promise.resolve(5));
-                    });
-                }).then(function (r) {
-                    return new Typeson.Promise(function (res) {
-                        setTimeout(function () {
-                            res(r + 90);
-                        }, 10);
-                    });
-                }),
-                Typeson.Promise.resolve(new Date()),
-                new Typeson.Promise(function (res) {
-                    setTimeout(function () {
-                        res(new APromiseUser(555));
-                    });
-                })
-            ];
-            return typeson.stringifyAsync(x).then(function (tson) {
-                log(tson);
-                const back = typeson.parse(tson);
-                assert(
-                    back[0] === 5 &&
-                        back[1] === 100 &&
-                        back[2] === 25 &&
-                        back[3] === 95 &&
-                        back[4] instanceof Date &&
-                        back[5] instanceof APromiseUser &&
-                        back[5].a === 555,
-                    'Should have resolved multiple nested promise ' +
-                        'values (and in the proper order)'
-                );
-                return undefined;
-            });
-        });
-
-        it('should work with Promise utilities', () => {
-            function makePromises () {
-                const x = new Typeson.Promise(function (res) {
-                    setTimeout(function () {
-                        res(30);
-                    }, 50);
-                });
-                const y = Typeson.Promise.resolve(400);
-                return [x, y];
-            }
-            // eslint-disable-next-line promise/avoid-new
-            return new Promise(function (resolve, reject) {
-                // eslint-disable-next-line promise/catch-or-return
-                Typeson.Promise.all(makePromises()).then(function (results) {
-                    assert(
-                        // eslint-disable-next-line promise/always-return
-                        results[0] === 30 && results[1] === 400,
-                        'Should work with Promise.all'
-                    );
-                }).then(function () {
-                    // eslint-disable-next-line promise/no-nesting
-                    return Typeson.Promise.race(
-                        makePromises()
-                    // eslint-disable-next-line promise/always-return
-                    ).then(function (results) {
-                        assert(
-                            results === 400,
-                            'Should work with Promise.race'
-                        );
-                        resolve();
-                    });
-                });
-            });
-        });
-        it('should properly handle Promise rejections', () => {
-            function makeRejectedPromises () {
-                const x = new Typeson.Promise(function (res, rej) {
-                    setTimeout(function () {
-                        rej(30);
-                    }, 50);
-                });
-                const y = new Typeson.Promise(function (res, rej) {
-                    setTimeout(function () {
-                        res(500);
-                    }, 500);
-                });
-                return [x, y];
-            }
-            // eslint-disable-next-line promise/avoid-new
-            return new Promise(function (resolve, reject) {
-                makeRejectedPromises()[0].then(null, function (errCode) {
-                    assert(
-                        errCode === 30,
-                        '`Typeson.Promise` should work with ' +
-                        '`then(null, onRejected)`'
-                    );
-                    return Typeson.Promise.reject(400);
-                }).catch(function (errCode) {
-                    assert(
-                        errCode === 400,
-                        '`Typeson.Promise` should work with `catch`'
-                    );
-                    return Typeson.Promise.all(makeRejectedPromises());
-                }).catch(function (errCode) {
-                    assert(
-                        errCode === 30,
-                        'Promise.all should work with rejected promises'
-                    );
-                    return Typeson.Promise.race(makeRejectedPromises());
-                }).catch(function (errCode) {
-                    assert(
-                        errCode === 30,
-                        'Promise.race should work with rejected promises'
-                    );
-                    return new Typeson.Promise(function () {
-                        throw new Error('Sync throw');
-                    });
-                }).catch(function (err) {
-                    assert(
-                        err.message === 'Sync throw',
-                        'Typeson.Promise should work with synchronous throws'
-                    );
-                    return Typeson.Promise.resolve(55);
-                }).then(null, function () {
-                    throw new Error('Should not reach here');
-                }).then(function (res) {
-                    assert(
-                        res === 55,
-                        'Typeson.Promises should bypass `then` ' +
-                        'without `onResolved`'
-                    );
-                    return Typeson.Promise.reject(33);
-                }).then(function () {
-                    throw new Error('Should not reach here');
-                }).catch(function (errCode) {
-                    assert(
-                        errCode === 33,
-                        'Typeson.Promises should bypass `then` when rejecting'
-                    );
-                    resolve();
-                });
-            });
-        });
+    describe('Async vs. Sync', () => {
         it('async README example', () => {
             function MyAsync (prop) {
                 this.prop = prop;
@@ -2067,6 +1825,38 @@ describe('Typeson', function () {
                 typeson.reviveAsync(encapsSync);
             }, TypeError, 'Async method requested but no async sync reviver');
         });
+
+        it('should revive with reviveAsync', async () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: {
+                    test (x) { return x instanceof MyAsync; },
+                    replaceAsync (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        return new Typeson.Promise(function (resolve, reject) {
+                            resolve(new MyAsync(data));
+                        });
+                    }
+                }
+            });
+
+            const mya = new MyAsync(500);
+            const encapsAsync = await typeson.encapsulateAsync(mya);
+            const back = await typeson.reviveAsync(encapsAsync);
+            assert(back instanceof MyAsync, 'Returns instance of MyAsync');
+            assert(back.prop === 500, 'Has same property value');
+        });
     });
 });
 
@@ -2234,5 +2024,250 @@ describe('Typeson.rootTypeName', () => {
             rootTypeName === 'Date',
             'Should return the single root type name'
         );
+    });
+});
+
+describe('Typeson.Promise', function () {
+    it('should allow single Promise resolution', () => {
+        const typeson = new Typeson();
+        const x = new Typeson.Promise(function (res) {
+            setTimeout(function () {
+                res(25);
+            }, 500);
+        });
+        return typeson.stringifyAsync(x).then(function (tson) {
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back === 25,
+                'Should have resolved the one promise value'
+            );
+            return undefined;
+        });
+    });
+    it('should allow single nested Promise resolution', () => {
+        function APromiseUser (a) { this.a = a; }
+        const typeson = new Typeson().register({
+            Date: [
+                function (x) { return x instanceof Date; },
+                function (date) { return date.getTime(); },
+                function (time) { return new Date(time); }
+            ],
+            PromiseUser: [
+                function (x) { return x instanceof APromiseUser; },
+                function (o) {
+                    return new Typeson.Promise(function (res) {
+                        setTimeout(function () {
+                            res(o.a);
+                        }, 300);
+                    });
+                },
+                function (val) { return new APromiseUser(val); }
+            ]
+        });
+        const x = new Typeson.Promise(function (res) {
+            setTimeout(function () {
+                res(new APromiseUser(555));
+            }, 1200);
+        });
+        return typeson.stringifyAsync(x).then(function (tson) {
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back instanceof APromiseUser &&
+                    back.a === 555,
+                'Should have resolved the one nested promise value'
+            );
+            return undefined;
+        });
+    });
+    it('should allow multiple Promise resolution', () => {
+        const typeson = new Typeson();
+        const x = [
+            Typeson.Promise.resolve(5),
+            100,
+            new Typeson.Promise(function (res) {
+                setTimeout(function () {
+                    res(25);
+                }, 500);
+            })
+        ];
+        return typeson.stringifyAsync(x).then(function (tson) {
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back[0] === 5 && back[1] === 100 && back[2] === 25,
+                'Should have resolved multiple promise values (and ' +
+                    'in the proper order)'
+            );
+            return undefined;
+        });
+    });
+    it('should allow nested Promise resolution', () => {
+        function APromiseUser (a) { this.a = a; }
+        const typeson = new Typeson().register({
+            Date: [
+                function (x) { return x instanceof Date; },
+                function (date) { return date.getTime(); },
+                function (time) { return new Date(time); }
+            ],
+            PromiseUser: [
+                function (x) { return x instanceof APromiseUser; },
+                function (o) {
+                    return new Typeson.Promise(function (res) {
+                        setTimeout(function () {
+                            res(o.a);
+                        }, 300);
+                    });
+                },
+                function (val) { return new APromiseUser(val); }
+            ]
+        });
+        const x = [
+            Typeson.Promise.resolve(5),
+            100,
+            new Typeson.Promise(function (res) {
+                setTimeout(function () {
+                    res(25);
+                }, 500);
+            }),
+            new Typeson.Promise(function (res) {
+                setTimeout(function () {
+                    res(Typeson.Promise.resolve(5));
+                });
+            }).then(function (r) {
+                return new Typeson.Promise(function (res) {
+                    setTimeout(function () {
+                        res(r + 90);
+                    }, 10);
+                });
+            }),
+            Typeson.Promise.resolve(new Date()),
+            new Typeson.Promise(function (res) {
+                setTimeout(function () {
+                    res(new APromiseUser(555));
+                });
+            })
+        ];
+        return typeson.stringifyAsync(x).then(function (tson) {
+            log(tson);
+            const back = typeson.parse(tson);
+            assert(
+                back[0] === 5 &&
+                    back[1] === 100 &&
+                    back[2] === 25 &&
+                    back[3] === 95 &&
+                    back[4] instanceof Date &&
+                    back[5] instanceof APromiseUser &&
+                    back[5].a === 555,
+                'Should have resolved multiple nested promise ' +
+                    'values (and in the proper order)'
+            );
+            return undefined;
+        });
+    });
+
+    it('should work with Promise utilities', () => {
+        function makePromises () {
+            const x = new Typeson.Promise(function (res) {
+                setTimeout(function () {
+                    res(30);
+                }, 50);
+            });
+            const y = Typeson.Promise.resolve(400);
+            return [x, y];
+        }
+        // eslint-disable-next-line promise/avoid-new
+        return new Promise(function (resolve, reject) {
+            // eslint-disable-next-line promise/catch-or-return
+            Typeson.Promise.all(makePromises()).then(function (results) {
+                assert(
+                    // eslint-disable-next-line promise/always-return
+                    results[0] === 30 && results[1] === 400,
+                    'Should work with Promise.all'
+                );
+            }).then(function () {
+                // eslint-disable-next-line promise/no-nesting
+                return Typeson.Promise.race(
+                    makePromises()
+                // eslint-disable-next-line promise/always-return
+                ).then(function (results) {
+                    assert(
+                        results === 400,
+                        'Should work with Promise.race'
+                    );
+                    resolve();
+                });
+            });
+        });
+    });
+    it('should properly handle Promise rejections', () => {
+        function makeRejectedPromises () {
+            const x = new Typeson.Promise(function (res, rej) {
+                setTimeout(function () {
+                    rej(30);
+                }, 50);
+            });
+            const y = new Typeson.Promise(function (res, rej) {
+                setTimeout(function () {
+                    res(500);
+                }, 500);
+            });
+            return [x, y];
+        }
+        // eslint-disable-next-line promise/avoid-new
+        return new Promise(function (resolve, reject) {
+            makeRejectedPromises()[0].then(null, function (errCode) {
+                assert(
+                    errCode === 30,
+                    '`Typeson.Promise` should work with ' +
+                    '`then(null, onRejected)`'
+                );
+                return Typeson.Promise.reject(400);
+            }).catch(function (errCode) {
+                assert(
+                    errCode === 400,
+                    '`Typeson.Promise` should work with `catch`'
+                );
+                return Typeson.Promise.all(makeRejectedPromises());
+            }).catch(function (errCode) {
+                assert(
+                    errCode === 30,
+                    'Promise.all should work with rejected promises'
+                );
+                return Typeson.Promise.race(makeRejectedPromises());
+            }).catch(function (errCode) {
+                assert(
+                    errCode === 30,
+                    'Promise.race should work with rejected promises'
+                );
+                return new Typeson.Promise(function () {
+                    throw new Error('Sync throw');
+                });
+            }).catch(function (err) {
+                assert(
+                    err.message === 'Sync throw',
+                    'Typeson.Promise should work with synchronous throws'
+                );
+                return Typeson.Promise.resolve(55);
+            }).then(null, function () {
+                throw new Error('Should not reach here');
+            }).then(function (res) {
+                assert(
+                    res === 55,
+                    'Typeson.Promises should bypass `then` ' +
+                    'without `onResolved`'
+                );
+                return Typeson.Promise.reject(33);
+            }).then(function () {
+                throw new Error('Should not reach here');
+            }).catch(function (errCode) {
+                assert(
+                    errCode === 33,
+                    'Typeson.Promises should bypass `then` when rejecting'
+                );
+                resolve();
+            });
+        });
     });
 });

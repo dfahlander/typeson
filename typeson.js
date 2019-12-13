@@ -787,13 +787,13 @@ class Typeson {
             if (!reviver) {
                 throw new Error('Unregistered type: ' + type);
             }
-            if (!sync && !('reviveAsync' in reviver)) {
-                throw new TypeError(
-                    'Async method requested but no async sync reviver'
-                );
-            } else if (!('revive' in reviver)) {
+            if (sync && !('revive' in reviver)) {
                 throw new TypeError(
                     'Sync method requested but no sync reviver'
+                );
+            } else if (!sync && !('reviveAsync' in reviver)) {
+                throw new TypeError(
+                    'Async method requested but no async sync reviver'
                 );
             }
             return reviver[
