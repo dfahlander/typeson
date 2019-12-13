@@ -1461,7 +1461,7 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
-                myAsyncType: [
+                mySyncType: [
                     function (x) { return x instanceof MySync; },
                     function (o) {
                         return o.prop;
@@ -1513,7 +1513,7 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
-                myAsyncType: [
+                mySyncType: [
                     function (x) { return x instanceof MySync; },
                     function (o) {
                         return o.prop;
@@ -1527,6 +1527,65 @@ describe('Typeson', function () {
             const mys = new MySync(500);
             assert.throws(() => {
                 typeson.stringifyAsync(mys);
+            });
+        });
+
+        it('should throw with non-sync result to reviveSync', async () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: [
+                    function (x) { return x instanceof MyAsync; },
+                    function (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    function (data) {
+                        // Do something more useful in real code
+                        return new Typeson.Promise(function (resolve, reject) {
+                            resolve(new MyAsync(data));
+                        });
+                    }
+                ]
+            });
+
+            const mya = new MyAsync(500);
+            const encapsAsync = await typeson.encapsulateAsync(mya);
+            assert.throws(() => {
+                // eslint-disable-next-line no-sync
+                typeson.reviveSync(encapsAsync);
+            });
+        });
+
+        it('should throw with sync result to reviveAsync', () => {
+            function MySync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                mySyncType: [
+                    function (x) { return x instanceof MySync; },
+                    function (o) {
+                        return o.prop;
+                    },
+                    function (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    }
+                ]
+            });
+
+            const mys = new MySync(500);
+            // eslint-disable-next-line no-sync
+            const encapsSync = typeson.encapsulateSync(mys);
+            assert.throws(() => {
+                typeson.reviveAsync(encapsSync);
             });
         });
     });
