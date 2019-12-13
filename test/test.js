@@ -1066,7 +1066,8 @@ describe('Typeson', function () {
 
     describe('Registration', () => {
         it(
-            'should support registering a class without replacer or reviver',
+            'should support registering a class without replacer or ' +
+            'reviver (by constructor/class)',
             () => {
                 function MyClass () {}
                 const TSON = new Typeson().register({MyClass});
@@ -1083,6 +1084,31 @@ describe('Typeson', function () {
                     back.hello === 'world',
                     'Should have all properties there.'
                 );
+            }
+        );
+        it(
+            'should get observer event when registering a class ' +
+            'with only test',
+            () => {
+                let typeDetected;
+                const TSON = new Typeson({
+                    encapsulateObserver (o) {
+                        if (o.typeDetected) {
+                            typeDetected = true;
+                        }
+                    }
+                }).register([{
+                    myType: {
+                        testPlainObjects: true,
+                        test (x) {
+                            return 'prop' in x;
+                        }
+                    }
+                }]);
+                const x = {prop: 5};
+                const tson = TSON.stringify(x);
+                log(tson);
+                assert(typeDetected, 'Type was detected');
             }
         );
         it('should execute replacers in proper order', () => {

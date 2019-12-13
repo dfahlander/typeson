@@ -640,8 +640,6 @@ class Typeson {
                             ? [type].concat(existing)
                             : type;
                     }
-                    // Now, also traverse the result in case it contains its
-                    //   own types to replace
                     Object.assign(stateObj, {type, replaced: true});
                     if ((sync || !replacer.replaceAsync) &&
                         !replacer.replace
@@ -658,6 +656,8 @@ class Typeson {
                         runObserver({replacing: true});
                     }
 
+                    // Now, also traverse the result in case it contains its
+                    //   own types to replace
                     const replaceMethod = sync || !replacer.replaceAsync
                         ? 'replace'
                         : 'replaceAsync';
