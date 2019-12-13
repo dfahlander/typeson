@@ -995,7 +995,7 @@ describe('Typeson', function () {
         });
     });
 
-    describe('Replacer registration', () => {
+    describe('Registration', () => {
         it(
             'should support registering a class without replacer or reviver',
             () => {
@@ -2164,7 +2164,7 @@ describe('Typeson.specialTypeNames', () => {
 });
 
 describe('Typeson.rootTypeName', () => {
-    it('should retrieve root type name', () => {
+    it('should retrieve root type name when JSON', () => {
         let runCount = 0;
         const typeson = new Typeson({
             encapsulateObserver (o) {
@@ -2187,6 +2187,23 @@ describe('Typeson.rootTypeName', () => {
         assert(
             runCount === 1,
             'Should not iterate through the array structure'
+        );
+    });
+
+    it('should retrieve root type name for a special type at root', () => {
+        const typeson = new Typeson().register({
+            Date: {
+                test (x) { return x instanceof Date; },
+                replace (date) { return date.getTime(); },
+                revive (time) { return new Date(time); }
+            }
+        });
+        const rootTypeName = typeson.rootTypeName(
+            new Date()
+        );
+        assert(
+            rootTypeName === 'Date',
+            'Should return the single root type name'
         );
     });
 });
