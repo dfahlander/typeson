@@ -252,8 +252,9 @@ describe('Typeson', function () {
                         function () {}, function () {}, function () {}
                     ]});
                 },
-                null,
-                null,
+                TypeError,
+                '# cannot be used as a type name as it is reserved ' +
+                    'for cyclic objects',
                 'Should throw on attempting to register the ' +
                     "reserved 'type', '#'"
             );
@@ -1452,7 +1453,7 @@ describe('Typeson', function () {
             assert.throws(() => {
                 // eslint-disable-next-line no-sync
                 typeson.encapsulateSync(mya);
-            });
+            }, TypeError, 'Sync method requested but async result obtained');
         });
 
         it('should throw with sync result to encapsulateAsync', () => {
@@ -1475,7 +1476,7 @@ describe('Typeson', function () {
             const mys = new MySync(500);
             assert.throws(() => {
                 typeson.encapsulateAsync(mys);
-            });
+            }, TypeError, 'Async method requested but sync result obtained');
         });
 
         it('should throw with non-sync result to stringifySync', () => {
@@ -1504,7 +1505,7 @@ describe('Typeson', function () {
             assert.throws(() => {
                 // eslint-disable-next-line no-sync
                 typeson.stringifySync(mya);
-            });
+            }, TypeError, 'Sync method requested but async result obtained');
         });
 
         it('should throw with sync result to stringifyAsync', () => {
@@ -1527,10 +1528,43 @@ describe('Typeson', function () {
             const mys = new MySync(500);
             assert.throws(() => {
                 typeson.stringifyAsync(mys);
-            });
+            }, TypeError, 'Async method requested but sync result obtained');
         });
 
         it('should throw with non-sync result to reviveSync', async () => {
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: {
+                    test (x) { return x instanceof MyAsync; },
+                    replaceAsync (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    revive (data) {
+                        // Do something more useful in real code
+                        return new Typeson.Promise(function (resolve, reject) {
+                            resolve(new MyAsync(data));
+                        });
+                    }
+                }
+            });
+
+            const mya = new MyAsync(500);
+            const encapsAsync = await typeson.encapsulateAsync(mya);
+            assert.throws(() => {
+                // eslint-disable-next-line no-sync
+                typeson.reviveSync(encapsAsync);
+            }, TypeError, 'Sync method requested but async result obtained');
+        });
+
+        it('should throw with missing sync method and reviveSync', async () => {
             function MyAsync (prop) {
                 this.prop = prop;
             }
@@ -1560,7 +1594,7 @@ describe('Typeson', function () {
             assert.throws(() => {
                 // eslint-disable-next-line no-sync
                 typeson.reviveSync(encapsAsync);
-            });
+            }, TypeError, 'Sync method requested but no sync reviver');
         });
 
         it('should throw with sync result to reviveAsync', () => {
@@ -1574,6 +1608,10 @@ describe('Typeson', function () {
                     replace (o) {
                         return o.prop;
                     },
+                    revive (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    },
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
@@ -1586,7 +1624,33 @@ describe('Typeson', function () {
             const encapsSync = typeson.encapsulateSync(mys);
             assert.throws(() => {
                 typeson.reviveAsync(encapsSync);
+            }, TypeError, 'Async method requested but sync result obtained');
+        });
+
+        it('should throw with missing async method and reviveAsync', () => {
+            function MySync (prop) {
+                this.prop = prop;
+            }
+
+            const typeson = new Typeson().register({
+                mySyncType: {
+                    test (x) { return x instanceof MySync; },
+                    replace (o) {
+                        return o.prop;
+                    },
+                    revive (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    }
+                }
             });
+
+            const mys = new MySync(500);
+            // eslint-disable-next-line no-sync
+            const encapsSync = typeson.encapsulateSync(mys);
+            assert.throws(() => {
+                typeson.reviveAsync(encapsSync);
+            }, TypeError, 'Async method requested but no async sync reviver');
         });
     });
 

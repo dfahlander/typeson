@@ -826,6 +826,16 @@ class Typeson {
                     if (!reviver) {
                         throw new Error('Unregistered type: ' + type);
                     }
+
+                    if (!sync && !('reviveAsync' in reviver)) {
+                        throw new TypeError(
+                            'Async method requested but no async sync reviver'
+                        );
+                    } else if (!('revive' in reviver)) {
+                        throw new TypeError(
+                            'Sync method requested but no sync reviver'
+                        );
+                    }
                     val = reviver[
                         sync && reviver.revive
                             ? 'revive'
@@ -919,6 +929,15 @@ class Typeson {
                 const [reviver] = that.revivers[type];
                 if (!reviver) {
                     throw new Error('Unregistered type: ' + type);
+                }
+                if (!sync && !('reviveAsync' in reviver)) {
+                    throw new TypeError(
+                        'Async method requested but no async sync reviver'
+                    );
+                } else if (!('revive' in reviver)) {
+                    throw new TypeError(
+                        'Sync method requested but no sync reviver'
+                    );
                 }
                 return reviver[
                     sync && reviver.revive
