@@ -796,9 +796,8 @@ class Typeson {
             //  encapsulation shouldn't have added types, so
             //  should have made an early exit
             if (sync && !('revive' in reviver)) {
-                throw new TypeError(
-                    'Sync method requested but no sync reviver'
-                );
+                // Just return value as is
+                return val;
             }
 
             return reviver[
