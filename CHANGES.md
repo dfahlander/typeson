@@ -1,6 +1,6 @@
 # typeson CHANGES
 
-## ?
+## 5.16.0
 
 - Fix: When checking for "null" constructor, return `true` if object created
     by `Object.create(null)`. This fix only impacts direct use of
