@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## ?
+
+- npm: Bump devDep.
+
 ## 5.16.0
 
 - Fix: When checking for "null" constructor, return `true` if object created
