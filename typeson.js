@@ -794,17 +794,26 @@ class Typeson {
                 throw new TypeError(
                     'Sync method requested but no sync reviver'
                 );
-            } else if (!sync && !('reviveAsync' in reviver)) {
+            } else if (!sync && !('reviveAsync' in reviver) &&
+                !('revive' in reviver)
+            ) {
+                throw new TypeError(
+                    'Async method requested but no reviver'
+                );
+            }
+            /*
+             else if (!sync && !('reviveAsync' in reviver)) {
                 throw new TypeError(
                     'Async method requested but no async reviver'
                 );
             }
+            */
             return reviver[
                 sync && reviver.revive
                     ? 'revive'
-                    // : !sync && reviver.reviveAsync
-                    : 'reviveAsync'
-                    // : 'revive'
+                    : !sync && reviver.reviveAsync
+                        ? 'reviveAsync'
+                        : 'revive'
             ](val, stateObj);
         }
 

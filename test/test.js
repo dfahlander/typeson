@@ -1943,8 +1943,9 @@ describe('Typeson', function () {
             }, TypeError, 'Async method requested but sync result obtained');
         });
 
+        /*
         it(
-            'should throw with missing async method and reviveAsync' +
+            'should throw with missing async method and reviveAsync ' +
             '(plain objects)',
             () => {
                 const typeson = new Typeson().register({
@@ -1999,6 +2000,7 @@ describe('Typeson', function () {
                 typeson.reviveAsync(encapsSync);
             }, TypeError, 'Async method requested but no async reviver');
         });
+        */
 
         it('should revive with reviveAsync', async () => {
             function MyAsync (prop) {
