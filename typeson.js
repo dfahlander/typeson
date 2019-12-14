@@ -477,7 +477,8 @@ class Typeson {
                         !['function', 'symbol'].includes(typeof value) &&
                         !('toJSON' in value) &&
                         !hasConstructorOf(value, TypesonPromise) &&
-                        !hasConstructorOf(value, Promise)
+                        !hasConstructorOf(value, Promise) &&
+                        !hasConstructorOf(value, ArrayBuffer)
                     ) ||
                     isPlainObj ||
                     stateObj.iterateIn === 'object'
