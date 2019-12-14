@@ -2033,6 +2033,41 @@ describe('Typeson', function () {
             assert(back instanceof MyAsync, 'Returns instance of MyAsync');
             assert(back.prop === 500, 'Has same property value');
         });
+
+        it(
+            'should revive with reviveAsync with only revive on spec',
+            async () => {
+                function MyAsync (prop) {
+                    this.prop = prop;
+                }
+
+                const typeson = new Typeson().register({
+                    myAsyncType: {
+                        test (x) { return x instanceof MyAsync; },
+                        replaceAsync (o) {
+                            return new Typeson.Promise((resolve, reject) => {
+                                // Do something more useful in real code
+                                setTimeout(() => {
+                                    resolve(o.prop);
+                                }, 800);
+                            });
+                        },
+                        revive (data) {
+                            // Do something more useful in real code
+                            return new Typeson.Promise((resolve, reject) => {
+                                resolve(new MyAsync(data));
+                            });
+                        }
+                    }
+                });
+
+                const mya = new MyAsync(500);
+                const encapsAsync = await typeson.encapsulateAsync(mya);
+                const back = await typeson.reviveAsync(encapsAsync);
+                assert(back instanceof MyAsync, 'Returns instance of MyAsync');
+                assert(back.prop === 500, 'Has same property value');
+            }
+        );
         it('should revive with `Typeson.Undefined` `reviveAsync`', async () => {
             const typeson = new Typeson().register({
                 undefinedType: {

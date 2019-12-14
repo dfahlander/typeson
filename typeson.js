@@ -790,24 +790,17 @@ class Typeson {
             if (!reviver) {
                 throw new Error('Unregistered type: ' + type);
             }
+
+            // Only `sync` expected here, as problematic async would
+            //  be missing both `reviver` and `reviverAsync`, and
+            //  encapsulation shouldn't have added types, so
+            //  should have made an early exit
             if (sync && !('revive' in reviver)) {
                 throw new TypeError(
                     'Sync method requested but no sync reviver'
                 );
-            } else if (!sync && !('reviveAsync' in reviver) &&
-                !('revive' in reviver)
-            ) {
-                throw new TypeError(
-                    'Async method requested but no reviver'
-                );
             }
-            /*
-             else if (!sync && !('reviveAsync' in reviver)) {
-                throw new TypeError(
-                    'Async method requested but no async reviver'
-                );
-            }
-            */
+
             return reviver[
                 sync && reviver.revive
                     ? 'revive'
