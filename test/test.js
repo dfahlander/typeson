@@ -1969,7 +1969,7 @@ describe('Typeson', function () {
                         typeson.reviveAsync(encapsSync);
                     },
                     TypeError,
-                    'Async method requested but no async sync reviver'
+                    'Async method requested but no async reviver'
                 );
             }
         );
@@ -1997,7 +1997,7 @@ describe('Typeson', function () {
             const encapsSync = typeson.encapsulateSync(mys);
             assert.throws(() => {
                 typeson.reviveAsync(encapsSync);
-            }, TypeError, 'Async method requested but no async sync reviver');
+            }, TypeError, 'Async method requested but no async reviver');
         });
 
         it('should revive with reviveAsync', async () => {

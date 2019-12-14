@@ -795,7 +795,7 @@ class Typeson {
                 );
             } else if (!sync && !('reviveAsync' in reviver)) {
                 throw new TypeError(
-                    'Async method requested but no async sync reviver'
+                    'Async method requested but no async reviver'
                 );
             }
             return reviver[
