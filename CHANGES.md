@@ -1,6 +1,6 @@
 # typeson CHANGES
 
-## ?
+## 5.17.0
 
 - Fix: Restore old behavior of nullish spec potentially replacing
 - Enhancement: Allow nullifying previous `testPlainObject` specs (by
