@@ -428,6 +428,11 @@ catch-all matchers *before* more precise ones.
 If `testPlainObjects` is set to `true`, a tester will be checked against plain objects and
 allow replacements without recursion.
 
+Note that you can supply `null` as a spec to remove a regular previously
+registered spec, and supply an object with only `testPlainObjects: true`
+to remove a previously registered spec which can remove a previously
+registered spec with a plain object replacer.
+
 ###### constructor-function
 
 A class (constructor function) that would use default test, encapsulation and revival rules, which is:
@@ -642,7 +647,7 @@ class constructor to compare.
 
 If no valid `constructor` is found, `false` will be returned unless
 `null` was supplied as the `classToCompare` in which case `true` will
-be returned.
+be returned when finding a `null` prototype (and `false` otherwise).
 
 #### `Typeson.isObject` (val)
 

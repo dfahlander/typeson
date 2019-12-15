@@ -3,7 +3,7 @@
 ## 5.17.0
 
 - Fix: Restore old behavior of nullish spec potentially replacing
-- Enhancement: Allow nullifying previous `testPlainObject` specs (by
+- Enhancement: Allow nullifying previous `testPlainObjects` specs (by
     absence of `test`)
 - npm: Bump devDep.
 
