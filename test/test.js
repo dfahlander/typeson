@@ -1235,6 +1235,61 @@ describe('Typeson', function () {
                 'Should replace previously registered replacer'
             );
         });
+
+        it('should allow removing previously registered replacer', () => {
+            function Person () {}
+            const john = new Person();
+            const typeson = new Typeson();
+            typeson.register([
+                {classFinder: [
+                    (x) => x instanceof Person, () => 'found'
+                ]}
+            ]);
+            typeson.register(
+                [{classFinder: null}]
+            );
+            const encapsulatedData = typeson.encapsulate(john);
+            assert(
+                !encapsulatedData.$types,
+                'Encapsulated should have no special type'
+            );
+        });
+
+        it(
+            'should allow removing previously registered replacer ' +
+            '(plain objects)',
+            () => {
+                const typeson = new Typeson();
+                typeson.register({
+                    plainObj: {
+                        testPlainObjects: true,
+                        test (x) {
+                            return 'nonenum' in x;
+                        },
+                        replace (o) {
+                            return {
+                                b: o.b,
+                                nonenum: o.nonenum
+                            };
+                        }
+                    }
+                });
+                typeson.register({plainObj: {
+                    testPlainObjects: true
+                }});
+                const a = {b: 5};
+                Object.defineProperty(a, 'nonenum', {
+                    enumerable: false,
+                    value: 100
+                });
+
+                const encapsulatedData = typeson.encapsulate(a);
+                assert(
+                    !encapsulatedData.$types,
+                    'Encapsulated should have no special type'
+                );
+            }
+        );
     });
 
     describe('encapsulateObserver', () => {

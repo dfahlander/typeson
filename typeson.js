@@ -1035,10 +1035,7 @@ class Typeson {
                     );
                 }
                 let spec = typeSpec[typeId];
-                if (!spec) {
-                    return;
-                }
-                const replacers = spec.testPlainObjects
+                const replacers = spec && spec.testPlainObjects
                     ? this.plainObjectReplacers
                     : this.nonplainObjectReplacers;
                 const existingReplacer = replacers.filter(function (r) {
@@ -1064,6 +1061,10 @@ class Typeson {
                     const [test, replace, revive] = spec;
                     spec = {test, replace, revive};
                 }
+                if (!spec || !spec.test) {
+                    return;
+                }
+
                 const replacerObj = {
                     type: typeId,
                     test: spec.test.bind(spec)
