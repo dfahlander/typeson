@@ -84,7 +84,7 @@
     "nyc": "^14.1.1",
     "open-cli": "^5.0.0",
     "regenerator-runtime": "^0.13.3",
-    "rollup": "1.27.12",
+    "rollup": "1.27.13",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-terser": "^5.1.3",
