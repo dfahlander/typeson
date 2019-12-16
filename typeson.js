@@ -940,9 +940,9 @@ class Typeson {
                 while (keyPathResolutions.length) {
                     const [[target, keyPath, clone, k]] = keyPathResolutions;
                     const val = getByKeyPath(target, keyPath);
-                    if (hasConstructorOf(val, Undefined)) {
-                        clone[k] = undefined;
-                    } else if (val !== undefined) {
+                    // Typeson.Undefined not expected here as not cyclic or
+                    //   `undefined`
+                    if (val !== undefined) {
                         clone[k] = val;
                     } else {
                         break;

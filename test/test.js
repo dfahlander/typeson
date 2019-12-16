@@ -1660,7 +1660,7 @@ describe('Typeson', function () {
 
             let b = new B(7);
             let tson = await typeson.stringifyAsync(b);
-            console.log(tson);
+            log(tson);
             let back = await typeson.parseAsync(tson);
             assert(!Array.isArray(back), 'Is not an array');
             assert(back[3] === 4, 'Has numeric property');
