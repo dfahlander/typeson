@@ -2135,6 +2135,19 @@ describe('Typeson', function () {
             'should revive with nested async revive (plain with plain object)',
             async () => {
                 const typeson = new Typeson().register([{
+                    undef: {
+                        testPlainObjects: true,
+                        test (x) {
+                            return 'undef' in x;
+                        },
+                        replace (o) {
+                            return null;
+                        },
+                        reviveAsync () {
+                            return new Typeson.Undefined();
+                        }
+                    }
+                }, {
                     myPlainAsyncType: {
                         testPlainObjects: true,
                         test (x) { return 'prop' in x; },
@@ -2142,7 +2155,10 @@ describe('Typeson', function () {
                             // console.log('replace', o);
                             return {
                                 prop: o.prop,
-                                x: o.x
+                                x: o.x,
+                                sth: {
+                                    undef: null
+                                }
                             };
                         },
                         reviveAsync (data) {
@@ -2152,22 +2168,37 @@ describe('Typeson', function () {
                                 resolve({
                                     prop: data.prop,
                                     x: data.x,
-                                    extra: {prop: 5}
+                                    extra: {prop: 5},
+                                    sth: data.sth
                                 });
                             });
                         }
                     }
                 }]);
 
-                const obj = {prop: 52, x: {prop: 500}};
+                const obj = {
+                    prop: 52,
+                    x: {prop: 500},
+                    sth: {
+                        undef: null
+                    }
+                };
                 const encapsAsync = await typeson.encapsulate(obj);
                 log('encapsAsync', encapsAsync);
                 const back = await typeson.reviveAsync(encapsAsync);
                 log('back', back);
                 assert(back.prop === 52, 'Outer is `myPlainAsyncType`');
+                assert(
+                    back.sth instanceof Typeson.Undefined,
+                    'Outer has `Undefined`'
+                );
                 assert(back.extra.prop === 5, 'Outer has extra prop');
                 assert(back.x.prop === 500, 'Inner is `myPlainAsyncType`');
                 assert(back.x.extra.prop === 5, 'Inner has extra prop');
+                assert(
+                    back.x.sth instanceof Typeson.Undefined,
+                    'Inner has `Undefined`'
+                );
             }
         );
 

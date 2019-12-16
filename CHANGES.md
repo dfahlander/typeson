@@ -1,5 +1,13 @@
 # typeson CHANGES
 
+## ?
+
+- Fix: Allow nested plain objects to async revive
+- Fix: Have empty keypath at very front, but nested first otherwise
+- Fix: Nested `Undefined`
+- Docs: Document removing a previously registered spec;
+    update/clarify `hasConstructorOf` `null` behavior
+
 ## 5.17.0
 
 - Fix: Restore old behavior of nullish spec potentially replacing

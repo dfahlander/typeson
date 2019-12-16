@@ -29,6 +29,10 @@ const {keys} = Object,
  * @returns {1|-1|boolean}
  */
 function nestedPathsFirst (a, b) {
+    if (a.keypath === '') {
+        return -1;
+    }
+
     let as = a.keypath.match(/\./gu) || 0;
     let bs = b.keypath.match(/\./gu) || 0;
     if (as) {
@@ -781,11 +785,6 @@ class Typeson {
          * @returns {[type]} [description]
          */
         function executeReviver (type, val, reducer) {
-            if (hasConstructorOf(val, TypesonPromise)) {
-                return val.then((v) => { // TypesonPromise here too
-                    return reducer(v, type);
-                });
-            }
             const [reviver] = that.revivers[type] || [];
             if (!reviver) {
                 throw new Error('Unregistered type: ' + type);
@@ -842,6 +841,8 @@ class Typeson {
             if (!plainObjectTypes.length) {
                 return undefined;
             }
+
+            // console.log(plainObjectTypes.sort(nestedPathsFirst));
             /**
             * @typedef {PlainObject} PlainObjectType
             * @property {string} keypath
@@ -851,27 +852,33 @@ class Typeson {
                 function reducer (possibleTypesonPromise, {
                     keypath, type
                 }) {
+                    if (isThenable(possibleTypesonPromise)) {
+                        return possibleTypesonPromise.then((val) => {
+                            return reducer(val, {
+                                keypath, type
+                            });
+                        });
+                    }
+                    // console.log('obj', JSON.stringify(keypath), obj);
                     let val = getByKeyPath(obj, keypath);
                     val = executeReviver(type, val, reducer);
 
-                    if (val === undefined) {
-                        return undefined;
-                    }
-                    if (hasConstructorOf(val, Undefined)) {
-                        val = undefined;
-                    }
                     if (hasConstructorOf(
                         val, TypesonPromise
                     )) {
                         return val.then((v) => {
-                            const newVal = setAtKeyPath(obj, keypath, v);
-                            obj = newVal;
+                            const newVal = setAtKeyPath(
+                                obj, keypath, v
+                            );
+                            if (newVal === v) {
+                                obj = newVal;
+                            }
                             return undefined;
                         });
                     }
                     const newVal = setAtKeyPath(obj, keypath, val);
                     if (newVal === val) {
-                        obj = val;
+                        obj = newVal;
                     }
                     return undefined;
                 },
@@ -942,6 +949,11 @@ class Typeson {
             }
 
             return [].concat(type).reduce(function reducer (val, type) {
+                if (hasConstructorOf(val, TypesonPromise)) {
+                    return val.then((v) => { // TypesonPromise here too
+                        return reducer(v, type);
+                    });
+                }
                 return executeReviver(type, val, reducer);
             }, value);
         }
