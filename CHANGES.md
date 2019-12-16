@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## 5.18.1
+
+- npm: Bumped version as package not seeming to be available for download
+    despite being published
+
 ## 5.18.0
 
 - Enhancement: Allow `TypesonPromise` `all` and `race` to work with
