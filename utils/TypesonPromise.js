@@ -77,7 +77,10 @@ TypesonPromise.reject = function (v) {
         return new TypesonPromise(function (typesonResolve, typesonReject) {
             // eslint-disable-next-line promise/catch-or-return
             Promise[meth](promArr.map((prom) => {
-                return prom.p;
+                return prom && prom.constructor &&
+                    prom.constructor.__typeson__type__ === 'TypesonPromise'
+                    ? prom.p
+                    : prom;
             })).then(typesonResolve, typesonReject);
         });
     };

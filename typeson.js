@@ -924,6 +924,7 @@ class Typeson {
                         } else if (v !== undefined) {
                             clone[k] = v;
                         }
+                        return v;
                     };
                     if (hasConstructorOf(val, TypesonPromise)) {
                         revivalPromises.push(
@@ -989,13 +990,20 @@ class Typeson {
             ret = possibleTypesonPromise.then(() => {
                 return obj;
             });
-        } else if (revivalPromises.length) {
-            // First resolve children
-            ret = TypesonPromise.all(revivalPromises).then(() => {
-                return _revive('', obj, null);
-            });
         } else {
             ret = _revive('', obj, null);
+            if (revivalPromises.length) {
+                // Ensure children resolved
+                ret = TypesonPromise.resolve(ret).then((r) => {
+                    return TypesonPromise.all([
+                        // May be a TypesonPromise or not
+                        r,
+                        ...revivalPromises
+                    ]);
+                }).then(([r]) => {
+                    return r;
+                });
+            }
         }
 
         return isThenable(ret)

@@ -1,12 +1,16 @@
 # typeson CHANGES
 
-## ?
+## 5.18.0
 
+- Enhancement: Allow `TypesonPromise` `all` and `race` to work with
+    non-`TypesonPromise`
 - Fix: Allow nested plain objects to async revive
 - Fix: Have empty keypath at very front, but nested first otherwise
 - Fix: Nested `Undefined`
 - Fix: Avoid recursion if `undefined` or `NaN`/`Infinity`/`-Infiinity`
     values return the same
+- Fix: Ensure `iterateIn` array can have async setting
+- Testing: Coverage, Intermediate async types
 - Docs: Document removing a previously registered spec;
     update/clarify `hasConstructorOf` `null` behavior
 

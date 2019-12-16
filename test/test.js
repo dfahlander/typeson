@@ -1521,7 +1521,7 @@ describe('Typeson', function () {
         });
     });
 
-    describe('Iteration', () => {
+    describe('Iteration', function () {
         it('should allow `iterateIn`', () => {
             function A (a) {
                 this.a = a;
@@ -1575,7 +1575,8 @@ describe('Typeson', function () {
             );
         });
 
-        it('should allow `iterateIn` (async)', async () => {
+        it('should allow `iterateIn` (async)', async function () {
+            this.timeout(3000);
             function A (a) {
                 this.a = a;
             }
@@ -1626,7 +1627,9 @@ describe('Typeson', function () {
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new Typeson.Promise(function (resolve, reject) {
-                            resolve(new MyAsync(data));
+                            setTimeout(() => {
+                                resolve(new MyAsync(data));
+                            }, 300);
                         });
                     }
                 }
@@ -1662,6 +1665,7 @@ describe('Typeson', function () {
             let tson = await typeson.stringifyAsync(b);
             log(tson);
             let back = await typeson.parseAsync(tson);
+            log('back', back);
             assert(!Array.isArray(back), 'Is not an array');
             assert(back[3] === 4, 'Has numeric property');
             assert(back.a === 5, "Got inherited 'a' property");
@@ -2948,10 +2952,17 @@ describe('Typeson.Promise', function () {
         // eslint-disable-next-line promise/avoid-new
         return new Promise(function (resolve, reject) {
             // eslint-disable-next-line promise/catch-or-return
-            Typeson.Promise.all(makePromises()).then(function (results) {
+            Typeson.Promise.all([
+                ...makePromises(),
+                100,
+                null,
+                function () {}
+            ]).then(function (results) {
                 assert(
                     // eslint-disable-next-line promise/always-return
-                    results[0] === 30 && results[1] === 400,
+                    results[0] === 30 && results[1] === 400 &&
+                        results[2] === 100 && results[3] === null &&
+                        typeof results[4] === 'function',
                     'Should work with Promise.all'
                 );
             }).then(function () {
