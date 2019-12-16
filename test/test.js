@@ -1584,6 +1584,7 @@ describe('Typeson', function () {
                     this[3] = 4;
                     this.b = b;
                     this.c = new MyAsync('abc');
+                    this.e = new Typeson.Undefined();
                     this.isArr = isArr;
                 }
                 B.prototype = new A(a);
@@ -1594,6 +1595,24 @@ describe('Typeson', function () {
                 this.prop = prop;
             }
             const typeson = new Typeson().register([{
+                undef: {
+                    test (x) { return x instanceof Typeson.Undefined; },
+                    replaceAsync (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(null);
+                            }, 800);
+                        });
+                    },
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        return new Typeson.Promise(function (resolve, reject) {
+                            resolve(new Typeson.Undefined());
+                        });
+                    }
+                }
+            }, {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
@@ -1641,13 +1660,14 @@ describe('Typeson', function () {
 
             let b = new B(7);
             let tson = await typeson.stringifyAsync(b);
-            log(tson);
+            console.log(tson);
             let back = await typeson.parseAsync(tson);
             assert(!Array.isArray(back), 'Is not an array');
             assert(back[3] === 4, 'Has numeric property');
             assert(back.a === 5, "Got inherited 'a' property");
             assert(back.b === 7, "Got own 'b' property");
             assert(back.c instanceof MyAsync, "Got own 'c' property");
+            assert('e' in back && back.e === undefined, "Got own 'e' property");
 
             b = new B(8, true);
             tson = await typeson.stringifyAsync(b);
@@ -1666,6 +1686,10 @@ describe('Typeson', function () {
             assert(
                 !('c' in back),
                 "'c' property won't survive array stringification"
+            );
+            assert(
+                !('e' in back),
+                "'e' property won't survive array stringification"
             );
         });
 
