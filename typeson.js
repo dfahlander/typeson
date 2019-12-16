@@ -963,13 +963,14 @@ class Typeson {
                 return ret;
             }
 
-            return [].concat(type).reduce(function reducer (val, type) {
+            // `type` can be an array here
+            return [].concat(type).reduce(function reducer (val, typ) {
                 if (hasConstructorOf(val, TypesonPromise)) {
                     return val.then((v) => { // TypesonPromise here too
-                        return reducer(v, type);
+                        return reducer(v, typ);
                     });
                 }
-                return executeReviver(type, val);
+                return executeReviver(typ, val);
             }, value);
         }
 
