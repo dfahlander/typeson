@@ -394,6 +394,56 @@ describe('Typeson', function () {
             'Should have correct value'
         );
     });
+
+    it('should support intermediate types (async)', async () => {
+        function CustomDate (date) {
+            this._date = date;
+        }
+        const typeson = new Typeson()
+            .register({
+                date: {
+                    test (x) { return x instanceof Date; },
+                    replaceAsync (date) {
+                        return new Typeson.Promise((resolve, reject) => {
+                            setTimeout(() => {
+                                resolve(date.getTime());
+                            });
+                        });
+                    },
+                    reviveAsync (time) {
+                        return new Typeson.Promise((resolve, reject) => {
+                            setTimeout(() => {
+                                resolve(new Date(time));
+                            });
+                        });
+                    }
+                }
+            })
+            .register({
+                CustomDate: {
+                    test (x) {
+                        return x instanceof CustomDate;
+                    },
+                    replaceAsync (cd) {
+                        return cd._date;
+                    },
+                    reviveAsync (date) {
+                        return new CustomDate(date);
+                    }
+                }
+            });
+        const date = new Date();
+        const input = new CustomDate(new Date());
+        const tson = await typeson.stringifyAsync(input);
+        log(tson);
+        const back = await typeson.parseAsync(tson);
+        assert(back instanceof CustomDate, 'Should get CustomDate back');
+        assert(
+            back._date.getTime() === date.getTime(),
+            'Should have correct value'
+        );
+    });
+
     it('should run replacers recursively', () => {
         function CustomDate (date, name) {
             this._date = date;
