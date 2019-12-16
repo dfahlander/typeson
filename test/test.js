@@ -1524,6 +1524,101 @@ describe('Typeson', function () {
                 "'b' property won't survive array stringification"
             );
         });
+
+        it('should allow `iterateIn` (async)', async () => {
+            function A (a) {
+                this.a = a;
+            }
+            function createExtendingClass (a) {
+                function B (b, isArr) {
+                    this[3] = 4;
+                    this.b = b;
+                    this.c = new MyAsync('abc');
+                    this.isArr = isArr;
+                }
+                B.prototype = new A(a);
+                return B;
+            }
+
+            function MyAsync (prop) {
+                this.prop = prop;
+            }
+            const typeson = new Typeson().register([{
+                myAsyncType: {
+                    test (x) { return x instanceof MyAsync; },
+                    replaceAsync (o) {
+                        return new Typeson.Promise(function (resolve, reject) {
+                            // Do something more useful in real code
+                            setTimeout(function () {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        return new Typeson.Promise(function (resolve, reject) {
+                            resolve(new MyAsync(data));
+                        });
+                    }
+                }
+            }, {
+                iterateIn: {
+                    test (x, stateObj) {
+                        if (x instanceof A) {
+                            stateObj.iterateIn = x.isArr ? 'array' : 'object';
+                            return true;
+                        }
+                        return false;
+                    },
+                    replaceAsync (val) {
+                        return new Typeson.Promise((resolve) => {
+                            setTimeout(() => {
+                                resolve(val);
+                            });
+                        });
+                    },
+                    reviveAsync (val) {
+                        return new Typeson.Promise((resolve) => {
+                            setTimeout(() => {
+                                resolve(val);
+                            });
+                        });
+                    }
+                }
+            }]);
+
+            const B = createExtendingClass(5);
+
+            let b = new B(7);
+            let tson = await typeson.stringifyAsync(b);
+            log(tson);
+            let back = await typeson.parseAsync(tson);
+            assert(!Array.isArray(back), 'Is not an array');
+            assert(back[3] === 4, 'Has numeric property');
+            assert(back.a === 5, "Got inherited 'a' property");
+            assert(back.b === 7, "Got own 'b' property");
+            assert(back.c instanceof MyAsync, "Got own 'c' property");
+
+            b = new B(8, true);
+            tson = await typeson.stringifyAsync(b);
+            log(tson);
+            back = await typeson.parseAsync(tson);
+            assert(Array.isArray(back), 'Is an array');
+            assert(back[3] === 4, 'Has numeric property');
+            assert(
+                !('a' in back),
+                "'a' property won't survive array stringification"
+            );
+            assert(
+                !('b' in back),
+                "'b' property won't survive array stringification"
+            );
+            assert(
+                !('c' in back),
+                "'c' property won't survive array stringification"
+            );
+        });
+
         it('should allow `iterateUnsetNumeric`', () => {
             const sparseUndefined = [
                 {

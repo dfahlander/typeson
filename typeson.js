@@ -467,12 +467,7 @@ class Typeson {
                 observerData = {replaced};
             } else {
                 // eslint-disable-next-line no-lonely-if
-                if ((isArr && stateObj.iterateIn !== 'object') ||
-                    stateObj.iterateIn === 'array'
-                ) {
-                    clone = new Array(value.length);
-                    observerData = {clone};
-                } else if (keypath === '' &&
+                if (keypath === '' &&
                     hasConstructorOf(value, TypesonPromise)
                 ) {
                     promisesData.push([
@@ -480,6 +475,11 @@ class Typeson {
                         undefined, undefined, stateObj.type
                     ]);
                     ret = value;
+                } else if ((isArr && stateObj.iterateIn !== 'object') ||
+                    stateObj.iterateIn === 'array'
+                ) {
+                    clone = new Array(value.length);
+                    observerData = {clone};
                 } else if (
                     (
                         !['function', 'symbol'].includes(typeof value) &&
@@ -785,10 +785,9 @@ class Typeson {
          *
          * @param {string} type
          * @param {Any} val
-         * @param {RevivalReducer} reducer [description]
          * @returns {[type]} [description]
          */
-        function executeReviver (type, val, reducer) {
+        function executeReviver (type, val) {
             const [reviver] = that.revivers[type] || [];
             if (!reviver) {
                 throw new Error('Unregistered type: ' + type);
@@ -865,7 +864,7 @@ class Typeson {
                     }
                     // console.log('obj', JSON.stringify(keypath), obj);
                     let val = getByKeyPath(obj, keypath);
-                    val = executeReviver(type, val, reducer);
+                    val = executeReviver(type, val);
 
                     if (hasConstructorOf(
                         val, TypesonPromise
@@ -892,6 +891,7 @@ class Typeson {
             // reviveTypes.sort(nestedPathsFirst).forEach(() => {});
         }
 
+        const revivalPromises = [];
         /**
          *
          * @param {string} keypath
@@ -918,10 +918,21 @@ class Typeson {
                         clone,
                         k
                     );
-                    if (hasConstructorOf(val, Undefined)) {
-                        clone[k] = undefined;
-                    } else if (val !== undefined) {
-                        clone[k] = val;
+                    const set = (v) => {
+                        if (hasConstructorOf(v, Undefined)) {
+                            clone[k] = undefined;
+                        } else if (v !== undefined) {
+                            clone[k] = v;
+                        }
+                    };
+                    if (hasConstructorOf(val, TypesonPromise)) {
+                        revivalPromises.push(
+                            val.then((ret) => {
+                                return set(ret);
+                            })
+                        );
+                    } else {
+                        set(val);
                     }
                 });
                 value = clone;
@@ -958,7 +969,7 @@ class Typeson {
                         return reducer(v, type);
                     });
                 }
-                return executeReviver(type, val, reducer);
+                return executeReviver(type, val);
             }, value);
         }
 
@@ -976,6 +987,11 @@ class Typeson {
         if (hasConstructorOf(possibleTypesonPromise, TypesonPromise)) {
             ret = possibleTypesonPromise.then(() => {
                 return obj;
+            });
+        } else if (revivalPromises.length) {
+            // First resolve children
+            ret = TypesonPromise.all(revivalPromises).then(() => {
+                return _revive('', obj, null);
             });
         } else {
             ret = _revive('', obj, null);
