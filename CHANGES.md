@@ -5,6 +5,8 @@
 - Fix: Allow nested plain objects to async revive
 - Fix: Have empty keypath at very front, but nested first otherwise
 - Fix: Nested `Undefined`
+- Fix: Avoid recursion if `undefined` or `NaN`/`Infinity`/`-Infiinity`
+    values return the same
 - Docs: Document removing a previously registered spec;
     update/clarify `hasConstructorOf` `null` behavior
 

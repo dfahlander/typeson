@@ -395,10 +395,14 @@ class Typeson {
                     (isNaN(value) || value === -Infinity ||
                         value === Infinity)
                 )) {
-                    ret = replace(
-                        keypath, value, stateObj, promisesData,
-                        false, resolvingTypesonPromise, runObserver
-                    );
+                    if (stateObj.replaced) {
+                        ret = value;
+                    } else {
+                        ret = replace(
+                            keypath, value, stateObj, promisesData,
+                            false, resolvingTypesonPromise, runObserver
+                        );
+                    }
                     if (ret !== value) {
                         observerData = {replaced: ret};
                     }

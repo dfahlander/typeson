@@ -1584,6 +1584,134 @@ describe('Typeson', function () {
             back = typeson.parse(tson);
             assert(!('0' in back.a), 'Undefined at index 0');
         });
+
+        it('should allow `iterateUnsetNumeric` (storing `undefined`)', () => {
+            const sparseUndefined = [
+                {
+                    sparseArrays: {
+                        testPlainObjects: true,
+                        test (x) { return Array.isArray(x); },
+                        replace (a, stateObj) {
+                            stateObj.iterateUnsetNumeric = true;
+                            return a;
+                        }
+                    }
+                },
+                {
+                    sparseUndefined: {
+                        test (x, stateObj) {
+                            return typeof x === 'undefined' &&
+                                stateObj.ownKeys === false;
+                        },
+                        replace (n) { return undefined; },
+                        // Will avoid adding anything
+                        revive (s) { return undefined; }
+                    }
+                }
+            ];
+            let endIterateUnsetNumeric;
+            let typeson = new Typeson({
+                encapsulateObserver (o) {
+                    if (o.endIterateUnsetNumeric) {
+                        endIterateUnsetNumeric = true;
+                    }
+                }
+            }).register([sparseUndefined]);
+
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            let arr = [, 5, , , 6, ];
+            let tson = typeson.stringify(arr);
+            log(tson);
+            assert(
+                endIterateUnsetNumeric,
+                'Observer should get `endIterateUnsetNumeric`'
+            );
+            let back = typeson.parse(tson);
+            assert(!('0' in back), 'Undefined at index 0');
+            assert(back[1] === 5 && back[4] === 6, 'Set values restored');
+            assert(!('2' in back), 'Undefined at index 2');
+            assert(!('3' in back), 'Undefined at index 3');
+            assert(!('5' in back), 'Undefined at index 5');
+
+            // Once again for coverage of absent observer and
+            //  nested keypath
+            typeson = new Typeson().register([sparseUndefined]);
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            arr = {a: [, 5, , , 6, ]};
+            tson = typeson.stringify(arr);
+            log(tson);
+            back = typeson.parse(tson);
+            assert(!('0' in back.a), 'Undefined at index 0');
+        });
+
+        it('should allow `iterateUnsetNumeric` (async)', async () => {
+            const sparseUndefined = [
+                {
+                    sparseArrays: {
+                        testPlainObjects: true,
+                        test (x) { return Array.isArray(x); },
+                        replace (a, stateObj) {
+                            stateObj.iterateUnsetNumeric = true;
+                            return a;
+                        }
+                    }
+                },
+                {
+                    sparseUndefined: {
+                        test (x, stateObj) {
+                            return typeof x === 'undefined' &&
+                                stateObj.ownKeys === false;
+                        },
+                        replaceAsync (n) {
+                            return new Typeson.Promise((resolve) => {
+                                setTimeout(() => {
+                                    resolve(0);
+                                });
+                            });
+                        },
+                        // Will avoid adding anything
+                        revive (s) { return undefined; }
+                    }
+                }
+            ];
+            let endIterateUnsetNumeric;
+            let typeson = new Typeson({
+                encapsulateObserver (o) {
+                    if (o.endIterateUnsetNumeric) {
+                        endIterateUnsetNumeric = true;
+                    }
+                }
+            }).register([sparseUndefined]);
+
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            let arr = [, 5, , , 6, ];
+            let tson = await typeson.stringifyAsync(arr);
+            log(tson);
+            assert(
+                endIterateUnsetNumeric,
+                'Observer should get `endIterateUnsetNumeric`'
+            );
+            let back = typeson.parse(tson);
+            assert(!('0' in back), 'Undefined at index 0');
+            assert(back[1] === 5 && back[4] === 6, 'Set values restored');
+            assert(!('2' in back), 'Undefined at index 2');
+            assert(!('3' in back), 'Undefined at index 3');
+            assert(!('5' in back), 'Undefined at index 5');
+
+            // Once again for coverage of absent observer and
+            //  nested keypath
+            typeson = new Typeson().register([sparseUndefined]);
+            // eslint-disable-next-line max-len
+            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            arr = {a: [, 5, , , 6, ]};
+            tson = await typeson.stringifyAsync(arr);
+            log(tson);
+            back = typeson.parse(tson);
+            assert(!('0' in back.a), 'Undefined at index 0');
+        });
     });
 
     describe('Async vs. Sync', () => {
