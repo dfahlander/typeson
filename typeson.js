@@ -851,14 +851,6 @@ class Typeson {
                 function reducer (possibleTypesonPromise, {
                     keypath, type
                 }) {
-                    if (hasConstructorOf(
-                        possibleTypesonPromise, TypesonPromise
-                    )) {
-                        // TypesonPromise here too
-                        return possibleTypesonPromise.then((v) => {
-                            return reducer(v, type);
-                        });
-                    }
                     let val = getByKeyPath(obj, keypath);
                     val = executeReviver(type, val, reducer);
 
@@ -867,6 +859,15 @@ class Typeson {
                     }
                     if (hasConstructorOf(val, Undefined)) {
                         val = undefined;
+                    }
+                    if (hasConstructorOf(
+                        val, TypesonPromise
+                    )) {
+                        return val.then((v) => {
+                            const newVal = setAtKeyPath(obj, keypath, v);
+                            obj = newVal;
+                            return undefined;
+                        });
                     }
                     const newVal = setAtKeyPath(obj, keypath, val);
                     if (newVal === val) {
@@ -894,8 +895,9 @@ class Typeson {
                 return undefined;
             }
             const type = types[keypath];
-            if (isArray(value) || isPlainObject(value)) {
-                const clone = isArray(value) ? new Array(value.length) : {};
+            const isArr = isArray(value);
+            if (isArr || isPlainObject(value)) {
+                const clone = isArr ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach((k) => {
                     const val = _revive(
@@ -957,7 +959,7 @@ class Typeson {
         let ret;
         if (hasConstructorOf(possibleTypesonPromise, TypesonPromise)) {
             ret = possibleTypesonPromise.then(() => {
-                return _revive('', obj, null);
+                return obj;
             });
         } else {
             ret = _revive('', obj, null);

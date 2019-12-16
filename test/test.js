@@ -2035,16 +2035,16 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new Typeson.Promise((resolve, reject) => {
                             // Do something more useful in real code
-                            setTimeout(function () {
+                            setTimeout(() => {
                                 resolve(o.prop);
                             }, 800);
                         });
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new Typeson.Promise((resolve, reject) => {
                             resolve(new MyAsync(data));
                         });
                     }
@@ -2057,6 +2057,119 @@ describe('Typeson', function () {
             assert(back instanceof MyAsync, 'Returns instance of MyAsync');
             assert(back.prop === 500, 'Has same property value');
         });
+
+        it('should revive with reviveAsync (plain objects)', async () => {
+            const typeson = new Typeson().register({
+                myAsyncType: {
+                    testPlainObjects: true,
+                    test (x) { return 'prop' in x; },
+                    replace (o) { return o.prop; },
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        return new Typeson.Promise((resolve, reject) => {
+                            resolve({prop: data});
+                        });
+                    }
+                }
+            });
+
+            const obj = {prop: 52};
+            const encapsAsync = await typeson.encapsulate(obj);
+            const back = await typeson.reviveAsync(encapsAsync);
+            assert(back.prop === 52, 'Has same property value');
+        });
+
+        it(
+            'should revive with nested async revive (plain with ' +
+            'non-plain object)',
+            async () => {
+                function MyAsync (prop) {
+                    this.prop = prop;
+                }
+
+                const typeson = new Typeson().register([{
+                    myAsyncType: {
+                        test (x) { return x instanceof MyAsync; },
+                        replaceAsync (o) {
+                            return new Typeson.Promise((resolve, reject) => {
+                                // Do something more useful in real code
+                                setTimeout(() => {
+                                    resolve(o.prop);
+                                }, 800);
+                            });
+                        },
+                        revive (data) {
+                            // Do something more useful in real code
+                            return new Typeson.Promise((resolve, reject) => {
+                                resolve(new MyAsync(data));
+                            });
+                        }
+                    }
+                }, {
+                    myPlainAsyncType: {
+                        testPlainObjects: true,
+                        test (x) { return 'prop' in x; },
+                        replace (o) {
+                            return o.prop;
+                        },
+                        reviveAsync (data) {
+                            // Do something more useful in real code
+                            return new Typeson.Promise((resolve, reject) => {
+                                resolve(new MyAsync(data));
+                            });
+                        }
+                    }
+                }]);
+
+                const obj = {prop: 52};
+                const encapsAsync = await typeson.encapsulate(obj);
+                // console.log('encapsAsync', encapsAsync);
+                const back = await typeson.reviveAsync(encapsAsync);
+                // console.log('back', back);
+                assert(back instanceof MyAsync, 'Is MyAsync instance');
+                assert(back.prop === 52, 'Has same property value');
+            }
+        );
+
+        it(
+            'should revive with nested async revive (plain with plain object)',
+            async () => {
+                const typeson = new Typeson().register([{
+                    myPlainAsyncType: {
+                        testPlainObjects: true,
+                        test (x) { return 'prop' in x; },
+                        replace (o) {
+                            // console.log('replace', o);
+                            return {
+                                prop: o.prop,
+                                x: o.x
+                            };
+                        },
+                        reviveAsync (data) {
+                            // console.log('revive', data);
+                            // Do something more useful in real code
+                            return new Typeson.Promise((resolve, reject) => {
+                                resolve({
+                                    prop: data.prop,
+                                    x: data.x,
+                                    extra: {prop: 5}
+                                });
+                            });
+                        }
+                    }
+                }]);
+
+                const obj = {prop: 52, x: {prop: 500}};
+                const encapsAsync = await typeson.encapsulate(obj);
+                log('encapsAsync', encapsAsync);
+                const back = await typeson.reviveAsync(encapsAsync);
+                log('back', back);
+                assert(back.prop === 52, 'Outer is `myPlainAsyncType`');
+                assert(back.extra.prop === 5, 'Outer has extra prop');
+                assert(back.x.prop === 500, 'Inner is `myPlainAsyncType`');
+                assert(back.x.extra.prop === 5, 'Inner has extra prop');
+            }
+        );
 
         it(
             'should revive with reviveAsync with only revive on spec',
