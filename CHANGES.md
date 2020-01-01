@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## ?
+
+- Linting (ESLint): As per latest ash-nazg
+- npm: Bump devDeps, peerDeps
+
 ## 5.18.1
 
 - npm: Bumped version as package not seeming to be available for download

@@ -1,6 +1,6 @@
 /* eslint-disable no-shadow */
 /**
- * Typeson - JSON with types
+ * @file Typeson - JSON with types
  * @license The MIT License (MIT)
  * @copyright (c) 2016-2018 David Fahlander, Brett Zamir
 */
@@ -72,7 +72,7 @@ class Typeson {
         //   Sample: [{'Date': value => new Date(value)}, {plain: false}]
         this.revivers = {};
 
-        /** Types registered via register() */
+        /** Types registered via `register()`. */
         this.types = {};
     }
 
