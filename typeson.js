@@ -421,7 +421,8 @@ class Typeson {
                 return value;
             }
             if (cyclic && !stateObj.iterateIn &&
-                !stateObj.iterateUnsetNumeric
+                !stateObj.iterateUnsetNumeric && value &&
+                typeof value === 'object'
             ) {
                 // Options set to detect cyclic references and be able
                 //   to rewrite them.

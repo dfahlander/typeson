@@ -1,7 +1,8 @@
 # typeson CHANGES
 
-## ?
+## 5.18.2
 
+- Fix: Avoid treating recurring primitive values as cyclic
 - Linting (ESLint): As per latest ash-nazg
 - npm: Bump devDeps, peerDeps
 
