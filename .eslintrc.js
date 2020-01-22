@@ -50,6 +50,10 @@ module.exports = {
         },
         {
             files: ["test/**"],
+            extends: [
+                'plugin:chai-friendly/recommended',
+                'plugin:chai-expect/recommended'
+            ],
             env: {
                 mocha: true
             },
