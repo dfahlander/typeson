@@ -51,6 +51,32 @@ function nestedPathsFirst (a, b) {
 }
 
 /**
+ * @callback Tester
+ * @param {any} value
+ * @param {StateObject} stateobj
+ * @returns {boolean}
+ */
+
+/**
+* @callback Replacer
+* @param {any} value
+* @param {StateObject} stateObj
+* @returns {any} Should be JSON-stringifiable
+*/
+
+/**
+* @callback Reviver
+* @param {JSON} value
+* @param {StateObject} stateObj
+* @returns {any}
+*/
+
+/**
+* @typedef {PlainObject} TypesonOptions
+* @property {boolean} stringification Auto-set by `stringify`
+*/
+
+/**
  * An instance of this class can be used to call `stringify()` and `parse()`.
  * Typeson resolves cyclic references by default. Can also be extended to
  * support custom types using the register() method.
@@ -60,6 +86,9 @@ function nestedPathsFirst (a, b) {
  *   cyclic references will be handled gracefully.
  */
 class Typeson {
+    /**
+     * @param {TypesonOptions} options
+     */
     constructor (options) {
         this.options = options;
 
@@ -92,11 +121,11 @@ class Typeson {
      * Serialize given object to Typeson.
      * Initial arguments work identical to those of `JSON.stringify`.
      * The `replacer` argument has nothing to do with our replacers.
-     * @param {Any} obj
+     * @param {any} obj
      * @param {JSONReplacer|string[]} replacer
      * @param {number|string} space
-     * @param {object} opts
-     * @returns {string|Promise} Promise resolves to a string
+     * @param {TypesonOptions} opts
+     * @returns {string|Promise<string>} Promise resolves to a string
      */
     stringify (obj, replacer, space, opts) {
         opts = {...this.options, ...opts, stringification: true};
@@ -111,10 +140,10 @@ class Typeson {
 
     /**
      * Also sync but throws on non-sync result.
-     * @param {Any} obj
+     * @param {any} obj
      * @param {JSONReplacer|string[]} replacer
      * @param {number|string} space
-     * @param {object} opts
+     * @param {TypesonOptions} opts
      * @returns {string}
      */
     stringifySync (obj, replacer, space, opts) {
@@ -125,10 +154,10 @@ class Typeson {
 
     /**
      *
-     * @param {Any} obj
+     * @param {any} obj
      * @param {JSONReplacer|string[]} replacer
      * @param {number|string} space
-     * @param {object} opts
+     * @param {TypesonOptions} opts
      * @returns {Promise<string>}
      */
     stringifyAsync (obj, replacer, space, opts) {
@@ -138,12 +167,19 @@ class Typeson {
     }
 
     /**
+    * @callback JSONReviver
+    * @param {string} key
+    * @param {JSON} value
+    * @returns {JSON}
+    */
+
+    /**
      * Parse Typeson back into an obejct.
      * Initial arguments works identical to those of `JSON.parse()`.
      * @param {string} text
-     * @param {function} reviver This JSON reviver has nothing to do with
+     * @param {JSONReviver} reviver This JSON reviver has nothing to do with
      *   our revivers.
-     * @param {object} opts
+     * @param {TypesonOptions} opts
      * @returns {external:JSON}
      */
     parse (text, reviver, opts) {
@@ -154,9 +190,9 @@ class Typeson {
     /**
     * Also sync but throws on non-sync result.
     * @param {string} text
-    * @param {function} reviver This JSON reviver has nothing to do with
+    * @param {JSONReviver} reviver This JSON reviver has nothing to do with
     *   our revivers.
-    * @param {object} opts
+    * @param {TypesonOptions} opts
     * @returns {external:JSON}
     */
     parseSync (text, reviver, opts) {
@@ -168,10 +204,10 @@ class Typeson {
     }
     /**
     * @param {string} text
-    * @param {function} reviver This JSON reviver has nothing to do with
+    * @param {JSONReviver} reviver This JSON reviver has nothing to do with
     *   our revivers.
-    * @param {object} opts
-    * @returns {Promise} Resolves to `external:JSON`
+    * @param {TypesonOptions} opts
+    * @returns {Promise<external:JSON>} Resolves to `external:JSON`
     */
     parseAsync (text, reviver, opts) {
         return this.parse(
@@ -182,10 +218,14 @@ class Typeson {
     }
 
     /**
+    * @typedef {} StateObject
+    */
+
+    /**
      *
-     * @param {Any} obj
-     * @param {object} stateObj
-     * @param {object} [opts={}]
+     * @param {any} obj
+     * @param {StateObject} stateObj
+     * @param {TypesonOptions} [opts={}]
      * @returns {string[]|false}
      */
     specialTypeNames (obj, stateObj, opts = {}) {
@@ -195,10 +235,10 @@ class Typeson {
 
     /**
      *
-     * @param {Any} obj
+     * @param {any} obj
      * @param {PlainObject} stateObj
      * @param {PlainObject} [opts={}]
-     * @returns {Promise|GenericArray|PlainObject|string|false}
+     * @returns {Promise<any>|GenericArray|PlainObject|string|false}
      */
     rootTypeName (obj, stateObj, opts = {}) {
         opts.iterateNone = true;
@@ -210,10 +250,10 @@ class Typeson {
      * registered types with plain objects representing the types data.
      *
      * This method is used internally by `Typeson.stringify()`.
-     * @param {Any} obj - Object to encapsulate.
+     * @param {any} obj - Object to encapsulate.
      * @param {PlainObject} stateObj
      * @param {PlainObject} opts
-     * @returns {Promise|GenericArray|PlainObject|string|false}
+     * @returns {Promise<any>|GenericArray|PlainObject|string|false}
      */
     encapsulate (obj, stateObj, opts) {
         opts = {sync: true, ...this.options, ...opts};
@@ -236,7 +276,7 @@ class Typeson {
 
         /**
          *
-         * @param {Any} ret
+         * @param {any} ret
          * @returns {GenericArray|PlainObject|string|false}
          */
         function finish (ret) {
@@ -276,9 +316,9 @@ class Typeson {
         }
         /**
          *
-         * @param {Any} ret
+         * @param {any} ret
          * @param {GenericArray} promisesData
-         * @returns {Promise<Any>}
+         * @returns {Promise<any>}
          */
         async function checkPromises (ret, promisesData) {
             const promResults = await Promise.all(
@@ -329,10 +369,20 @@ class Typeson {
         }
 
         /**
+        * @typedef {PlainObject} OwnKeysObject
+        * @property {boolean} ownKeys
+        */
+
+        /**
+        * @callback BuiltinStateObjectPropertiesCallback
+        * @returns {void}
+        */
+
+        /**
          *
-         * @param {object} stateObj
-         * @param {object} ownKeysObj
-         * @param {function} cb
+         * @param {StateObject} stateObj
+         * @param {OwnKeysObject} ownKeysObj
+         * @param {BuiltinStateObjectPropertiesCallback} cb
          * @returns {undefined}
          */
         function _adaptBuiltinStateObjectProperties (
@@ -354,13 +404,13 @@ class Typeson {
         /**
          *
          * @param {string} keypath
-         * @param {Any} value
+         * @param {any} value
          * @param {boolean} cyclic
          * @param {PlainObject} stateObj
          * @param {boolean} promisesData
          * @param {boolean} resolvingTypesonPromise
          * @param {string} detectedType
-         * @returns {Any}
+         * @returns {any}
          */
         function _encapsulate (
             keypath, value, cyclic, stateObj, promisesData,
@@ -613,15 +663,49 @@ class Typeson {
         }
 
         /**
+        * @typedef {PlainObject} KeyPathEvent
+        * @property {string} cyclicKeypath
+        */
+
+        /**
+        * @typedef {PlainObject} EndIterateInEvent
+        * @property {boolean} endIterateIn
+        * @property {boolean} end
+        */
+
+        /**
+        * @typedef {PlainObject} EndIterateUnsetNumericEvent
+        * @property {boolean} endIterateUnsetNumeric
+        * @property {boolean} end
+        */
+
+        /**
+        * @typedef {PlainObject} TypeDetectedEvent
+        * @property {boolean} typeDetected
+        */
+
+        /**
+        * @typedef {PlainObject} ReplacingEvent
+        * @property {boolean} replacing
+        */
+
+        /**
+        * @callback Observer
+        * @param {KeyPathEvent|EndIterateInEvent|EndIterateUnsetNumericEvent|
+        *   TypeDetectedEvent|ReplacingEvent} [event]
+        * @returns {void}
+        */
+
+        /**
          *
          * @param {string} keypath
-         * @param {Any} value
+         * @param {any} value
          * @param {PlainObject} stateObj
          * @param {GenericArray} promisesData
          * @param {boolean} plainObject
          * @param {boolean} resolvingTypesonPromise
-         * @param {function} [runObserver]
-         * @returns {*}
+         * @param {Observer} [runObserver]
+         * @returns {any}
          */
         function replace (
             keypath, value, stateObj, promisesData, plainObject,
@@ -711,10 +795,10 @@ class Typeson {
 
     /**
      * Also sync but throws on non-sync result.
-     * @param {*} obj
-     * @param {object} stateObj
-     * @param {object} opts
-     * @returns {*}
+     * @param {any} obj
+     * @param {StateObject} stateObj
+     * @param {TypesonOptions} opts
+     * @returns {any}
      */
     encapsulateSync (obj, stateObj, opts) {
         return this.encapsulate(obj, stateObj, {
@@ -723,10 +807,10 @@ class Typeson {
     }
 
     /**
-     * @param {*} obj
-     * @param {object} stateObj
-     * @param {object} opts
-     * @returns {*}
+     * @param {any} obj
+     * @param {StateObject} stateObj
+     * @param {TypesonOptions} opts
+     * @returns {any}
      */
     encapsulateAsync (obj, stateObj, opts) {
         return this.encapsulate(obj, stateObj, {
@@ -737,12 +821,13 @@ class Typeson {
     /**
      * Revive an encapsulated object.
      * This method is used internally by `Typeson.parse()`.
-     * @param {object} obj - Object to revive. If it has `$types` member, the
-     *   properties that are listed there will be replaced with its true type
-     *   instead of just plain objects.
-     * @param {object} opts
+     * @param {PlainObject} obj - Object to revive. If it has `$types` member,
+     *   the properties that are listed there will be replaced with its true
+     *   type instead of just plain objects.
+     * @param {TypesonOptions} opts
      * @throws TypeError If mismatch between sync/async type and result
-     * @returns {Promise|*} If async, returns a Promise that resolves to `*`
+     * @returns {Promise<any>|any} If async, returns a Promise that resolves
+     * to `any`.
      */
     revive (obj, opts) {
         let types = obj && obj.$types;
@@ -777,16 +862,16 @@ class Typeson {
 
         /**
          * @callback RevivalReducer
-         * @param {Any} value
+         * @param {any} value
          * @param {string} type
-         * @returns {Any}
+         * @returns {any}
          */
 
         /**
          *
          * @param {string} type
-         * @param {Any} val
-         * @returns {[type]} [description]
+         * @param {any} val
+         * @returns {any}
          */
         function executeReviver (type, val) {
             const [reviver] = that.revivers[type] || [];
@@ -896,11 +981,11 @@ class Typeson {
         /**
          *
          * @param {string} keypath
-         * @param {Any} value
-         * @param {?(Array|object)} target
-         * @param {Array|object} [clone]
+         * @param {any} value
+         * @param {?(GenericArray|PlainObject)} target
+         * @param {GenericArray|PlainObject} [clone]
          * @param {string} [key]
-         * @returns {Any}
+         * @returns {any}
          */
         function _revive (keypath, value, target, clone, key) {
             if (ignore$Types && keypath === '$types') {
@@ -914,7 +999,8 @@ class Typeson {
                 keys(value).forEach((k) => {
                     const val = _revive(
                         keypath + (keypath ? '.' : '') +
-                            escapeKeyPathComponent(k), value[k],
+                            escapeKeyPathComponent(k),
+                        value[k],
                         target || clone,
                         clone,
                         k
@@ -978,8 +1064,8 @@ class Typeson {
 
         /**
          *
-         * @param {Any} retrn
-         * @returns {undefined|Any}
+         * @param {any} retrn
+         * @returns {undefined|any}
          */
         function checkUndefined (retrn) {
             return hasConstructorOf(retrn, Undefined) ? undefined : retrn;
@@ -1030,9 +1116,9 @@ class Typeson {
 
     /**
      * Also sync but throws on non-sync result.
-     * @param {Any} obj
-     * @param {object} opts
-     * @returns {Any}
+     * @param {any} obj
+     * @param {TypesonOptions} opts
+     * @returns {any}
      */
     reviveSync (obj, opts) {
         return this.revive(obj, {
@@ -1041,9 +1127,9 @@ class Typeson {
     }
 
     /**
-    * @param {Any} obj
-    * @param {object} opts
-    * @returns {Promise} Resolves to `*`
+    * @param {any} obj
+    * @param {TypesonOptions} opts
+    * @returns {Promise<any>}
     */
     reviveAsync (obj, opts) {
         return this.revive(obj, {
@@ -1052,12 +1138,16 @@ class Typeson {
     }
 
     /**
+    * @typedef {Tester|Replacer|Reviver} Spec
+    */
+
+    /**
      * Register types.
      * For examples on how to use this method, see
      *   {@link https://github.com/dfahlander/typeson-registry/tree/master/types}.
-     * @param {object.<string,Function[]>[]} typeSpecSets - Types and
-     *   their functions [test, encapsulate, revive];
-     * @param {object} opts
+     * @param {object<string,Spec[]>[]} typeSpecSets -
+     * Types and their functions [test, encapsulate, revive];
+     * @param {TypesonOptions} opts
      * @returns {Typeson}
      */
     register (typeSpecSets, opts) {

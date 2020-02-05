@@ -1,14 +1,48 @@
 /**
+* @callback TypesonFulfilled
+* @returns {Promise<any>|any}
+*/
+
+/**
+* @callback TypesonRejected
+* @returns {Promise<any>|any}
+*/
+
+/**
+ * @callback TypesonResolve
+ * @param {any} value
+ * @returns {Promise<any>}
+ */
+
+/**
+ * @callback TypesonReject
+ * @param {Error|any} error
+ * @returns {Promise<any>}
+ */
+
+/**
+ * @callback TypesonResolveReject
+ * @param {TypesonResolve} typesonResolve
+ * @param {TypesonReject} typesonReject
+ * @returns {Promise<any>}
+ */
+
+/* eslint-disable block-spacing, space-before-function-paren,
+  space-before-blocks, space-infix-ops, semi, promise/avoid-new,
+  jsdoc/require-jsdoc */
+/**
  * We keep this function minimized so if using two instances of this
  *   library, where one is minimized and one is not, it will still work
  *   with `hasConstructorOf`.
  * With ES6 classes, we may be able to simply use `class TypesonPromise
  *   extends Promise` and add a string tag for detection.
- * @param {function} f
+ * @param {TypesonResolveReject} f
  */
-// eslint-disable-next-line max-len
-// eslint-disable-next-line block-spacing, space-before-function-paren, space-before-blocks, space-infix-ops, semi, promise/avoid-new
 class TypesonPromise{constructor(f){this.p=new Promise(f)}}
+/* eslint-enable block-spacing, space-before-function-paren,
+  space-before-blocks, space-infix-ops, semi, promise/avoid-new,
+  jsdoc/require-jsdoc */
+
 // eslint-disable-next-line max-len
 // class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
 
@@ -23,8 +57,8 @@ if (typeof Symbol !== 'undefined') {
 
 /**
  *
- * @param {function} [onFulfilled]
- * @param {function} [onRejected]
+ * @param {TypesonFulfilled} [onFulfilled]
+ * @param {TypesonRejected} [onRejected]
  * @returns {TypesonPromise}
  */
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
@@ -41,7 +75,7 @@ TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
 
 /**
  *
- * @param {function} onRejected
+ * @param {TypesonRejected} onRejected
  * @returns {TypesonPromise}
  */
 TypesonPromise.prototype.catch = function (onRejected) {
@@ -49,7 +83,7 @@ TypesonPromise.prototype.catch = function (onRejected) {
 };
 /**
  *
- * @param {Any} v
+ * @param {any} v
  * @returns {TypesonPromise}
  */
 TypesonPromise.resolve = function (v) {
@@ -59,7 +93,7 @@ TypesonPromise.resolve = function (v) {
 };
 /**
  *
- * @param {Any} v
+ * @param {any} v
  * @returns {TypesonPromise}
  */
 TypesonPromise.reject = function (v) {
@@ -70,7 +104,7 @@ TypesonPromise.reject = function (v) {
 ['all', 'race'].forEach(function (meth) {
     /**
      *
-     * @param {Promise[]} promArr
+     * @param {Promise<any>[]} promArr
      * @returns {TypesonPromise}
      */
     TypesonPromise[meth] = function (promArr) {

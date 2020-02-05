@@ -5,7 +5,7 @@ const {toString: toStr} = {},
 
 /**
  * Second argument not in use internally, but provided for utility.
- * @param {Any} v
+ * @param {any} v
  * @param {boolean} catchCheck
  * @returns {boolean}
  */
@@ -17,7 +17,7 @@ function isThenable (v, catchCheck) {
 
 /**
  *
- * @param {Any} val
+ * @param {any} val
  * @returns {string}
  */
 function toStringTag (val) {
@@ -27,8 +27,8 @@ function toStringTag (val) {
 /**
  * This function is dependent on both constructors
  *   being identical so any minimization is expected of both.
- * @param {Any} a
- * @param {function} b
+ * @param {any} a
+ * @param {GenericFunction} b
  * @returns {boolean}
  */
 function hasConstructorOf (a, b) {
@@ -60,7 +60,7 @@ function hasConstructorOf (a, b) {
 
 /**
  *
- * @param {Any} val
+ * @param {any} val
  * @returns {boolean}
  */
 function isPlainObject (val) { // Mirrors jQuery's
@@ -78,7 +78,7 @@ function isPlainObject (val) { // Mirrors jQuery's
 
 /**
  *
- * @param {Any} val
+ * @param {any} val
  * @returns {boolean}
  */
 function isUserObject (val) {
@@ -95,7 +95,7 @@ function isUserObject (val) {
 
 /**
  *
- * @param {Any} v
+ * @param {any} v
  * @returns {boolean}
  */
 function isObject (v) {
@@ -123,7 +123,7 @@ function unescapeKeyPathComponent (keyPathComponent) {
 /**
  * @param {PlainObject|GenericArray} obj
  * @param {string} keyPath
- * @returns {Any}
+ * @returns {any}
  */
 function getByKeyPath (obj, keyPath) {
     if (keyPath === '') {
@@ -145,8 +145,8 @@ function getByKeyPath (obj, keyPath) {
  *
  * @param {PlainObject} obj
  * @param {string} keyPath
- * @param {Any} value
- * @returns {Any}
+ * @param {any} value
+ * @returns {any}
  */
 function setAtKeyPath (obj, keyPath, value) {
     if (keyPath === '') {

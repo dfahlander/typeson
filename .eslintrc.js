@@ -66,8 +66,6 @@ module.exports = {
         "indent": ["error", 4, {"outerIIFEBody": 0}],
         // Todo: Reenable when apparent bug fixed
         'unicorn/no-unsafe-regex': 0,
-        // Todo: Reenable and fix/inline-disable
-        'jsdoc/check-types': 0,
         'promise/prefer-await-to-then': 0,
         'promise/prefer-await-to-callbacks': 0,
         'node/no-unsupported-features/es-builtins': 0,
