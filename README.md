@@ -308,7 +308,7 @@ const myTypeson = new Typeson().register([
 ]);
 ```
 
-### Instace methods
+### Instance methods
 
 #### `stringify` (obj, [replacer], [space], [options])
 
