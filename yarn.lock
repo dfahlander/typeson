@@ -1265,10 +1265,10 @@ balanced-match@^1.0.0:
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
   integrity sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
 
-base64-arraybuffer-es6@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/base64-arraybuffer-es6/-/base64-arraybuffer-es6-0.5.0.tgz#27877d01148bcfb3919c17ecf64ea163d9bdba62"
-  integrity sha512-UCIPaDJrNNj5jG2ZL+nzJ7czvZV/ZYX6LaIRgfVU1k1edJOQg7dkbiSKzwHkNp6aHEHER/PhlFBrMYnlvJJQEw==
+base64-arraybuffer-es6@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/base64-arraybuffer-es6/-/base64-arraybuffer-es6-0.6.0.tgz#036f79f57588dca0018de7792ddf149299382007"
+  integrity sha512-57nLqKj4ShsDwFJWJsM4sZx6u60WbCge35rWRSevUwqxDtRwwxiKAO800zD2upPv4CfdWjQp//wSLar35nDKvA==
 
 binary-extensions@^2.0.0:
   version "2.0.0"
@@ -1795,10 +1795,10 @@ eslint-ast-utils@^1.1.0:
     lodash.get "^4.4.2"
     lodash.zip "^4.2.0"
 
-eslint-config-ash-nazg@21.0.0:
-  version "21.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-ash-nazg/-/eslint-config-ash-nazg-21.0.0.tgz#ab52da01ce5cc76296e65eb46411ad00d0539f07"
-  integrity sha512-Uu4ItM3MSAJIHHzvJaS/XmahqTSfjWMyCHX+hsGxE659/7gtiK9fyaWYt48HXwtfyd2RLuWAWfVl3qHiakqc1Q==
+eslint-config-ash-nazg@22.0.0:
+  version "22.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-ash-nazg/-/eslint-config-ash-nazg-22.0.0.tgz#29033f27b2f8b8a1b6d7fbd29cda6f061de0d940"
+  integrity sha512-XfnzqIQN/W/VQqeXDLQKpOptAw4GnlfZrBGntH9JImYmVIUge+XEeyaVGHr2/dKNZ9Et7hB/zFLIXPUm0u3zPg==
 
 eslint-config-standard@^14.1.1:
   version "14.1.1"
