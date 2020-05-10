@@ -3,3 +3,4 @@ dist
 ignore
 coverage
 node_modules
+!.eslintrc.js

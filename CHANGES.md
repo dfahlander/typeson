@@ -1,5 +1,15 @@
 # typeson CHANGES
 
+## ?
+
+- Linting: Lint per lasest ash-nazg; lint hidden file
+- Docs: Corrected typo (@stephanemagnenat)
+- Build: Use "json" extension on RC file
+- npm: Replace deprecated `rollup-plugin-babel` with `@rollup/plugin-babel`
+    and make `babelHelpers` `bundled` value explicit
+- npm: Update peerDeps (core-js-bundle, regenerator-runtime)
+- npm: Update devDeps
+
 ## 5.18.2
 
 - Fix: Avoid treating recurring primitive values as cyclic

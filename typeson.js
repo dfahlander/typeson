@@ -394,7 +394,7 @@ class Typeson {
                 delete stateObj[prop];
                 return tmp;
             });
-            // eslint-disable-next-line callback-return
+            // eslint-disable-next-line node/callback-return
             cb();
             internalStateObjPropsToIgnore.forEach((prop, i) => {
                 stateObj[prop] = vals[i];
@@ -441,10 +441,12 @@ class Typeson {
             if (['string', 'boolean', 'number', 'undefined'].includes(
                 $typeof
             )) {
-                if (value === undefined || ($typeof === 'number' &&
-                    (isNaN(value) || value === -Infinity ||
-                        value === Infinity)
-                )) {
+                if (value === undefined ||
+                    (
+                        Number.isNaN(value) || value === -Infinity ||
+                            value === Infinity
+                    )
+                ) {
                     if (stateObj.replaced) {
                         ret = value;
                     } else {
