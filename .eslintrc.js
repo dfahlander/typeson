@@ -73,9 +73,11 @@ module.exports = {
         }
     ],
     rules: {
+        // Disable for now
+        'eslint-comments/require-description': 0,
+
         indent: ['error', 4, {outerIIFEBody: 0}],
-        // Todo: Reenable when apparent bug fixed
-        'unicorn/no-unsafe-regex': 0,
+        'unicorn/consistent-destructuring': 0,
         'promise/prefer-await-to-then': 0,
         'promise/prefer-await-to-callbacks': 0,
         'node/no-unsupported-features/es-builtins': 0,

@@ -2,12 +2,17 @@
 
 ## ?
 
-- Linting: Lint per lasest ash-nazg; lint hidden file
+### User-facing
+
 - Docs: Corrected typo (@stephanemagnenat)
-- Build: Use "json" extension on RC file
+- npm: Update peerDeps (core-js-bundle, regenerator-runtime)
+
+### Dev-facing
+
+- Linting: Lint per lasest ash-nazg; lint hidden file
+- Build: Use "json" extension on RC file; indicate `default` exports for Rollup
 - npm: Replace deprecated `rollup-plugin-babel` with `@rollup/plugin-babel`
     and make `babelHelpers` `bundled` value explicit
-- npm: Update peerDeps (core-js-bundle, regenerator-runtime)
 - npm: Update devDeps
 
 ## 5.18.2

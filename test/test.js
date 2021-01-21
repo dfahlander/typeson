@@ -31,13 +31,18 @@ const typeson = new Typeson().register({
     ],
     SpecialNumber: [
         function (x) {
-            return Number.isNaN(x) || x === Infinity || x === -Infinity;
+            return Number.isNaN(x) || x === Number.POSITIVE_INFINITY ||
+                x === Number.NEGATIVE_INFINITY;
         },
         function (n) {
             return Number.isNaN(n) ? 'NaN' : n > 0 ? 'Infinity' : '-Infinity';
         },
         function (s) {
-            return {NaN: Number.NaN, Infinity, '-Infinity': -Infinity}[s];
+            return {
+                NaN: Number.NaN,
+                Infinity: Number.POSITIVE_INFINITY,
+                '-Infinity': Number.NEGATIVE_INFINITY
+            }[s];
         }
     ],
     ArrayBuffer: [
@@ -756,7 +761,7 @@ describe('Typeson', function () {
                 }
             }
         });
-        const arr = new Array(10);
+        const arr = Array.from({length: 10});
         arr[0] = 3;
         arr[2] = {arr};
         arr[2].f = [[arr]];
@@ -826,7 +831,7 @@ describe('Typeson', function () {
                 }
             }
         });
-        const arr = new Array(10);
+        const arr = Array.from({length: 10});
         arr[2] = {arr};
         arr[2].f = [[arr]];
 
@@ -1356,7 +1361,7 @@ describe('Typeson', function () {
             let str = '';
             let indentFactor = 0;
             const indent = function () {
-                return new Array(indentFactor * 4 + 1).join(' ');
+                return ' '.repeat(indentFactor * 4);
             };
             const typeson = new Typeson({
                 encapsulateObserver (o) {

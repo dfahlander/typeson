@@ -592,7 +592,7 @@ const typeson = new Typeson({sync: false}).register({
             return new Typeson.Promise(function (resolve, reject) {
                 setTimeout(function () {
                     // Do something more useful in real code
-                    if (new Date().getTime() % 2) {
+                    if (Date.now() % 2) {
                         reject(new Error('Better luck next time'));
                         return;
                     }

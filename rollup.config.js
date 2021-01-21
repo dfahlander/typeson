@@ -8,15 +8,16 @@ import {terser} from 'rollup-plugin-terser';
  */
 
 /**
- * @param {PlainObject} config
- * @param {boolean} config.minifying
- * @param {string} [config.format='umd'} = {}]
+ * @param {PlainObject} [config={}]
+ * @param {boolean} [config.minifying]
+ * @param {string} [config.format="umd"]
  * @returns {external:RollupConfig}
  */
 function getRollupObject ({minifying, format = 'umd'} = {}) {
     const nonMinified = {
         input: 'typeson.js',
         output: {
+            exports: format === 'cjs' ? 'default' : undefined,
             file: `dist/typeson${
                 (format === 'cjs'
                     ? '-commonjs2'

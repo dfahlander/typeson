@@ -443,18 +443,17 @@ class Typeson {
             )) {
                 if (value === undefined ||
                     (
-                        Number.isNaN(value) || value === -Infinity ||
-                            value === Infinity
+                        Number.isNaN(value) ||
+                            value === Number.NEGATIVE_INFINITY ||
+                            value === Number.POSITIVE_INFINITY
                     )
                 ) {
-                    if (stateObj.replaced) {
-                        ret = value;
-                    } else {
-                        ret = replace(
+                    ret = stateObj.replaced
+                        ? value
+                        : replace(
                             keypath, value, stateObj, promisesData,
                             false, resolvingTypesonPromise, runObserver
                         );
-                    }
                     if (ret !== value) {
                         observerData = {replaced: ret};
                     }
@@ -531,6 +530,7 @@ class Typeson {
                 } else if ((isArr && stateObj.iterateIn !== 'object') ||
                     stateObj.iterateIn === 'array'
                 ) {
+                    // eslint-disable-next-line unicorn/no-new-array -- Sparse
                     clone = new Array(value.length);
                     observerData = {clone};
                 } else if (
@@ -694,7 +694,7 @@ class Typeson {
         /**
         * @callback Observer
         * @param {KeyPathEvent|EndIterateInEvent|EndIterateUnsetNumericEvent|
-        *   TypeDetectedEvent|ReplacingEvent} [event]
+        * TypeDetectedEvent|ReplacingEvent} [event]
         * @returns {void}
         */
 
@@ -873,6 +873,7 @@ class Typeson {
          *
          * @param {string} type
          * @param {any} val
+         * @throws {Error}
          * @returns {any}
          */
         function executeReviver (type, val) {
@@ -996,6 +997,7 @@ class Typeson {
             const type = types[keypath];
             const isArr = isArray(value);
             if (isArr || isPlainObject(value)) {
+                // eslint-disable-next-line unicorn/no-new-array -- Sparse
                 const clone = isArr ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach((k) => {
@@ -1213,7 +1215,7 @@ class Typeson {
                 }
                 const start = typeof opts.fallback === 'number'
                     ? opts.fallback
-                    : (opts.fallback ? 0 : Infinity);
+                    : (opts.fallback ? 0 : Number.POSITIVE_INFINITY);
                 if (spec.testPlainObjects) {
                     this.plainObjectReplacers.splice(start, 0, replacerObj);
                 } else {
