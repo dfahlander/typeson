@@ -1,8 +1,0 @@
-{
-  "plugins": {
-    "maximum-heading-length": false,
-    "list-item-indent": false,
-    "list-item-spacing": false,
-    "no-missing-blank-lines": false
-  }
-}
