@@ -1,8 +1,6 @@
 /* globals assert */
 /* eslint-disable no-console, no-restricted-syntax,
     jsdoc/require-jsdoc, no-empty-function, no-shadow */
-// import '../node_modules/core-js-bundle/minified.js';
-import '../node_modules/regenerator-runtime/runtime.js';
 
 import Typeson from '../typeson.js';
 import * as B64 from
@@ -1084,7 +1082,7 @@ describe('Typeson', function () {
             );
         });
         it('should resolve cyclic object members', () => {
-            // eslint-disable-next-line sonarjs/prefer-object-literal
+            // eslint-disable-next-line radar/prefer-object-literal
             const recursive = {};
             recursive.b = recursive;
             const recursiveContainer = {a: recursive};

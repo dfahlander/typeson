@@ -1,19 +1,24 @@
 # typeson CHANGES
 
-## ?
+## 6.0.0
 
 ### User-facing
 
+- Breaking change: Drop peerDeps (core-js-bundle, regenerator-runtime) and
+    avoid need for `regenerator-runtime`
 - Docs: Corrected typo (@stephanemagnenat)
-- npm: Update peerDeps (core-js-bundle, regenerator-runtime)
 
 ### Dev-facing
 
 - Linting: Lint per lasest ash-nazg; lint hidden file
 - Build: Use "json" extension on RC file; indicate `default` exports for Rollup
+- Editorconfig: Enforce JSON spacing
+- Testing: Remove need for bootstrap file
+- npm: Add coverage in main `test` script
+- npm: Switch to server without reported vulnerabilities (`http-server`)
 - npm: Replace deprecated `rollup-plugin-babel` with `@rollup/plugin-babel`
     and make `babelHelpers` `bundled` value explicit
-- npm: Update devDeps
+- npm: Update devDeps (including changing updated ash-nazg peerDeps.)
 
 ## 5.18.2
 

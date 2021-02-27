@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-    extends: 'ash-nazg/sauron-node',
+    extends: 'ash-nazg/sauron-node-overrides',
     settings: {
         polyfills: [
             'Array.from',
@@ -25,17 +25,10 @@ module.exports = {
     },
     overrides: [
         {
-            files: ['.eslintrc.js'],
-            extends: ['plugin:node/recommended-script'],
-            rules: {
-                'import/no-commonjs': 0
-            }
-        },
-        {
+            files: ['**/*.md/*.js'],
             settings: {
                 polyfills: ['Float64Array', 'Int8Array']
             },
-            files: ['**/*.md'],
             rules: {
                 'eol-last': ['off'],
                 'no-console': ['off'],
@@ -82,6 +75,9 @@ module.exports = {
         'promise/prefer-await-to-callbacks': 0,
         'node/no-unsupported-features/es-builtins': 0,
         'node/no-unsupported-features/es-syntax': 0,
-        'jsdoc/check-values': ['error', {allowedLicenses: true}]
+        'jsdoc/check-values': ['error', {allowedLicenses: true}],
+
+        'unicorn/no-this-assignment': 0,
+        'unicorn/prefer-spread': 0
     }
 };
