@@ -6,7 +6,7 @@
   "browser": "./dist/typeson.js",
   "module": "./dist/typeson-esm.js",
   "scripts": {
-    "prepublishOnly": "yarn",
+    "prepublishOnly": "pnpm i",
     "eslint": "eslint --ext js,md,html .",
     "start": "http-server -p 8092",
     "rollup": "rollup -c",
