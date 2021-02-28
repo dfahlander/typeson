@@ -1,5 +1,14 @@
 # typeson CHANGES
 
+## ?
+
+### User-facing
+
+### Dev-facing
+
+- npm: Switch to pnpm
+- npm: Update devDeps.
+
 ## 6.0.0
 
 ### User-facing
