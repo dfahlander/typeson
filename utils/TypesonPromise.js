@@ -101,7 +101,7 @@ TypesonPromise.reject = function (v) {
         typesonReject(v);
     });
 };
-['all', 'race'].forEach(function (meth) {
+['all', 'race', 'allSettled'].forEach(function (meth) {
     /**
      *
      * @param {Promise<any>[]} promArr

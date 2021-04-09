@@ -2977,6 +2977,28 @@ describe('Typeson.Promise', function () {
                         results === 400,
                         'Should work with Promise.race'
                     );
+                });
+            }).then(function () {
+                // eslint-disable-next-line promise/no-nesting
+                return Typeson.Promise.allSettled([
+                    ...makePromises(),
+                    new Typeson.Promise(function (res, rej) {
+                        setTimeout(function () {
+                            rej('foo');
+                        }, 10);
+                    })
+                ]).then(function (results) {
+                    assert(
+                        // eslint-disable-next-line promise/always-return
+                        results[0].status === 'fulfilled' &&
+                        results[0].value === 30 &&
+                        results[1].status === 'fulfilled' &&
+                        results[1].value === 400 &&
+                        results[2].status === 'rejected' &&
+                        results[2].reason === 'foo',
+                        'Should work with Promise.allSettled'
+                    );
+
                     resolve();
                 });
             });
