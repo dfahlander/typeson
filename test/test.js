@@ -3069,7 +3069,17 @@ describe('Typeson.Promise', function () {
                     errCode === 33,
                     'Typeson.Promises should bypass `then` when rejecting'
                 );
-                resolve();
+                return Typeson.Promise.allSettled(makeRejectedPromises());
+            }).then(function (result) {
+                assert(
+                    JSON.stringify(result) === JSON.stringify([
+                        {status: 'rejected', reason: 30},
+                        {status: 'fulfilled', value: 500}
+                    ])
+                );
+                return resolve();
+            }).catch(function () {
+                throw new Error('Should not reach here');
             });
         });
     });
