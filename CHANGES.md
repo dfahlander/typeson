@@ -1,8 +1,11 @@
 # typeson CHANGES
 
-## ?
+## 6.1.0
 
 ### User-facing
+
+- Enhancement: Adds `Typeson.Promise.allSettled` utility for parity with
+    other `Promise` methods
 
 ### Dev-facing
 
