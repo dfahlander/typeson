@@ -131,8 +131,8 @@ const json = JSON.stringify(jsonFriendly, null, 2);
 const parsed = JSON.parse(json);
 // Revive back again:
 const revived = typeson.revive(parsed);
-
 ```
+
 *The above sample separates Typeson.encapsulate() from JSON.stringify(). Could also have used Typeson.stringify().*
 
 ## Environment/Format support

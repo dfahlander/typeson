@@ -1,5 +1,17 @@
 # typeson CHANGES
 
+## 7.0.0
+
+### User-facing
+
+- Enhancement: ESM
+- Enhancement: Expose `Typeson.setAtKeyPath`
+
+### Dev-facing
+
+- chore: switches to c8 from nyc for ESM compatibility
+- npm: Update devDeps.
+
 ## 6.1.0
 
 ### User-facing
