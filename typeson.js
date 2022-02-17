@@ -1156,12 +1156,13 @@ class Typeson {
      */
     register (typeSpecSets, opts) {
         opts = opts || {};
-        [].concat(typeSpecSets).forEach(function R (typeSpec) {
+        const R = (typeSpec) => {
             // Allow arrays of arrays of arrays...
             if (isArray(typeSpec)) {
-                return typeSpec.map((typSpec) => R.call(this, typSpec));
+                typeSpec.forEach((typSpec) => R(typSpec));
+                return;
             }
-            typeSpec && keys(typeSpec).forEach(function (typeId) {
+            typeSpec && keys(typeSpec).forEach((typeId) => {
                 if (typeId === '#') {
                     throw new TypeError(
                         '# cannot be used as a type name as it is reserved ' +
@@ -1237,8 +1238,9 @@ class Typeson {
 
                 // Record to be retrieved via public types property.
                 this.types[typeId] = spec;
-            }, this);
-        }, this);
+            });
+        };
+        [].concat(typeSpecSets).forEach((typeSpec) => R(typeSpec));
         return this;
     }
 }
@@ -1271,6 +1273,7 @@ Typeson.isUserObject = isUserObject;
 Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
 Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
 Typeson.getByKeyPath = getByKeyPath;
+Typeson.setAtKeyPath = setAtKeyPath;
 Typeson.getJSONType = getJSONType;
 Typeson.JSON_TYPES = [
     'null', 'boolean', 'number', 'string', 'array', 'object'

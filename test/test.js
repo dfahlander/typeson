@@ -1082,7 +1082,7 @@ describe('Typeson', function () {
             );
         });
         it('should resolve cyclic object members', () => {
-            // eslint-disable-next-line radar/prefer-object-literal
+            // eslint-disable-next-line sonarjs/prefer-object-literal
             const recursive = {};
             recursive.b = recursive;
             const recursiveContainer = {a: recursive};
@@ -2642,6 +2642,7 @@ describe('Typeson.isThenable', () => {
     it(
         'should detect missing `catch` upon second argument being `true`',
         () => {
+            // eslint-disable-next-line unicorn/no-thenable -- Want Promise-like
             const notThenable = Typeson.isThenable({then () {}}, true);
             assert(!notThenable, 'Object not found with a catch');
         }

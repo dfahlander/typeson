@@ -55,6 +55,7 @@ if (typeof Symbol !== 'undefined') {
     TypesonPromise.prototype[Symbol.toStringTag] = 'TypesonPromise';
 }
 
+/* eslint-disable unicorn/no-thenable -- Desired to be Promise-like */
 /**
  *
  * @param {TypesonFulfilled} [onFulfilled]
@@ -119,5 +120,6 @@ TypesonPromise.reject = function (v) {
         });
     };
 });
+/* eslint-enable unicorn/no-thenable -- Desired to be Promise-like */
 
 export {TypesonPromise};

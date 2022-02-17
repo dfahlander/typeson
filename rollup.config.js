@@ -1,4 +1,4 @@
-import babel from '@rollup/plugin-babel';
+import {babel} from '@rollup/plugin-babel';
 import {terser} from 'rollup-plugin-terser';
 
 /**
@@ -25,7 +25,7 @@ function getRollupObject ({minifying, format = 'umd'} = {}) {
                         ? ''
                         : '-' + format) +
                 (minifying ? '.min' : '')
-            }.js`,
+            }.${format === 'esm' ? '' : 'c'}js`,
             format,
             name: 'Typeson'
         },
