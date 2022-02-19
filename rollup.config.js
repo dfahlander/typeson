@@ -17,7 +17,6 @@ function getRollupObject ({minifying, format = 'umd'} = {}) {
     const nonMinified = {
         input: 'typeson.js',
         output: {
-            exports: format === 'cjs' ? 'default' : undefined,
             file: `dist/typeson${
                 (format === 'cjs'
                     ? '-commonjs2'

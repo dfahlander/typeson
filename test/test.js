@@ -2,7 +2,10 @@
 /* eslint-disable no-console, no-restricted-syntax,
     jsdoc/require-jsdoc, no-empty-function, no-shadow */
 
-import Typeson from '../typeson.js';
+import {
+    Typeson, TypesonPromise, Undefined,
+    toStringTag, isThenable, isUserObject, hasConstructorOf
+} from '../typeson.js';
 import * as B64 from
     '../node_modules/base64-arraybuffer-es6/dist/base64-arraybuffer-es.js';
 
@@ -44,7 +47,7 @@ const typeson = new Typeson().register({
         }
     ],
     ArrayBuffer: [
-        function test (x) { return Typeson.toStringTag(x) === 'ArrayBuffer'; },
+        function test (x) { return toStringTag(x) === 'ArrayBuffer'; },
         function encapsulate (b) { return B64.encode(b); },
         function revive (b64) { return B64.decode(b64); }
     ],
@@ -406,14 +409,14 @@ describe('Typeson', function () {
                 date: {
                     test (x) { return x instanceof Date; },
                     replaceAsync (date) {
-                        return new Typeson.Promise((resolve, reject) => {
+                        return new TypesonPromise((resolve, reject) => {
                             setTimeout(() => {
                                 resolve(date.getTime());
                             });
                         });
                     },
                     reviveAsync (time) {
-                        return new Typeson.Promise((resolve, reject) => {
+                        return new TypesonPromise((resolve, reject) => {
                             setTimeout(() => {
                                 resolve(new Date(time));
                             });
@@ -678,7 +681,7 @@ describe('Typeson', function () {
         const typeson = new Typeson().register({
             replaceReviveContainer: {
                 test (x) {
-                    return Typeson.toStringTag(x) === 'ReplaceReviver';
+                    return toStringTag(x) === 'ReplaceReviver';
                 },
                 replace (b, stateObj) {
                     if (!stateObj.objs) {
@@ -870,7 +873,7 @@ describe('Typeson', function () {
     it('should allow unknown string tags', () => {
         const map = {
             map: {
-                test (x) { return Typeson.toStringTag(x) === 'Map'; },
+                test (x) { return toStringTag(x) === 'Map'; },
                 replace (mp) { return [...mp.entries()]; },
                 revive (entries) { return new Map(entries); }
             }
@@ -902,7 +905,7 @@ describe('Typeson', function () {
     it('should throw upon attempt to parse type that is not registered', () => {
         const map = {
             map: {
-                test (x) { return Typeson.toStringTag(x) === 'Map'; },
+                test (x) { return toStringTag(x) === 'Map'; },
                 replace (mp) { return [...mp.entries()]; },
                 revive (entries) { return new Map(entries); }
             }
@@ -1481,7 +1484,7 @@ describe('Typeson', function () {
                 PromiseUser: [
                     function (x) { return x instanceof APromiseUser; },
                     function (o) {
-                        return new Typeson.Promise(function (res) {
+                        return new TypesonPromise(function (res) {
                             setTimeout(function () {
                                 res(o.a);
                             }, 300);
@@ -1587,7 +1590,7 @@ describe('Typeson', function () {
                     this[3] = 4;
                     this.b = b;
                     this.c = new MyAsync('abc');
-                    this.e = new Typeson.Undefined();
+                    this.e = new Undefined();
                     this.isArr = isArr;
                 }
                 B.prototype = new A(a);
@@ -1599,9 +1602,9 @@ describe('Typeson', function () {
             }
             const typeson = new Typeson().register([{
                 undef: {
-                    test (x) { return x instanceof Typeson.Undefined; },
+                    test (x) { return x instanceof Undefined; },
                     replaceAsync (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(null);
@@ -1610,8 +1613,8 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise(function (resolve, reject) {
-                            resolve(new Typeson.Undefined());
+                        return new TypesonPromise(function (resolve, reject) {
+                            resolve(new Undefined());
                         });
                     }
                 }
@@ -1619,7 +1622,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -1628,7 +1631,7 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             setTimeout(() => {
                                 resolve(new MyAsync(data));
                             }, 300);
@@ -1645,14 +1648,14 @@ describe('Typeson', function () {
                         return false;
                     },
                     replaceAsync (val) {
-                        return new Typeson.Promise((resolve) => {
+                        return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(val);
                             });
                         });
                     },
                     reviveAsync (val) {
-                        return new Typeson.Promise((resolve) => {
+                        return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(val);
                             });
@@ -1840,7 +1843,7 @@ describe('Typeson', function () {
                                 stateObj.ownKeys === false;
                         },
                         replaceAsync (n) {
-                            return new Typeson.Promise((resolve) => {
+                            return new TypesonPromise((resolve) => {
                                 setTimeout(() => {
                                     resolve(0);
                                 });
@@ -1899,7 +1902,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -1931,7 +1934,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -1974,7 +1977,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2015,7 +2018,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2047,7 +2050,7 @@ describe('Typeson', function () {
                         return o.prop;
                     },
                     function (data) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(new MyAsync(data));
@@ -2098,7 +2101,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2150,7 +2153,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2159,7 +2162,7 @@ describe('Typeson', function () {
                     },
                     revive (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             resolve(new MyAsync(data));
                         });
                     }
@@ -2186,7 +2189,7 @@ describe('Typeson', function () {
                     myAsyncType: {
                         test (x) { return x instanceof MyAsync; },
                         replaceAsync (o) {
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 // Do something more useful in real code
                                 setTimeout(() => {
                                     resolve(o.prop);
@@ -2195,7 +2198,7 @@ describe('Typeson', function () {
                         },
                         reviveAsync (data) {
                             // Do something more useful in real code
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2338,7 +2341,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new Typeson.Promise((resolve, reject) => {
+                        return new TypesonPromise((resolve, reject) => {
                             // Do something more useful in real code
                             setTimeout(() => {
                                 resolve(o.prop);
@@ -2347,7 +2350,7 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise((resolve, reject) => {
+                        return new TypesonPromise((resolve, reject) => {
                             resolve(new MyAsync(data));
                         });
                     }
@@ -2369,7 +2372,7 @@ describe('Typeson', function () {
                     replace (o) { return o.prop; },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise((resolve, reject) => {
+                        return new TypesonPromise((resolve, reject) => {
                             resolve({prop: data});
                         });
                     }
@@ -2394,7 +2397,7 @@ describe('Typeson', function () {
                     myAsyncType: {
                         test (x) { return x instanceof MyAsync; },
                         replaceAsync (o) {
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 // Do something more useful in real code
                                 setTimeout(() => {
                                     resolve(o.prop);
@@ -2403,7 +2406,7 @@ describe('Typeson', function () {
                         },
                         revive (data) {
                             // Do something more useful in real code
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2417,7 +2420,7 @@ describe('Typeson', function () {
                         },
                         reviveAsync (data) {
                             // Do something more useful in real code
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2447,7 +2450,7 @@ describe('Typeson', function () {
                             return null;
                         },
                         reviveAsync () {
-                            return new Typeson.Undefined();
+                            return new Undefined();
                         }
                     }
                 }, {
@@ -2467,7 +2470,7 @@ describe('Typeson', function () {
                         reviveAsync (data) {
                             // console.log('revive', data);
                             // Do something more useful in real code
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 resolve({
                                     prop: data.prop,
                                     x: data.x,
@@ -2492,14 +2495,14 @@ describe('Typeson', function () {
                 log('back', back);
                 assert(back.prop === 52, 'Outer is `myPlainAsyncType`');
                 assert(
-                    back.sth instanceof Typeson.Undefined,
+                    back.sth instanceof Undefined,
                     'Outer has `Undefined`'
                 );
                 assert(back.extra.prop === 5, 'Outer has extra prop');
                 assert(back.x.prop === 500, 'Inner is `myPlainAsyncType`');
                 assert(back.x.extra.prop === 5, 'Inner has extra prop');
                 assert(
-                    back.x.sth instanceof Typeson.Undefined,
+                    back.x.sth instanceof Undefined,
                     'Inner has `Undefined`'
                 );
             }
@@ -2516,7 +2519,7 @@ describe('Typeson', function () {
                     myAsyncType: {
                         test (x) { return x instanceof MyAsync; },
                         replaceAsync (o) {
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 // Do something more useful in real code
                                 setTimeout(() => {
                                     resolve(o.prop);
@@ -2525,7 +2528,7 @@ describe('Typeson', function () {
                         },
                         revive (data) {
                             // Do something more useful in real code
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2539,14 +2542,14 @@ describe('Typeson', function () {
                 assert(back.prop === 500, 'Has same property value');
             }
         );
-        it('should revive with `Typeson.Undefined` `reviveAsync`', async () => {
+        it('should revive with `Undefined` `reviveAsync`', async () => {
             const typeson = new Typeson().register({
                 undefinedType: {
                     test (x) {
                         return x === undefined;
                     },
                     replaceAsync (o) {
-                        return new Typeson.Promise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve, reject) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(null);
@@ -2555,8 +2558,8 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new Typeson.Promise(function (resolve, reject) {
-                            resolve(new Typeson.Undefined());
+                        return new TypesonPromise(function (resolve, reject) {
+                            resolve(new Undefined());
                         });
                     }
                 }
@@ -2577,7 +2580,7 @@ describe('Typeson', function () {
                             return x === undefined;
                         },
                         replaceAsync (o) {
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 // Do something more useful in real code
                                 setTimeout(function () {
                                     resolve(null);
@@ -2608,7 +2611,7 @@ describe('Typeson', function () {
                             return x === undefined;
                         },
                         replaceAsync (o) {
-                            return new Typeson.Promise((resolve, reject) => {
+                            return new TypesonPromise((resolve, reject) => {
                                 // Do something more useful in real code
                                 setTimeout(function () {
                                     resolve(null);
@@ -2634,30 +2637,30 @@ describe('Typeson', function () {
     });
 });
 
-describe('Typeson.isThenable', () => {
+describe('isThenable', () => {
     it('should detect `catch` upon second argument being `true`', () => {
-        const thenable = Typeson.isThenable(Promise.resolve(), true);
+        const thenable = isThenable(Promise.resolve(), true);
         assert(thenable, 'Promise found to have catch');
     });
     it(
         'should detect missing `catch` upon second argument being `true`',
         () => {
             // eslint-disable-next-line unicorn/no-thenable -- Want Promise-like
-            const notThenable = Typeson.isThenable({then () {}}, true);
+            const notThenable = isThenable({then () {}}, true);
             assert(!notThenable, 'Object not found with a catch');
         }
     );
 });
 
-describe('Typeson.isUserObject', () => {
+describe('isUserObject', () => {
     it('should detect non-user objects', () => {
         const a = null;
         const b = [];
         const c = /test/u;
 
-        assert(!Typeson.isUserObject(a), 'null is not a user object');
-        assert(!Typeson.isUserObject(b), 'Array is not a user object');
-        assert(!Typeson.isUserObject(c), 'RegExp is not a user object');
+        assert(!isUserObject(a), 'null is not a user object');
+        assert(!isUserObject(b), 'Array is not a user object');
+        assert(!isUserObject(c), 'RegExp is not a user object');
     });
     it('should detect user objects', () => {
         class A {
@@ -2670,18 +2673,18 @@ describe('Typeson.isUserObject', () => {
         const e = new B();
 
         assert(
-            Typeson.isUserObject(c),
+            isUserObject(c),
             'Object with null prototype is a user object'
         );
-        assert(Typeson.isUserObject(d), 'Object literal is a user object');
+        assert(isUserObject(d), 'Object literal is a user object');
         assert(
-            Typeson.isUserObject(e),
+            isUserObject(e),
             'Instance of user class is a user object'
         );
     });
 });
 
-describe('Typeson.hasConstructorOf', () => {
+describe('hasConstructorOf', () => {
     it(
         'should detect whether an object has a "null" constructor ' +
         '(i.e., `null` prototype)',
@@ -2689,14 +2692,14 @@ describe('Typeson.hasConstructorOf', () => {
             function B () {}
             const a = Object.create(null);
             assert(
-                Typeson.hasConstructorOf(a, null),
+                hasConstructorOf(a, null),
                 'Object with null prototype has a "null" constructor'
             );
 
             B.prototype = a;
             const c = new B();
             assert(
-                Typeson.hasConstructorOf(c, null),
+                hasConstructorOf(c, null),
                 'Object with null prototype has a "null" ancestor constructor'
             );
         }
@@ -2705,7 +2708,7 @@ describe('Typeson.hasConstructorOf', () => {
         const d = function () { /* Twin */ };
         const e = new function () { /* Twin */ }();
         assert(
-            Typeson.hasConstructorOf(e, d),
+            hasConstructorOf(e, d),
             'Object has constructor that is identical to ' +
             'another when stringified'
         );
@@ -2715,14 +2718,14 @@ describe('Typeson.hasConstructorOf', () => {
         const undef = new Undefined();
 
         assert(
-            Typeson.hasConstructorOf(undef, Typeson.Undefined),
-            'Instance of Typeson.Undefined has constructor identical ' +
-                'to Typeson.Undefined despite inconsistent stringification'
+            hasConstructorOf(undef, Undefined),
+            'Instance of Undefined has constructor identical ' +
+                'to Undefined despite inconsistent stringification'
         );
     });
 });
 
-describe('Typeson.specialTypeNames', () => {
+describe('Typeson.prototype.specialTypeNames', () => {
     it('should retrieve special type names', () => {
         const typeson = new Typeson().register({
             Date: {
@@ -2757,7 +2760,7 @@ describe('Typeson.specialTypeNames', () => {
     });
 });
 
-describe('Typeson.rootTypeName', () => {
+describe('Typeson.prototype.rootTypeName', () => {
     it('should retrieve root type name when JSON', () => {
         let runCount = 0;
         const typeson = new Typeson({
@@ -2802,10 +2805,10 @@ describe('Typeson.rootTypeName', () => {
     });
 });
 
-describe('Typeson.Promise', function () {
+describe('TypesonPromise', function () {
     it('should allow single Promise resolution', () => {
         const typeson = new Typeson();
-        const x = new Typeson.Promise(function (res) {
+        const x = new TypesonPromise(function (res) {
             setTimeout(function () {
                 res(25);
             }, 500);
@@ -2831,7 +2834,7 @@ describe('Typeson.Promise', function () {
             PromiseUser: [
                 function (x) { return x instanceof APromiseUser; },
                 function (o) {
-                    return new Typeson.Promise(function (res) {
+                    return new TypesonPromise(function (res) {
                         setTimeout(function () {
                             res(o.a);
                         }, 300);
@@ -2840,7 +2843,7 @@ describe('Typeson.Promise', function () {
                 function (val) { return new APromiseUser(val); }
             ]
         });
-        const x = new Typeson.Promise(function (res) {
+        const x = new TypesonPromise(function (res) {
             setTimeout(function () {
                 res(new APromiseUser(555));
             }, 1200);
@@ -2859,9 +2862,9 @@ describe('Typeson.Promise', function () {
     it('should allow multiple Promise resolution', () => {
         const typeson = new Typeson();
         const x = [
-            Typeson.Promise.resolve(5),
+            TypesonPromise.resolve(5),
             100,
-            new Typeson.Promise(function (res) {
+            new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(25);
                 }, 500);
@@ -2889,7 +2892,7 @@ describe('Typeson.Promise', function () {
             PromiseUser: [
                 function (x) { return x instanceof APromiseUser; },
                 function (o) {
-                    return new Typeson.Promise(function (res) {
+                    return new TypesonPromise(function (res) {
                         setTimeout(function () {
                             res(o.a);
                         }, 300);
@@ -2899,26 +2902,26 @@ describe('Typeson.Promise', function () {
             ]
         });
         const x = [
-            Typeson.Promise.resolve(5),
+            TypesonPromise.resolve(5),
             100,
-            new Typeson.Promise(function (res) {
+            new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(25);
                 }, 500);
             }),
-            new Typeson.Promise(function (res) {
+            new TypesonPromise(function (res) {
                 setTimeout(function () {
-                    res(Typeson.Promise.resolve(5));
+                    res(TypesonPromise.resolve(5));
                 });
             }).then(function (r) {
-                return new Typeson.Promise(function (res) {
+                return new TypesonPromise(function (res) {
                     setTimeout(function () {
                         res(r + 90);
                     }, 10);
                 });
             }),
-            Typeson.Promise.resolve(new Date()),
-            new Typeson.Promise(function (res) {
+            TypesonPromise.resolve(new Date()),
+            new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(new APromiseUser(555));
                 });
@@ -2944,18 +2947,18 @@ describe('Typeson.Promise', function () {
 
     it('should work with Promise utilities', () => {
         function makePromises () {
-            const x = new Typeson.Promise(function (res) {
+            const x = new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(30);
                 }, 50);
             });
-            const y = Typeson.Promise.resolve(400);
+            const y = TypesonPromise.resolve(400);
             return [x, y];
         }
         // eslint-disable-next-line promise/avoid-new
         return new Promise(function (resolve, reject) {
             // eslint-disable-next-line promise/catch-or-return
-            Typeson.Promise.all([
+            TypesonPromise.all([
                 ...makePromises(),
                 100,
                 null,
@@ -2970,7 +2973,7 @@ describe('Typeson.Promise', function () {
                 );
             }).then(function () {
                 // eslint-disable-next-line promise/no-nesting
-                return Typeson.Promise.race(
+                return TypesonPromise.race(
                     makePromises()
                 // eslint-disable-next-line promise/always-return
                 ).then(function (results) {
@@ -2981,9 +2984,9 @@ describe('Typeson.Promise', function () {
                 });
             }).then(function () {
                 // eslint-disable-next-line promise/no-nesting
-                return Typeson.Promise.allSettled([
+                return TypesonPromise.allSettled([
                     ...makePromises(),
-                    new Typeson.Promise(function (res, rej) {
+                    new TypesonPromise(function (res, rej) {
                         setTimeout(function () {
                             rej('foo');
                         }, 10);
@@ -3007,12 +3010,12 @@ describe('Typeson.Promise', function () {
     });
     it('should properly handle Promise rejections', () => {
         function makeRejectedPromises () {
-            const x = new Typeson.Promise(function (res, rej) {
+            const x = new TypesonPromise(function (res, rej) {
                 setTimeout(function () {
                     rej(30);
                 }, 50);
             });
-            const y = new Typeson.Promise(function (res, rej) {
+            const y = new TypesonPromise(function (res, rej) {
                 setTimeout(function () {
                     res(500);
                 }, 500);
@@ -3024,53 +3027,53 @@ describe('Typeson.Promise', function () {
             makeRejectedPromises()[0].then(null, function (errCode) {
                 assert(
                     errCode === 30,
-                    '`Typeson.Promise` should work with ' +
+                    '`TypesonPromise` should work with ' +
                     '`then(null, onRejected)`'
                 );
-                return Typeson.Promise.reject(400);
+                return TypesonPromise.reject(400);
             }).catch(function (errCode) {
                 assert(
                     errCode === 400,
-                    '`Typeson.Promise` should work with `catch`'
+                    '`TypesonPromise` should work with `catch`'
                 );
-                return Typeson.Promise.all(makeRejectedPromises());
+                return TypesonPromise.all(makeRejectedPromises());
             }).catch(function (errCode) {
                 assert(
                     errCode === 30,
                     'Promise.all should work with rejected promises'
                 );
-                return Typeson.Promise.race(makeRejectedPromises());
+                return TypesonPromise.race(makeRejectedPromises());
             }).catch(function (errCode) {
                 assert(
                     errCode === 30,
                     'Promise.race should work with rejected promises'
                 );
-                return new Typeson.Promise(function () {
+                return new TypesonPromise(function () {
                     throw new Error('Sync throw');
                 });
             }).catch(function (err) {
                 assert(
                     err.message === 'Sync throw',
-                    'Typeson.Promise should work with synchronous throws'
+                    'TypesonPromise should work with synchronous throws'
                 );
-                return Typeson.Promise.resolve(55);
+                return TypesonPromise.resolve(55);
             }).then(null, function () {
                 throw new Error('Should not reach here');
             }).then(function (res) {
                 assert(
                     res === 55,
-                    'Typeson.Promises should bypass `then` ' +
+                    'TypesonPromises should bypass `then` ' +
                     'without `onResolved`'
                 );
-                return Typeson.Promise.reject(33);
+                return TypesonPromise.reject(33);
             }).then(function () {
                 throw new Error('Should not reach here');
             }).catch(function (errCode) {
                 assert(
                     errCode === 33,
-                    'Typeson.Promises should bypass `then` when rejecting'
+                    'TypesonPromises should bypass `then` when rejecting'
                 );
-                return Typeson.Promise.allSettled(makeRejectedPromises());
+                return TypesonPromise.allSettled(makeRejectedPromises());
             }).then(function (result) {
                 assert(
                     JSON.stringify(result) === JSON.stringify([
