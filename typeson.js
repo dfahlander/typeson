@@ -8,8 +8,8 @@
 import {TypesonPromise} from './utils/TypesonPromise.js';
 import {
     isPlainObject, isObject, hasConstructorOf,
-    isThenable, toStringTag, isUserObject,
-    escapeKeyPathComponent, unescapeKeyPathComponent,
+    isThenable,
+    escapeKeyPathComponent,
     getByKeyPath, setAtKeyPath, getJSONType
 } from './utils/classMethods.js';
 
@@ -287,7 +287,7 @@ class Typeson {
                 if (typeNames.length) {
                     return typeNames[0];
                 }
-                return Typeson.getJSONType(ret);
+                return getJSONType(ret);
             }
             if (typeNames.length) {
                 if (opts.returnTypeNames) {
@@ -342,7 +342,7 @@ class Typeson {
                         TypesonPromise
                     );
                     // Handle case where an embedded custom type itself
-                    //   returns a `Typeson.Promise`
+                    //   returns a `TypesonPromise`
                     if (keyPath && isTypesonPromise) {
                         const encaps2 = await encaps.p;
                         parentObj[key] = encaps2;
@@ -353,7 +353,7 @@ class Typeson {
                     } else if (isTypesonPromise) {
                         ret = encaps.p;
                     } else {
-                        // If this is itself a `Typeson.Promise` (because the
+                        // If this is itself a `TypesonPromise` (because the
                         //   original value supplied was a `Promise` or
                         //   because the supplied custom type value resolved
                         //   to one), returning it below will be fine since
@@ -422,7 +422,7 @@ class Typeson {
             const runObserver = encapsulateObserver
                 ? function (obj) {
                     const type = detectedType || stateObj.type || (
-                        Typeson.getJSONType(value)
+                        getJSONType(value)
                     );
                     encapsulateObserver(Object.assign(obj || observerData, {
                         keypath,
@@ -1168,7 +1168,7 @@ class Typeson {
                         '# cannot be used as a type name as it is reserved ' +
                         'for cyclic objects'
                     );
-                } else if (Typeson.JSON_TYPES.includes(typeId)) {
+                } else if (JSON_TYPES.includes(typeId)) {
                     throw new TypeError(
                         'Plain JSON object types are reserved as type names'
                     );
@@ -1257,26 +1257,13 @@ Undefined.__typeson__type__ = 'TypesonUndefined';
 
 // The following provide classes meant to avoid clashes with other values
 
-// To insist `undefined` should be added
-Typeson.Undefined = Undefined;
-// To support async encapsulation/stringification
-Typeson.Promise = TypesonPromise;
+// Typeson.Undefined is to insist `undefined` should be added
+// TypesonPromise is to support async encapsulation/stringification
+// Others include some fundamental type-checking utilities
 
-// Some fundamental type-checking utilities
-Typeson.isThenable = isThenable;
-Typeson.toStringTag = toStringTag;
-Typeson.hasConstructorOf = hasConstructorOf;
-Typeson.isObject = isObject;
-Typeson.isPlainObject = isPlainObject;
-Typeson.isUserObject = isUserObject;
-
-Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
-Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
-Typeson.getByKeyPath = getByKeyPath;
-Typeson.setAtKeyPath = setAtKeyPath;
-Typeson.getJSONType = getJSONType;
-Typeson.JSON_TYPES = [
+const JSON_TYPES = [
     'null', 'boolean', 'number', 'string', 'array', 'object'
 ];
 
-export default Typeson;
+export * from './utils/classMethods.js';
+export {Typeson, TypesonPromise, Undefined, JSON_TYPES};
