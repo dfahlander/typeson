@@ -4,8 +4,9 @@
 
 ### User-facing
 
-- Enhancement: ESM
-- Enhancement: Expose `Typeson.setAtKeyPath`
+- BREAKING feat: move to named exports
+- BREAKING feat: Offer ESM (breaks some paths and adds `exports`)
+- feat: Expose `Typeson.setAtKeyPath`
 
 ### Dev-facing
 

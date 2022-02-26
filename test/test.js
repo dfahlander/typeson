@@ -2713,14 +2713,20 @@ describe('hasConstructorOf', () => {
             'another when stringified'
         );
 
-        class Undefined {}
-        Undefined.__typeson__type__ = 'TypesonUndefined';
-        const undef = new Undefined();
+        const U = class Undefined {};
+        U.__typeson__type__ = 'TypesonUndefined';
+        const undef = new U();
 
         assert(
             hasConstructorOf(undef, Undefined),
             'Instance of Undefined has constructor identical ' +
                 'to Undefined despite inconsistent stringification'
+        );
+
+        const un = new Undefined();
+
+        assert(
+            hasConstructorOf(un, Undefined)
         );
     });
 });

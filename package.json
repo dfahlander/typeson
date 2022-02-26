@@ -3,14 +3,14 @@
   "version": "7.0.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.min.cjs",
-  "browser": "./dist/typeson.cjs",
-  "module": "./dist/typeson-esm.js",
+  "browser": "./dist/typeson.umd.js",
+  "module": "./dist/typeson.esm.js",
   "type": "module",
   "exports": {
     ".": {
-      "browser": "./dist/typeson.cjs",
-      "import": "./dist/typeson-esm.js",
-      "require": "./dist/typeson-commonjs2.min.cjs"
+      "browser": "./dist/typeson.umd.min.js",
+      "import": "./dist/typeson.esm.min.js",
+      "require": "./dist/typeson.umd.min.js"
     }
   },
   "scripts": {
