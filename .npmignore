@@ -6,3 +6,5 @@ test/
 !LICENSE-MIT.txt
 /ignore
 coverage
+utils
+typeson.js
