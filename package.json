@@ -8,9 +8,9 @@
   "type": "module",
   "exports": {
     ".": {
-      "browser": "./dist/typeson.umd.min.js",
       "import": "./dist/typeson.esm.min.js",
-      "require": "./dist/typeson.umd.min.js"
+      "require": "./dist/typeson.umd.min.js",
+      "browser": "./dist/typeson.umd.min.js"
     }
   },
   "scripts": {
@@ -59,16 +59,16 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.17.4",
+    "@babel/core": "^7.17.5",
     "@babel/preset-env": "^7.16.11",
     "@brettz9/eslint-plugin": "^1.0.4",
-    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-babel": "^5.3.1",
     "babel-plugin-transform-async-to-promises": "^0.8.18",
     "base64-arraybuffer-es6": "^1.0.0",
     "c8": "^7.11.0",
     "chai": "^4.3.6",
-    "eslint": "^8.9.0",
-    "eslint-config-ash-nazg": "32.4.0",
+    "eslint": "^8.10.0",
+    "eslint-config-ash-nazg": "32.5.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-array-func": "^3.1.7",
     "eslint-plugin-chai-expect": "^3.0.0",
@@ -77,19 +77,19 @@
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-html": "^6.2.0",
     "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-jsdoc": "^37.9.2",
+    "eslint-plugin-jsdoc": "^37.9.6",
     "eslint-plugin-markdown": "^2.2.1",
     "eslint-plugin-no-unsanitized": "^4.0.1",
     "eslint-plugin-no-use-extend-native": "^0.5.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.0.0",
-    "eslint-plugin-sonarjs": "^0.11.0",
+    "eslint-plugin-sonarjs": "^0.12.0",
     "eslint-plugin-standard": "^4.1.0",
     "eslint-plugin-unicorn": "^41.0.0",
     "http-server": "^14.1.0",
-    "mocha": "^9.2.0",
+    "mocha": "^9.2.1",
     "open-cli": "^7.0.1",
-    "rollup": "2.67.2",
+    "rollup": "2.69.0",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-terser": "^7.0.2"
   },

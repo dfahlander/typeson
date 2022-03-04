@@ -1,5 +1,15 @@
 # typeson CHANGES
 
+## 7.0.1
+
+### User-facing
+
+- fix: Set (UMD) `browser` export after `import`/`require`
+
+### Dev-facing
+
+- chore: update devDeps.
+
 ## 7.0.0
 
 ### User-facing
