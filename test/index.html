@@ -21,8 +21,9 @@
         window.assert = chai.assert;
         mocha.setup({ui: 'bdd', timeout: 5000});
         </script>
-        <script type="module" src="./test.js"></script>
         <script type="module">
+        import './test.js';
+
         mocha.run();
         </script>
     </body>
