@@ -17,7 +17,11 @@ function getRollupObject ({minifying, format = 'umd'} = {}) {
     const nonMinified = {
         input: 'typeson.js',
         output: {
-            file: `dist/typeson.${format}${minifying ? '.min' : ''}.js`,
+            file: `dist/typeson${
+                format === 'cjs' ? '' : `.${format}`
+            }${minifying ? '.min' : ''}.${
+                format === 'cjs' ? 'c' : ''
+            }js`,
             format,
             name: 'Typeson'
         },
@@ -44,6 +48,7 @@ function getRollupObject ({minifying, format = 'umd'} = {}) {
 export default [
     getRollupObject({minifying: true, format: 'umd'}),
     getRollupObject({minifying: false, format: 'umd'}),
+    getRollupObject({minifying: false, format: 'cjs'}),
     getRollupObject({minifying: true, format: 'esm'}),
     getRollupObject({minifying: false, format: 'esm'})
 ];

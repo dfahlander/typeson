@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 7.0.2
+
+- fix: CJS export
+
 ## 7.0.1
 
 ### User-facing
