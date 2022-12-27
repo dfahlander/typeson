@@ -608,11 +608,9 @@ const typeson = new Typeson({sync: false}).register({
 
 const mya = new MyAsync(500);
 
-(async () => {
 const result = await typeson.stringify(mya);
 const back = typeson.parse(result, null, {sync: true});
 console.log(back.prop); // 500
-})();
 ```
 
 ### Other exported methods

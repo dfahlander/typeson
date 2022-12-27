@@ -2,6 +2,9 @@
 
 module.exports = {
     extends: 'ash-nazg/sauron-node-overrides',
+    parserOptions: {
+        ecmaVersion: 2022
+    },
     settings: {
         polyfills: [
             'Array.from',
@@ -40,13 +43,13 @@ module.exports = {
                 'import/no-extraneous-dependencies': 'off',
                 'global-require': 'off',
                 'no-restricted-syntax': ['off'],
-                'node/no-missing-import': ['off'],
+                'n/no-missing-import': ['off'],
                 'no-multi-spaces': 'off',
                 'jsdoc/require-jsdoc': 'off',
                 'no-unused-vars': ['error', {
                     varsIgnorePattern: '^(typeson|myTypeson|objs|revived|obj)$'
                 }],
-                'node/global-require': 'off',
+                'n/global-require': 'off',
                 // Disable until may fix https://github.com/gajus/eslint-plugin-jsdoc/issues/211
                 indent: 'off'
             }
@@ -68,13 +71,14 @@ module.exports = {
     rules: {
         // Disable for now
         'eslint-comments/require-description': 0,
+        'jsdoc/check-types': 0,
 
         indent: ['error', 4, {outerIIFEBody: 0}],
         'unicorn/consistent-destructuring': 0,
         'promise/prefer-await-to-then': 0,
         'promise/prefer-await-to-callbacks': 0,
-        'node/no-unsupported-features/es-builtins': 0,
-        'node/no-unsupported-features/es-syntax': 0,
+        'n/no-unsupported-features/es-builtins': 0,
+        'n/no-unsupported-features/es-syntax': 0,
         'jsdoc/check-values': ['error', {allowedLicenses: true}],
 
         'unicorn/no-this-assignment': 0,

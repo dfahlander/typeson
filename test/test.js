@@ -2033,7 +2033,7 @@ describe('Typeson', function () {
 
             const mya = new MyAsync(500);
             assert.throws(() => {
-                // eslint-disable-next-line node/no-sync
+                // eslint-disable-next-line n/no-sync
                 typeson.encapsulateSync(mya);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2061,10 +2061,10 @@ describe('Typeson', function () {
             });
 
             const mya = new MyAsync(500);
-            // eslint-disable-next-line node/no-sync
+            // eslint-disable-next-line n/no-sync
             const smya = typeson.stringifySync(mya);
             assert.throws(() => {
-                // eslint-disable-next-line node/no-sync
+                // eslint-disable-next-line n/no-sync
                 typeson.parseSync(smya);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2116,7 +2116,7 @@ describe('Typeson', function () {
 
             const mya = new MyAsync(500);
             assert.throws(() => {
-                // eslint-disable-next-line node/no-sync
+                // eslint-disable-next-line n/no-sync
                 typeson.stringifySync(mya);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2172,7 +2172,7 @@ describe('Typeson', function () {
             const mya = new MyAsync(500);
             const encapsAsync = await typeson.encapsulateAsync(mya);
             assert.throws(() => {
-                // eslint-disable-next-line node/no-sync
+                // eslint-disable-next-line n/no-sync
                 typeson.reviveSync(encapsAsync);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2207,7 +2207,7 @@ describe('Typeson', function () {
 
                 const mya = new MyAsync(500);
                 const encapsAsync = await typeson.encapsulateAsync(mya);
-                // eslint-disable-next-line node/no-sync
+                // eslint-disable-next-line n/no-sync
                 const revivedAsync = typeson.reviveSync(encapsAsync);
                 assert(revivedAsync === 500);
             }
@@ -2236,7 +2236,7 @@ describe('Typeson', function () {
             });
 
             const mys = new MySync(500);
-            // eslint-disable-next-line node/no-sync
+            // eslint-disable-next-line n/no-sync
             const encapsSync = typeson.encapsulateSync(mys);
             assert.throws(() => {
                 typeson.reviveAsync(encapsSync);
@@ -2266,7 +2266,7 @@ describe('Typeson', function () {
             });
 
             const mys = new MySync(500);
-            // eslint-disable-next-line node/no-sync
+            // eslint-disable-next-line n/no-sync
             const stringSync = typeson.stringifySync(mys);
             assert.throws(() => {
                 typeson.parseAsync(stringSync);
@@ -2293,7 +2293,7 @@ describe('Typeson', function () {
                 });
 
                 const mys = {prop: 500};
-                // eslint-disable-next-line node/no-sync
+                // eslint-disable-next-line n/no-sync
                 const encapsSync = typeson.encapsulateSync(mys);
                 assert.throws(
                     () => {
@@ -2324,7 +2324,7 @@ describe('Typeson', function () {
             });
 
             const mys = new MySync(500);
-            // eslint-disable-next-line node/no-sync
+            // eslint-disable-next-line n/no-sync
             const encapsSync = typeson.encapsulateSync(mys);
             assert.throws(() => {
                 typeson.reviveAsync(encapsSync);
@@ -2978,10 +2978,10 @@ describe('TypesonPromise', function () {
                     'Should work with Promise.all'
                 );
             }).then(function () {
-                // eslint-disable-next-line promise/no-nesting
                 return TypesonPromise.race(
                     makePromises()
-                // eslint-disable-next-line promise/always-return
+                // eslint-disable-next-line max-len -- Long
+                // eslint-disable-next-line promise/always-return, promise/no-nesting
                 ).then(function (results) {
                     assert(
                         results === 400,
@@ -2989,7 +2989,6 @@ describe('TypesonPromise', function () {
                     );
                 });
             }).then(function () {
-                // eslint-disable-next-line promise/no-nesting
                 return TypesonPromise.allSettled([
                     ...makePromises(),
                     new TypesonPromise(function (res, rej) {
@@ -2997,6 +2996,7 @@ describe('TypesonPromise', function () {
                             rej('foo');
                         }, 10);
                     })
+                // eslint-disable-next-line promise/no-nesting
                 ]).then(function (results) {
                     assert(
                         // eslint-disable-next-line promise/always-return

@@ -394,7 +394,7 @@ class Typeson {
                 delete stateObj[prop];
                 return tmp;
             });
-            // eslint-disable-next-line node/callback-return
+            // eslint-disable-next-line n/callback-return
             cb();
             internalStateObjPropsToIgnore.forEach((prop, i) => {
                 stateObj[prop] = vals[i];
