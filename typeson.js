@@ -259,6 +259,8 @@ class Typeson {
         opts = {sync: true, ...this.options, ...opts};
         const {sync} = opts;
 
+        let insert$ = false;
+
         const that = this,
             types = {},
             refObjs = [], // For checking cyclic references
@@ -270,7 +272,7 @@ class Typeson {
         const cyclic = 'cyclic' in opts ? opts.cyclic : true;
         const {encapsulateObserver} = opts;
         const ret = _encapsulate(
-            '', obj, cyclic, stateObj || {},
+            null, obj, cyclic, stateObj || {},
             promisesDataRoot
         );
 
@@ -296,7 +298,7 @@ class Typeson {
 
                 // Special if array (or a primitive) was serialized
                 //   because JSON would ignore custom `$types` prop on it
-                if (!ret || !isPlainObject(ret) ||
+                if (insert$ || !ret || !isPlainObject(ret) ||
                     // Also need to handle if this is an object with its
                     //   own `$types` property (to avoid ambiguity)
                     hasOwn.call(ret, '$types')
@@ -403,7 +405,7 @@ class Typeson {
 
         /**
          *
-         * @param {string} keypath
+         * @param {string|null} keypath
          * @param {any} value
          * @param {boolean} cyclic
          * @param {PlainObject} stateObj
@@ -481,10 +483,10 @@ class Typeson {
                 if (refIndex < 0) {
                     if (cyclic === true) {
                         refObjs.push(value);
-                        refKeys.push(keypath);
+                        refKeys.push(keypath || '');
                     }
                 } else {
-                    types[keypath] = '#';
+                    types[keypath || ''] = '#';
                     if (runObserver) {
                         runObserver({
                             cyclicKeypath: refKeys[refIndex]
@@ -519,7 +521,7 @@ class Typeson {
                 observerData = {replaced};
             } else {
                 // eslint-disable-next-line no-lonely-if
-                if (keypath === '' &&
+                if (keypath === null &&
                     hasConstructorOf(value, TypesonPromise)
                 ) {
                     promisesData.push([
@@ -574,7 +576,7 @@ class Typeson {
                         stateObj,
                         ownKeysObj,
                         () => {
-                            const kp = keypath + (keypath ? '.' : '') +
+                            const kp = (keypath || '') + (keypath ? '.' : '') +
                                 escapeKeyPathComponent(key);
                             const val = _encapsulate(
                                 kp, value[key], Boolean(cyclic), stateObj,
@@ -600,7 +602,7 @@ class Typeson {
                 //  all numeric indexes on sparse arrays when not wanted
                 //  or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
-                    const kp = keypath + (keypath ? '.' : '') +
+                    const kp = (keypath || '') + (keypath ? '.' : '') +
                         escapeKeyPathComponent(key);
                     const ownKeysObj = {ownKeys: true};
                     _adaptBuiltinStateObjectProperties(
@@ -634,7 +636,7 @@ class Typeson {
                 for (let i = 0; i < vl; i++) {
                     if (!(i in value)) {
                         // No need to escape numeric
-                        const kp = keypath + (keypath ? '.' : '') + i;
+                        const kp = (keypath || '') + (keypath ? '.' : '') + i;
 
                         const ownKeysObj = {ownKeys: false};
                         _adaptBuiltinStateObjectProperties(
@@ -700,7 +702,7 @@ class Typeson {
 
         /**
          *
-         * @param {string} keypath
+         * @param {string|null} keypath
          * @param {any} value
          * @param {PlainObject} stateObj
          * @param {GenericArray} promisesData
@@ -729,10 +731,13 @@ class Typeson {
                         // For example, ensuring deep cloning of the object,
                         //   or replacing a type to its equivalent without
                         //   the need to revive it.
-                        const existing = types[keypath];
+                        if (keypath === null) {
+                            insert$ = true;
+                        }
+                        const existing = types[keypath || ''];
                         // type can comprise an array of types (see test
                         //   "should support intermediate types")
-                        types[keypath] = existing
+                        types[keypath || ''] = existing
                             ? [type].concat(existing)
                             : type;
                     }
@@ -983,7 +988,7 @@ class Typeson {
         const revivalPromises = [];
         /**
          *
-         * @param {string} keypath
+         * @param {string|null} keypath
          * @param {any} value
          * @param {?(GenericArray|PlainObject)} target
          * @param {GenericArray|PlainObject} [clone]
@@ -994,7 +999,7 @@ class Typeson {
             if (ignore$Types && keypath === '$types') {
                 return undefined;
             }
-            const type = types[keypath];
+            const type = keypath === null ? null : types[keypath];
             const isArr = isArray(value);
             if (isArr || isPlainObject(value)) {
                 // eslint-disable-next-line unicorn/no-new-array -- Sparse
@@ -1002,7 +1007,7 @@ class Typeson {
                 // Iterate object or array
                 keys(value).forEach((k) => {
                     const val = _revive(
-                        keypath + (keypath ? '.' : '') +
+                        (keypath || '') + (keypath ? '.' : '') +
                             escapeKeyPathComponent(k),
                         value[k],
                         target || clone,
@@ -1082,7 +1087,7 @@ class Typeson {
                 return obj;
             });
         } else {
-            ret = _revive('', obj, null);
+            ret = _revive(!ignore$Types ? '' : null, obj, null);
             if (revivalPromises.length) {
                 // Ensure children resolved
                 ret = TypesonPromise.resolve(ret).then((r) => {
