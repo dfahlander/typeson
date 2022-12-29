@@ -18,8 +18,12 @@ const objs = [
   // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
   {foo: new Int8Array(3)},
   // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
-  new Date()
+  new Date(),
   // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format at root)
+  {$types: {}},
+  // {"$":{"$types":{}},"$types":true} (needs escaping)
+  {$types: {}, abc: new Date()}
+  // {"$":{"$types":{},"abc":1672338131954},"$types":{"$":{"abc":"Date"}}}
 ];
 ```
 
