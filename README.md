@@ -10,21 +10,52 @@ Preserves types over JSON, BSON or socket.io.
 const objs = [
   {foo: 'bar'},
   // {"foo":"bar"} (simple types gives plain JSON)
+
   {foo: new Date()},
   // {"foo":1464049031538, "$types":{"foo":"Date"}}
+
   {foo: new Set([new Date()])},
   // {"foo":[1464127925971], "$types":{"foo":"Set","foo.0":"Date"}}
+
   {foo: {sub: /bar/iu}},
   // {"foo":{"sub":{"source":"bar","flags":"i"}}, "$types":{"foo.sub":"RegExp"}}
+
   {foo: new Int8Array(3)},
   // {"foo":"AAAA", "$types":{"foo":"Int8Array"}}
+
   new Date(),
-  // {"$":1464128478593, "$types":{"$":{"":"Date"}}} (special format at root)
+  // {"$":1464128478593, "$types":{"$":{"":"Date"}}}
+  // Needs $ escaping for object at root and "" for whole object
+
   {$types: {}},
-  // {"$":{"$types":{}},"$types":true} (needs escaping)
-  {$types: {}, abc: new Date()}
+  // {"$":{"$types":{}},"$types":true}
+  // Needs $ escaping for special "$types"
+
+  {$types: {}, abc: new Date()},
   // {"$":{"$types":{},"abc":1672338131954},"$types":{"$":{"abc":"Date"}}}
+  // Needs $ escaping for special "$types"
+
+  {'': new Date(), "''": new Date()}
+  // {"":1672504445626,"''":1672504445626,"$types":{"''":"Date","''''":"Date"}}
+  // Needs escaping of empty string (as double astrophes) and escaping of double
+  //   apostrophes (doubled apostrophes)
 ];
+```
+
+Or a cyclic array:
+
+```js
+const arr = [];
+arr[0] = arr;
+// {"$":["#"],"$types":{"$":{"0":"#"}}}
+```
+
+Or a cyclic object:
+
+```js
+const obj = {};
+obj[''] = obj;
+// {"":"#","$types":{"''":"#"}}
 ```
 
 ## Why?

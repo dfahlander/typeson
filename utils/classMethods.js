@@ -110,7 +110,11 @@ function isObject (v) {
  * @returns {string}
  */
 function escapeKeyPathComponent (keyPathComponent) {
-    return keyPathComponent.replace(/~/gu, '~0').replace(/\./gu, '~1');
+    return keyPathComponent.replaceAll(
+        "''", "''''"
+    ).replace(
+        /^$/u, "''"
+    ).replace(/~/gu, '~0').replace(/\./gu, '~1');
 }
 
 /**
@@ -119,7 +123,11 @@ function escapeKeyPathComponent (keyPathComponent) {
  * @returns {string}
  */
 function unescapeKeyPathComponent (keyPathComponent) {
-    return keyPathComponent.replace(/~1/gu, '.').replace(/~0/gu, '~');
+    return keyPathComponent.replace(/~1/gu, '.').replace(/~0/gu, '~').replace(
+        /^''$/u, ''
+    ).replaceAll(
+        "''''", "''"
+    );
 }
 
 /**

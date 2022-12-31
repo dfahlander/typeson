@@ -963,6 +963,39 @@ describe('Typeson', function () {
         }
     );
 
+    it(
+        'should round-trip with empty-string keys; typeson-registry issue #25',
+        function () {
+            const res = roundtrip({
+                '': new Date(1672018152309)
+            });
+            assert(res[''] instanceof Date, 'instanceof Date');
+            assert(res[''].getTime() === 1672018152309, 'Correct time');
+
+            // Check emptpy-string escape sequence itself
+            const res2 = roundtrip({
+                "''": new Date(1672018152309)
+            });
+            assert(res2["''"] instanceof Date, 'instanceof Date');
+            assert(res2["''"].getTime() === 1672018152309, 'Correct time');
+
+            const typeson = new Typeson().register({
+                set: {
+                    test (x) { return toStringTag(x) === 'Set'; },
+                    replace (st) {
+                        return [...st.values()];
+                    },
+                    revive (values) { return new Set(values); }
+                }
+            });
+
+            const tson = typeson.stringify({'': new Set()});
+            const result = typeson.parse(tson);
+
+            assert(result[''] instanceof Set);
+        }
+    );
+
     describe('Type error checking', () => {
         it('disallows hash type', () => {
             assert.throws(
