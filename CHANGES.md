@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## 8.0.0
+
+- BREAKING fix: empty string components of key paths are now escaped (as `''`)
+    and `''` is escaped as `''''`
+
 ## 7.0.2
 
 - fix: CJS export
