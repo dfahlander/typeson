@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 8.0.1
+
+- fix: switch use of Node 14-unsupported `replaceAll`
+
 ## 8.0.0
 
 - BREAKING fix: empty string components of key paths are now escaped (as `''`)
