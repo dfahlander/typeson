@@ -16,6 +16,13 @@ function log (...args) {
     }
 }
 const typeson = new Typeson().register({
+    zero: [
+        (x) => x === 0,
+        (n) => ({
+            negative: Object.is(n, -0)
+        }),
+        (s) => (s.negative ? -0 : 0)
+    ],
     Date: [
         function (x) { return x instanceof Date; },
         function (date) { return date.getTime(); },
@@ -81,7 +88,8 @@ describe('Typeson', function () {
         const date = new Date();
         const input = {
             a: 'a', b: 2, c () {}, d: false, e: null,
-            f: Symbol('symbol'), g: [], h: date, i: /apa/gui
+            f: Symbol('symbol'), g: [], h: date, i: /apa/gui,
+            j: 0, k: -0
         };
         res = roundtrip(input);
         assert(res !== input, 'Object is a clone, not a reference');
@@ -100,6 +108,8 @@ describe('Typeson', function () {
             Object.keys(res.i).length === 0,
             'regex only treated as empty object by default'
         );
+        assert(Object.is(res.j, 0), 'Positive zero');
+        assert(Object.is(res.k, -0), 'Negative zero');
     });
     it('should resolve nested objects', () => {
         const input = {a: [{subA: 5}, [6, 7]], b: {subB: {c: 8}}};

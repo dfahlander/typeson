@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 8.0.2
+
+- fix: support distinguishing of +0 and -0
+
 ## 8.0.1
 
 - fix: switch use of Node 14-unsupported `replaceAll`

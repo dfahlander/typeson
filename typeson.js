@@ -443,9 +443,12 @@ class Typeson {
             )) {
                 if (value === undefined ||
                     (
+                        // Numbers that are not supported in JSON
                         Number.isNaN(value) ||
                             value === Number.NEGATIVE_INFINITY ||
-                            value === Number.POSITIVE_INFINITY
+                            value === Number.POSITIVE_INFINITY ||
+                            // This can be 0 or -0
+                            value === 0
                     )
                 ) {
                     ret = stateObj.replaced
