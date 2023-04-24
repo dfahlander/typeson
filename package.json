@@ -6,6 +6,7 @@
   "browser": "./dist/typeson.umd.js",
   "module": "./dist/typeson.esm.js",
   "type": "module",
+  "types": "./dist/typeson.d.ts",
   "exports": {
     ".": {
       "import": "./dist/typeson.esm.min.js",
@@ -14,17 +15,19 @@
     }
   },
   "scripts": {
+    "tsc": "tsc",
     "prepublishOnly": "pnpm i",
     "eslint": "eslint --ext js,md,html .",
     "lint": "npm run eslint --",
     "start": "http-server -p 8092",
     "rollup": "rollup -c",
+    "build": "npm run rollup && tsc -p tsconfig-build.json",
     "open-test": "open-cli http://localhost:8092/test/ && npm start",
-    "browser-test": "npm run rollup && npm run eslint && npm run open-test",
+    "browser-test": "npm run build && npm run eslint && npm run open-test",
     "open-coverage": "open-cli http://localhost:8092/coverage/ && npm start",
     "mocha": "mocha --require chai/register-assert.js --require chai/register-expect.js test/test.js",
     "mocha-cov": "rm -Rf node_modules/.cache && c8 --reporter=html --reporter=text npm run mocha",
-    "test": "npm run rollup && npm run eslint && npm run mocha-cov"
+    "test": "npm run build && npm run eslint && npm run mocha-cov"
   },
   "c8": {
     "exclude": [
@@ -55,17 +58,21 @@
   },
   "homepage": "https://github.com/dfahlander/typeson#readme",
   "engines": {
-    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+    "node": ">=16.0.0"
   },
-  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.21.4",
     "@babel/preset-env": "^7.21.4",
     "@brettz9/eslint-plugin": "^1.0.4",
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.1",
+    "@types/babel__core": "^7.20.0",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18.16.2",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
     "babel-plugin-transform-async-to-promises": "^0.8.18",
-    "base64-arraybuffer-es6": "^1.0.0",
+    "base64-arraybuffer-es6": "^2.0.1",
     "c8": "^7.13.0",
     "chai": "^4.3.7",
     "eslint": "^8.39.0",
@@ -78,7 +85,7 @@
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-html": "^7.1.0",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsdoc": "^43.0.7",
+    "eslint-plugin-jsdoc": "^43.1.1",
     "eslint-plugin-markdown": "^3.0.0",
     "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-no-unsanitized": "^4.0.2",
@@ -91,8 +98,9 @@
     "http-server": "^14.1.1",
     "mocha": "^10.2.0",
     "open-cli": "^7.2.0",
-    "rollup": "3.20.7",
-    "rollup-plugin-re": "^1.0.7"
+    "rollup": "3.21.0",
+    "rollup-plugin-re": "^1.0.7",
+    "typescript": "^5.0.4"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }

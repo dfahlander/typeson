@@ -1,16 +1,25 @@
-/* globals assert */
 /* eslint-disable no-console, no-restricted-syntax,
     jsdoc/require-jsdoc, no-empty-function, no-shadow */
 
+import {describe, it} from 'mocha';
+import {assert} from 'chai';
+import * as B64 from 'base64-arraybuffer-es6';
+
 import {
     Typeson, TypesonPromise, Undefined,
-    toStringTag, isThenable, isUserObject, hasConstructorOf
+    toStringTag, isThenable, isUserObject, hasConstructorOf,
+    getByKeyPath, setAtKeyPath
 } from '../typeson.js';
-import * as B64 from
-    '../node_modules/base64-arraybuffer-es6/dist/base64-arraybuffer-es.js';
 
 const debug = false;
+
+/**
+ * @param {...any} args
+ * @returns {void}
+ */
 function log (...args) {
+    // eslint-disable-next-line max-len -- Long
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Debugging
     if (debug) {
         console.log(...args);
     }
@@ -45,7 +54,7 @@ const typeson = new Typeson().register({
         function (n) {
             return Number.isNaN(n) ? 'NaN' : n > 0 ? 'Infinity' : '-Infinity';
         },
-        function (s) {
+        function (/** @type {string} */ s) {
             return {
                 NaN: Number.NaN,
                 Infinity: Number.POSITIVE_INFINITY,
@@ -75,10 +84,16 @@ const typeson = new Typeson().register({
 
 const globalTypeson = typeson;
 
+/**
+ * @param {any} x
+ * @returns {any}
+ */
 function roundtrip (x) {
-    const tson = typeson.stringify(x, null, 2);
+    /* eslint-disable n/no-sync -- Safety */
+    const tson = typeson.stringifySync(x, null, 2);
     log(tson);
-    return typeson.parse(tson);
+    return typeson.parseSync(tson);
+    /* eslint-enable n/no-sync -- Safety */
 }
 
 describe('Typeson', function () {
@@ -130,19 +145,29 @@ describe('Typeson', function () {
         const date = new Date();
         const tson = typeson.stringify(date, null, 2);
         log(tson);
-        const back = typeson.parse(tson);
+        const back = typeson.parse(/** @type {string} */ (tson));
         assert(
             back instanceof Date && back.toString() === date.toString(),
             'Date value'
         );
     });
     it('should support objects containing internally used properties', () => {
+        /**
+         * @param {any} data
+         * @param {(result: any) => void} cb
+         * @returns {void}
+         */
         function test (data, cb) {
             const tson = typeson.stringify(data, null, 2);
             log(tson);
-            const result = typeson.parse(tson);
+            const result = typeson.parse(/** @type {string} */ (tson));
             cb(result);
         }
+
+        /**
+         * @param {boolean} val
+         * @returns {void}
+         */
         function valSwitch (val) {
             test({$types: val}, function (result) {
                 assert(
@@ -216,6 +241,11 @@ describe('Typeson', function () {
                     'from original object without additions'
             );
         });
+
+        /**
+         * @param {boolean} val
+         * @returns {void}
+         */
         function valSwitch2 (val) {
             test({a: new Date(), $types: val}, function (result) {
                 assert(
@@ -386,6 +416,10 @@ describe('Typeson', function () {
         assert(res[2] === 3, 'Third item should be 3');
     });
     it('should support intermediate types', () => {
+        /**
+         * @param {Date} date
+         * @returns {void}
+         */
         function CustomDate (date) {
             this._date = date;
         }
@@ -402,7 +436,7 @@ describe('Typeson', function () {
         const input = new CustomDate(new Date());
         const tson = typeson.stringify(input);
         log(tson);
-        const back = typeson.parse(tson);
+        const back = typeson.parse(/** @type {string} */ (tson));
         assert(back instanceof CustomDate, 'Should get CustomDate back');
         assert(
             back._date.getTime() === date.getTime(),
@@ -411,6 +445,10 @@ describe('Typeson', function () {
     });
 
     it('should support intermediate types (async)', async () => {
+        /**
+         * @param {Date} date
+         * @returns {void}
+         */
         function CustomDate (date) {
             this._date = date;
         }
@@ -440,10 +478,14 @@ describe('Typeson', function () {
                         return x instanceof CustomDate;
                     },
                     replaceAsync (cd) {
-                        return cd._date;
+                        return new TypesonPromise((resolve, reject) => {
+                            resolve(cd._date);
+                        });
                     },
                     reviveAsync (date) {
-                        return new CustomDate(date);
+                        return new TypesonPromise((resolve, reject) => {
+                            resolve(new CustomDate(date));
+                        });
                     }
                 }
             });
@@ -460,6 +502,11 @@ describe('Typeson', function () {
     });
 
     it('should run replacers recursively', () => {
+        /**
+         * @param {Date} date
+         * @param {string} name
+         * @returns {void}
+         */
         function CustomDate (date, name) {
             this._date = date;
             this.name = name;
@@ -490,7 +537,7 @@ describe('Typeson', function () {
             });
         const tson = typeson.stringify(input, null, 2);
         log(tson);
-        const result = typeson.parse(tson);
+        const result = typeson.parse(/** @type {string} */ (tson));
         assert(result.name === 'Karl', 'Basic prop');
         assert(
             result.date instanceof CustomDate,
@@ -526,7 +573,7 @@ describe('Typeson', function () {
         });
         let tson = TSON.stringify(new Custom());
         log(tson);
-        let z = TSON.parse(tson);
+        let z = TSON.parse(/** @type {string} */ (tson));
         assert(
             z instanceof Custom && z.x === 'oops',
             'Custom type encapsulated in bool should work'
@@ -541,7 +588,7 @@ describe('Typeson', function () {
         });
         tson = TSON.stringify(new Custom());
         log(tson);
-        z = TSON.parse(tson);
+        z = TSON.parse(/** @type {string} */ (tson));
         assert(
             z instanceof Custom && z.x === 'oops',
             'Custom type encapsulated in bool should work'
@@ -556,7 +603,7 @@ describe('Typeson', function () {
         });
         tson = TSON.stringify(new Custom());
         log(tson);
-        z = TSON.parse(tson);
+        z = TSON.parse(/** @type {string} */ (tson));
         assert(
             z instanceof Custom && z.x === 'oops',
             'Custom type encapsulated in bool should work'
@@ -566,9 +613,15 @@ describe('Typeson', function () {
         'should be possible to encapsulate object with reserved `$types` ' +
         'property',
         () => {
-            function Custom (val, $types) {
-                this.val = val;
-                this.$types = $types;
+            class Custom {
+                /**
+                 * @param {string} val
+                 * @param {string} $types
+                 */
+                constructor (val, $types) {
+                    this.val = val;
+                    this.$types = $types;
+                }
             }
             const typeson = new Typeson().register({
                 Custom: [
@@ -581,7 +634,7 @@ describe('Typeson', function () {
 
             const tson = typeson.stringify(input);
             log(tson);
-            const x = typeson.parse(tson);
+            const x = typeson.parse(/** @type {string} */ (tson));
             assert(x instanceof Custom, 'Should get a Custom back');
             assert(x.val === 'bar', 'Should have correct val value');
             assert(x.$types === 'foo', 'Should have correct $types value');
@@ -601,7 +654,7 @@ describe('Typeson', function () {
         let a = new A(); // Encapsulated as is
         let tson = typeson.stringify(a);
         log(tson);
-        let back = typeson.parse(tson);
+        let back = typeson.parse(/** @type {string} */ (tson));
         assert(back === 'abcd', 'Should have executed `toJSON`');
 
         typeson = new Typeson();
@@ -611,7 +664,7 @@ describe('Typeson', function () {
         };
         tson = typeson.stringify(a);
         log(tson);
-        back = typeson.parse(tson);
+        back = typeson.parse(/** @type {string} */ (tson));
         assert(back === 'abcd', 'Should have executed `toJSON`');
     });
     it('should allow plain object replacements', () => {
@@ -637,7 +690,7 @@ describe('Typeson', function () {
 
         let tson = typeson.stringify(a);
         log(tson);
-        let back = typeson.parse(tson);
+        let back = typeson.parse(/** @type {string} */ (tson));
         assert(back.b === 5, 'Should have kept property');
         assert(
             back.nonenum === 100,
@@ -656,7 +709,7 @@ describe('Typeson', function () {
         });
         tson = typeson.stringify(x);
         log(tson);
-        back = typeson.parse(tson);
+        back = typeson.parse(/** @type {string} */ (tson));
         assert(back.b === 7, 'Should have kept property');
         assert(back.nonenum === 50, 'Should have kept non-enumerable property');
         assert(
@@ -668,9 +721,13 @@ describe('Typeson', function () {
     it('should allow forcing of async return', () => {
         const typeson = new Typeson({sync: false, throwOnBadSyncType: false});
         const x = 5;
-        return typeson.stringify(x).then(function (tson) {
+        return /** @type {Promise<string>} */ (
+            typeson.stringify(x)
+        ).then(function (tson) {
             log(tson);
-            const back = typeson.parse(tson);
+            const back = typeson.parse(/** @type {string} */ (tson));
+            return back;
+        }).then(function (back) {
             assert(
                 back === 5,
                 'Should allow async to be forced even without ' +
@@ -680,20 +737,50 @@ describe('Typeson', function () {
         });
     });
 
-    it('should transmit state through replacers and revivers', () => {
-        function ReplaceReviver (obj) {
-            Object.defineProperty(this, 'obj', {
-                enumerable: false,
-                value: obj
-            });
+    it('should throw on non-async forced async return', () => {
+        const typeson = new Typeson({sync: false, throwOnBadSyncType: true});
+        const x = 5;
+
+        // eslint-disable-next-line n/no-sync -- Testing
+        const tson = typeson.stringifySync(x);
+        try {
+            typeson.parse(/** @type {string} */ (tson));
+            assert(false);
+        } catch (err) {
+            assert(
+                /** @type {TypeError} */ (err).message ===
+                    'Async method requested but sync result obtained'
+            );
         }
-        ReplaceReviver.prototype[Symbol.toStringTag] = 'ReplaceReviver';
+    });
+
+    it('should transmit state through replacers and revivers', () => {
+        class ReplaceReviver {
+            /**
+             * @param {object} obj
+             */
+            constructor (obj) {
+                Object.defineProperty(this, 'obj', {
+                    enumerable: false,
+                    value: obj
+                });
+            }
+            [Symbol.toStringTag] = 'ReplaceReviver';
+        }
         const typeson = new Typeson().register({
             replaceReviveContainer: {
                 test (x) {
                     return toStringTag(x) === 'ReplaceReviver';
                 },
-                replace (b, stateObj) {
+                replace (
+                    b,
+                    /**
+                     * @type {import('../typeson.js').StateObject & {
+                     *   objs?: any[]
+                     * }}
+                     */
+                    stateObj
+                ) {
                     if (!stateObj.objs) {
                         stateObj.objs = [];
                     }
@@ -706,7 +793,15 @@ describe('Typeson', function () {
                         obj: b.obj
                     };
                 },
-                revive (o, stateObj) {
+                revive (
+                    o,
+                    /**
+                     * @type {import('../typeson.js').StateObject & {
+                    *   objs?: any[]
+                    * }}
+                    */
+                    stateObj
+                ) {
                     if (!stateObj.objs) {
                         stateObj.objs = [];
                     }
@@ -730,7 +825,7 @@ describe('Typeson', function () {
         const obj = {rr1, rr2, rr3, rrXYZ};
         const tson = typeson.stringify(obj);
         log(tson);
-        const back = typeson.parse(tson);
+        const back = typeson.parse(/** @type {string} */ (tson));
         assert(back.rr1.obj.value === 10, 'Should preserve value (rr1)');
         assert(back.rr2.obj.value === 353, 'Should preserve value (rr2)');
         assert(back.rr3.obj.value === 10, 'Should preserve value (rr3)');
@@ -762,6 +857,9 @@ describe('Typeson', function () {
                     return false;
                 },
                 revive (o) {
+                    /**
+                     * @type {{[key: string]: any}}
+                     */
                     const arr = [];
                     // No map here as may be a sparse array (including
                     //   with `length` set)
@@ -772,6 +870,10 @@ describe('Typeson', function () {
                 }
             }
         });
+
+        /**
+         * @type {{[key: string]: any}}
+         */
         const arr = Array.from({length: 10});
         arr[0] = 3;
         arr[2] = {arr};
@@ -789,7 +891,7 @@ describe('Typeson', function () {
         log('tson', tson);
         assert(endIterateIn, 'Observes `endIterateIn` state');
 
-        const back = typeson.parse(tson);
+        const back = typeson.parse(/** @type {string} */ (tson));
         log('back', back);
         assert(
             back[0] === 3 && back[3] === '4' && back[4] === 5,
@@ -832,6 +934,9 @@ describe('Typeson', function () {
                     return false;
                 },
                 revive (o) {
+                    /**
+                     * @type {{[key: string]: any}}
+                     */
                     const arr = [];
                     // No map here as may be a sparse array (including
                     //   with `length` set)
@@ -842,6 +947,7 @@ describe('Typeson', function () {
                 }
             }
         });
+
         const arr = Array.from({length: 10});
         arr[2] = {arr};
         arr[2].f = [[arr]];
@@ -871,7 +977,9 @@ describe('Typeson', function () {
         }
 
         `;
-        const back = typeson.parse(tsonStringifiedSomehowWithNestedTypesFirst);
+        const back = typeson.parse(/** @type {string} */ (
+            tsonStringifiedSomehowWithNestedTypesFirst
+        ));
         log('back', back);
         assert(
             Array.isArray(back[2].arr), 'Preserves cyclic array on object'
@@ -881,6 +989,9 @@ describe('Typeson', function () {
         );
     });
     it('should allow unknown string tags', () => {
+        /**
+         * @type {import('../typeson.js').TypeSpecSet}
+         */
         const map = {
             map: {
                 test (x) { return toStringTag(x) === 'Map'; },
@@ -898,7 +1009,7 @@ describe('Typeson', function () {
 
         const tson = typeson.stringify(a, null, 2);
         log('tson', tson);
-        const back = typeson.parse(tson);
+        const back = typeson.parse(/** @type {string} */ (tson));
 
         assert(
             back.__raw_map instanceof Map,
@@ -913,6 +1024,9 @@ describe('Typeson', function () {
     });
 
     it('should throw upon attempt to parse type that is not registered', () => {
+        /**
+         * @type {import('../typeson.js').TypeSpecSet}
+         */
         const map = {
             map: {
                 test (x) { return toStringTag(x) === 'Map'; },
@@ -934,7 +1048,7 @@ describe('Typeson', function () {
 
         assert.throws(
             () => {
-                newTypeson.parse(tson);
+                newTypeson.parse(/** @type {string} */ (tson));
             },
             Error,
             'Unregistered type: map',
@@ -964,7 +1078,7 @@ describe('Typeson', function () {
 
             assert.throws(
                 () => {
-                    newTypeson.parse(tson);
+                    newTypeson.parse(/** @type {string} */ (tson));
                 },
                 Error,
                 'Unregistered type: mySyncType',
@@ -1000,24 +1114,97 @@ describe('Typeson', function () {
             });
 
             const tson = typeson.stringify({'': new Set()});
-            const result = typeson.parse(tson);
+            const result = typeson.parse(/** @type {string} */ (tson));
 
             assert(result[''] instanceof Set);
         }
     );
+
+    it('should throw with bad $types revival', function () {
+        const typeson = new Typeson().register({
+            Date: {
+                test (x) { return x instanceof Date; },
+                replace (date) { return date.getTime(); },
+                revive (time) { return new Date(time); }
+            }
+        });
+        // const date = new Date();
+        // // eslint-disable-next-line n/no-sync -- Testing
+        // const tson = typeson.stringifySync(date, null, 2);
+        // log(tson);
+        try {
+            typeson.revive({
+                $: 1682622573995,
+                $types: {
+                    $: {
+                        '': 250
+                    }
+                }
+            });
+            assert(false, 'Should not pass revival');
+        } catch (err) {
+            assert(/** @type {TypeError} */ (err).message === 'Bad type JSON');
+        }
+    });
+
+    it('should throw with missing reviver', async () => {
+        class MyAsync {
+            /**
+             * @param {number} prop
+             */
+            constructor (prop) {
+                this.prop = prop;
+            }
+        }
+
+        const typeson = new Typeson().register({
+            myAsyncType: {
+                test (x) { return x instanceof MyAsync; },
+                replaceAsync (o) {
+                    return new TypesonPromise((resolve, reject) => {
+                        // Do something more useful in real code
+                        setTimeout(() => {
+                            resolve(o.prop);
+                        }, 800);
+                    });
+                },
+                reviveAsync (data) {
+                    // Do something more useful in real code
+                    return new TypesonPromise((resolve, reject) => {
+                        resolve(new MyAsync(data));
+                    });
+                }
+            }
+        });
+
+        delete /** @type {[import('../typeson.js').ReviverObject, {}]} */ (
+            typeson.revivers.myAsyncType
+        )[0].reviveAsync;
+
+        try {
+            await typeson.reviveAsync(
+                {$: 500, $types: {$: {'': 'myAsyncType'}}}
+            );
+            assert(false);
+        } catch (err) {
+            assert(/** @type {Error} */ (err).message === 'Missing reviver');
+        }
+    });
 
     describe('Type error checking', () => {
         it('disallows hash type', () => {
             assert.throws(
                 () => {
                     new Typeson().register({'#': [
-                        function () {}, function () {}, function () {}
+                        function () {
+                            return true;
+                        }, function () {}, function () {}
                     ]});
                 },
                 TypeError,
                 '# cannot be used as a type name as it is reserved ' +
                     'for cyclic objects',
-                'Should throw on attempting to register the ' +
+                'should throw on attempting to register the ' +
                     "reserved 'type', '#'"
             );
         });
@@ -1028,7 +1215,9 @@ describe('Typeson', function () {
                 let caught = false;
                 try {
                     new Typeson().register({
-                        [type]: [function () {}, function () {}, function () {}]
+                        [type]: [function () {
+                            return true;
+                        }, function () {}, function () {}]
                     });
                 } catch (err) {
                     caught = true;
@@ -1045,6 +1234,14 @@ describe('Typeson', function () {
 
     describe('Cyclics', () => {
         it('should resolve cyclics', () => {
+            /**
+             * @type {{list: {
+             *   name: string,
+             *   parent: object[],
+             *   root: object,
+             *   children: object
+             * }[]}}
+             */
             const data = {list: []};
             for (let i = 0; i < 10; ++i) {
                 data.list.push({
@@ -1058,7 +1255,7 @@ describe('Typeson', function () {
 
             const tson = typeson.stringify(data, null, 2);
             log(tson);
-            const result = typeson.parse(tson);
+            const result = typeson.parse(/** @type {string} */ (tson));
 
             assert(
                 result.list.length === 10,
@@ -1076,15 +1273,15 @@ describe('Typeson', function () {
         it('should resolve cyclics 2', () => {
             const kalle = {name: 'Kalle', age: 33};
             const input = [kalle, kalle, kalle];
-            const tson = typeson.stringify(input);
-            log(tson.match(/Kalle/gu).length);
+            const tson = /** @type {string} */ (typeson.stringify(input));
+            log(tson.match(/Kalle/gu)?.length);
             log(tson);
             assert(
-                tson.match(/Kalle/gu).length === 1,
+                tson.match(/Kalle/gu)?.length === 1,
                 "TSON should only contain one 'Kalle'. The others should " +
                     'just reference the first'
             );
-            const result = typeson.parse(tson);
+            const result = typeson.parse(/** @type {string} */ (tson));
             assert(
                 result[0] === result[1] && result[1] === result[2],
                 'The resulting object should also just have references ' +
@@ -1092,16 +1289,22 @@ describe('Typeson', function () {
             );
         });
         it('should resolve cyclic arrays', () => {
+            /**
+             * @type {object[]}
+             */
             const recursive = [];
             recursive.push(recursive);
             let tson = typeson.stringify(recursive);
-            let result = typeson.parse(tson);
+            let result = typeson.parse(/** @type {string} */ (tson));
             assert(result === result[0], 'array directly contains self');
 
+            /**
+             * @type {object[]}
+             */
             const recursive2 = [];
             recursive2.push([recursive2]);
             tson = typeson.stringify(recursive2);
-            result = typeson.parse(tson);
+            result = typeson.parse(/** @type {string} */ (tson));
             assert(
                 result !== result[0] && result === result[0][0],
                 'array indirectly contains self'
@@ -1110,7 +1313,7 @@ describe('Typeson', function () {
             const recursive3 = [recursive];
             tson = typeson.stringify(recursive3);
             log(tson);
-            result = typeson.parse(tson);
+            result = typeson.parse(/** @type {string} */ (tson));
             assert(
                 result !== result[0] && result !== result[0][0] &&
                     result[0] === result[0][0],
@@ -1120,7 +1323,7 @@ describe('Typeson', function () {
             const recursive4 = [1, recursive];
             tson = typeson.stringify(recursive4);
             log(tson);
-            result = typeson.parse(tson);
+            result = typeson.parse(/** @type {string} */ (tson));
             assert(
                 result !== result[1] && result !== result[1][0] &&
                     result[1] === result[1][0],
@@ -1134,7 +1337,7 @@ describe('Typeson', function () {
             const recursiveContainer = {a: recursive};
             const tson = typeson.stringify(recursiveContainer);
             log(tson);
-            const result = typeson.parse(tson);
+            const result = typeson.parse(/** @type {string} */ (tson));
             assert(
                 result !== result.a && result !== result.b &&
                     result.a === result.a.b,
@@ -1163,7 +1366,7 @@ describe('Typeson', function () {
             };
             const tson = typeson.stringify(data, null, 2);
             log(tson);
-            const back = typeson.parse(tson);
+            const back = typeson.parse(/** @type {string} */ (tson));
             assert(
                 back.buf === back.bar.data.buffer,
                 'The buffers point to same object'
@@ -1176,13 +1379,17 @@ describe('Typeson', function () {
             'should support registering a class without replacer or ' +
             'reviver (by constructor/class)',
             () => {
-                function MyClass () {}
+                /** @type {{[key: string]: string}} */
+                class MyClass {
+                    hello = 'abc';
+                }
                 const TSON = new Typeson().register({MyClass});
+
                 const x = new MyClass();
                 x.hello = 'world';
                 const tson = TSON.stringify(x);
                 log(tson);
-                const back = TSON.parse(tson);
+                const back = TSON.parse(/** @type {string} */ (tson));
                 assert(
                     back instanceof MyClass,
                     'Should revive to a MyClass instance.'
@@ -1200,7 +1407,9 @@ describe('Typeson', function () {
                 let typeDetected;
                 const TSON = new Typeson({
                     encapsulateObserver (o) {
-                        if (o.typeDetected) {
+                        if (
+                            o.typeDetected
+                        ) {
                             typeDetected = true;
                         }
                     }
@@ -1219,7 +1428,7 @@ describe('Typeson', function () {
             }
         );
         it('should execute replacers in proper order', () => {
-            function Person () {}
+            class Person {}
             const john = new Person();
             const typeson = new Typeson().register([
                 {specificClassFinder: [
@@ -1229,7 +1438,9 @@ describe('Typeson', function () {
                     (x) => x && typeof x === 'object', () => 'general found'
                 ]}
             ]);
-            const clonedData = typeson.parse(typeson.stringify(john));
+            const clonedData = typeson.parse(/** @type {string} */ (
+                typeson.stringify(john)
+            ));
             assert(
                 clonedData === 'general found',
                 'Should execute replacers in proper order'
@@ -1237,7 +1448,7 @@ describe('Typeson', function () {
         });
 
         it('should execute replacers with `fallback` in proper order', () => {
-            function Person () {}
+            class Person {}
             const john = new Person();
             const typeson = new Typeson();
             typeson.register([
@@ -1253,7 +1464,9 @@ describe('Typeson', function () {
             ], {
                 fallback: 0
             });
-            const clonedData = typeson.parse(typeson.stringify(john));
+            const clonedData = typeson.parse(/** @type {string} */ (
+                typeson.stringify(john)
+            ));
             assert(
                 clonedData === 'specific found',
                 'Should execute replacers in proper order'
@@ -1261,7 +1474,7 @@ describe('Typeson', function () {
         });
 
         it('should execute replacers with `fallback` in proper order', () => {
-            function Person () {}
+            class Person {}
             const john = new Person();
             const typeson = new Typeson();
             typeson.register([
@@ -1277,7 +1490,9 @@ describe('Typeson', function () {
             ], {
                 fallback: true
             });
-            const clonedData = typeson.parse(typeson.stringify(john));
+            const clonedData = typeson.parse(/** @type {string} */ (
+                typeson.stringify(john)
+            ));
             assert(
                 clonedData === 'specific found',
                 'Should execute replacers in proper order'
@@ -1285,8 +1500,8 @@ describe('Typeson', function () {
         });
 
         it('should silently ignore nullish spec', () => {
-            function Person () {}
-            function Dog () {}
+            class Person {}
+            class Dog {}
             const john = new Person();
 
             const typeson = new Typeson();
@@ -1306,7 +1521,9 @@ describe('Typeson', function () {
                     ]
                 }
             ]);
-            const clonedData = typeson.parse(typeson.stringify(john));
+            const clonedData = typeson.parse(/** @type {string} */ (
+                typeson.stringify(john)
+            ));
             assert(
                 clonedData === 'person found',
                 'Should find item despite nullish specs'
@@ -1314,7 +1531,7 @@ describe('Typeson', function () {
         });
 
         it('should allow replacing previously registered replacer', () => {
-            function Person () {}
+            class Person {}
             const john = new Person();
             const typeson = new Typeson();
             typeson.register([
@@ -1327,7 +1544,9 @@ describe('Typeson', function () {
                     (x) => x instanceof Person, () => 'later found'
                 ]}]
             );
-            const clonedData = typeson.parse(typeson.stringify(john));
+            const clonedData = typeson.parse(/** @type {string} */ (
+                typeson.stringify(john)
+            ));
             assert(
                 clonedData === 'later found',
                 'Should replace previously registered replacer'
@@ -1335,7 +1554,7 @@ describe('Typeson', function () {
         });
 
         it('should allow removing previously registered replacer', () => {
-            function Person () {}
+            class Person {}
             const john = new Person();
             const typeson = new Typeson();
             typeson.register([
@@ -1449,6 +1668,13 @@ describe('Typeson', function () {
                 }
             })
                 .register(globalTypeson.types);
+            /**
+             * @type {{
+             *   time: Date,
+             *   vals: [null, undefined, number, string],
+             *   cyclicInput?: object
+             * }}
+             */
             const input = {
                 time: new Date(959000000000),
                 vals: [null, undefined, 5, 'str']
@@ -1463,6 +1689,7 @@ describe('Typeson', function () {
             );
         });
         it('encapsulateObserver should observe types', () => {
+            /** @type {string[]} */
             const actual = [];
             const expected = [
                 'object', 'Date', 'array', 'null',
@@ -1498,7 +1725,12 @@ describe('Typeson', function () {
         it('should run encapsulateObserver async', () => {
             let str = '';
             const placeholderText = '(Please wait for the value...)';
-            function APromiseUser (a) { this.a = a; }
+            class APromiseUser {
+                /**
+                 * @param {number} a
+                 */
+                constructor (a) { this.a = a; }
+            }
             const typeson = new Typeson({
                 encapsulateObserver (o) {
                     if (o.typeDetected || o.replacing) {
@@ -1540,7 +1772,9 @@ describe('Typeson', function () {
 
             const prom = typeson.encapsulateAsync(input).then(
                 function (encaps) {
-                    const back = typeson.parse(JSON.stringify(encaps));
+                    const back = typeson.parse(/** @type {string} */ (
+                        JSON.stringify(encaps)
+                    ));
                     assert(
                         back[0] === input[0] &&
                         back[2] === input[2] &&
@@ -1571,16 +1805,34 @@ describe('Typeson', function () {
 
     describe('Iteration', function () {
         it('should allow `iterateIn`', () => {
-            function A (a) {
-                this.a = a;
-            }
-            function createExtendingClass (a) {
-                function B (b, isArr) {
-                    this[3] = 4;
-                    this.b = b;
-                    this.isArr = isArr;
+            class A {
+                /** @type {any} */
+                isArr;
+                /**
+                 * @param {number} a
+                 */
+                constructor (a) {
+                    this.a = a;
                 }
-                B.prototype = new A(a);
+            }
+
+            /**
+             * @param {number} a
+             * @returns {new (b: number, isArr?: boolean) => B}
+             */
+            function createExtendingClass (a) {
+                class B extends A {
+                    /**
+                     * @param {number} b
+                     * @param {boolean} [isArr]
+                     */
+                    constructor (b, isArr) {
+                        super(a);
+                        this[3] = 4;
+                        this.b = b;
+                        this.isArr = isArr;
+                    }
+                }
                 return B;
             }
 
@@ -1601,7 +1853,7 @@ describe('Typeson', function () {
             let b = new B(7);
             let tson = typeson.stringify(b);
             log(tson);
-            let back = typeson.parse(tson);
+            let back = typeson.parse(/** @type {string} */ (tson));
             assert(!Array.isArray(back), 'Is not an array');
             assert(back[3] === 4, 'Has numeric property');
             assert(back.a === 5, "Got inherited 'a' property");
@@ -1610,7 +1862,7 @@ describe('Typeson', function () {
             b = new B(8, true);
             tson = typeson.stringify(b);
             log(tson);
-            back = typeson.parse(tson);
+            back = typeson.parse(/** @type {string} */ (tson));
             assert(Array.isArray(back), 'Is an array');
             assert(back[3] === 4, 'Has numeric property');
             assert(
@@ -1625,23 +1877,46 @@ describe('Typeson', function () {
 
         it('should allow `iterateIn` (async)', async function () {
             this.timeout(3000);
-            function A (a) {
-                this.a = a;
-            }
-            function createExtendingClass (a) {
-                function B (b, isArr) {
-                    this[3] = 4;
-                    this.b = b;
-                    this.c = new MyAsync('abc');
-                    this.e = new Undefined();
-                    this.isArr = isArr;
+            class A {
+                /** @type {any} */
+                isArr;
+                /**
+                 * @param {number} a
+                 */
+                constructor (a) {
+                    this.a = a;
                 }
-                B.prototype = new A(a);
+            }
+
+            /**
+             * @param {number} a
+             * @returns {new (b: number, isArr?: boolean) => B}
+             */
+            function createExtendingClass (a) {
+                class B extends A {
+                    /**
+                     * @param {number} b
+                     * @param {boolean} [isArr]
+                     */
+                    constructor (b, isArr) {
+                        super(a);
+                        this[3] = 4;
+                        this.b = b;
+                        this.c = new MyAsync('abc');
+                        this.e = new Undefined();
+                        this.isArr = isArr;
+                    }
+                }
                 return B;
             }
 
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {string} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
             const typeson = new Typeson().register([{
                 undef: {
@@ -1714,6 +1989,10 @@ describe('Typeson', function () {
             log(tson);
             let back = await typeson.parseAsync(tson);
             log('back', back);
+            if (!back || typeof back !== 'object') {
+                assert(false, 'Back result must not be null');
+                return;
+            }
             assert(!Array.isArray(back), 'Is not an array');
             assert(back[3] === 4, 'Has numeric property');
             assert(back.a === 5, "Got inherited 'a' property");
@@ -1746,6 +2025,9 @@ describe('Typeson', function () {
         });
 
         it('should allow `iterateUnsetNumeric`', () => {
+            /**
+             * @type {import('../typeson.js').Preset}
+             */
             const sparseUndefined = [
                 {
                     sparseArrays: {
@@ -1780,14 +2062,14 @@ describe('Typeson', function () {
 
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            let arr = [, 5, , , 6, ];
+            const arr = [, 5, , , 6, ];
             let tson = typeson.stringify(arr);
             log(tson);
             assert(
                 endIterateUnsetNumeric,
                 'Observer should get `endIterateUnsetNumeric`'
             );
-            let back = typeson.parse(tson);
+            let back = typeson.parse(/** @type {string} */ (tson));
             assert(!('0' in back), 'Undefined at index 0');
             assert(back[1] === 5 && back[4] === 6, 'Set values restored');
             assert(!('2' in back), 'Undefined at index 2');
@@ -1799,14 +2081,17 @@ describe('Typeson', function () {
             typeson = new Typeson().register([sparseUndefined]);
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            arr = {a: [, 5, , , 6, ]};
-            tson = typeson.stringify(arr);
+            const arr2 = {a: [, 5, , , 6, ]};
+            tson = typeson.stringify(arr2);
             log(tson);
-            back = typeson.parse(tson);
+            back = typeson.parse(/** @type {string} */ (tson));
             assert(!('0' in back.a), 'Undefined at index 0');
         });
 
         it('should allow `iterateUnsetNumeric` (storing `undefined`)', () => {
+            /**
+             * @type {import('../typeson.js').Preset}
+             */
             const sparseUndefined = [
                 {
                     sparseArrays: {
@@ -1841,14 +2126,14 @@ describe('Typeson', function () {
 
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            let arr = [, 5, , , 6, ];
+            const arr = [, 5, , , 6, ];
             let tson = typeson.stringify(arr);
             log(tson);
             assert(
                 endIterateUnsetNumeric,
                 'Observer should get `endIterateUnsetNumeric`'
             );
-            let back = typeson.parse(tson);
+            let back = typeson.parse(/** @type {string} */ (tson));
             assert(!('0' in back), 'Undefined at index 0');
             assert(back[1] === 5 && back[4] === 6, 'Set values restored');
             assert(!('2' in back), 'Undefined at index 2');
@@ -1860,14 +2145,15 @@ describe('Typeson', function () {
             typeson = new Typeson().register([sparseUndefined]);
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            arr = {a: [, 5, , , 6, ]};
-            tson = typeson.stringify(arr);
+            const arr2 = {a: [, 5, , , 6, ]};
+            tson = typeson.stringify(arr2);
             log(tson);
-            back = typeson.parse(tson);
+            back = typeson.parse(/** @type {string} */ (tson));
             assert(!('0' in back.a), 'Undefined at index 0');
         });
 
         it('should allow `iterateUnsetNumeric` (async)', async () => {
+            /** @type {import('../typeson.js').Preset} */
             const sparseUndefined = [
                 {
                     sparseArrays: {
@@ -1908,14 +2194,14 @@ describe('Typeson', function () {
 
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            let arr = [, 5, , , 6, ];
+            const arr = [, 5, , , 6, ];
             let tson = await typeson.stringifyAsync(arr);
             log(tson);
             assert(
                 endIterateUnsetNumeric,
                 'Observer should get `endIterateUnsetNumeric`'
             );
-            let back = typeson.parse(tson);
+            let back = typeson.parse(/** @type {string} */ (tson));
             assert(!('0' in back), 'Undefined at index 0');
             assert(back[1] === 5 && back[4] === 6, 'Set values restored');
             assert(!('2' in back), 'Undefined at index 2');
@@ -1927,18 +2213,23 @@ describe('Typeson', function () {
             typeson = new Typeson().register([sparseUndefined]);
             // eslint-disable-next-line max-len
             // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
-            arr = {a: [, 5, , , 6, ]};
-            tson = await typeson.stringifyAsync(arr);
+            const arr2 = {a: [, 5, , , 6, ]};
+            tson = await typeson.stringifyAsync(arr2);
             log(tson);
-            back = typeson.parse(tson);
+            back = typeson.parse(/** @type {string} */ (tson));
             assert(!('0' in back.a), 'Undefined at index 0');
         });
     });
 
     describe('Async vs. Sync', () => {
         it('async README example', () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson({sync: false}).register({
@@ -1959,7 +2250,9 @@ describe('Typeson', function () {
             });
 
             const mya = new MyAsync(500);
-            return typeson.stringify(mya).then(function (result) {
+            return /** @type {Promise<string>} */ (
+                typeson.stringify(mya)
+            ).then(function (result) {
                 const back = typeson.parse(result, null, {sync: true});
                 assert(
                     back.prop === 500,
@@ -1969,8 +2262,13 @@ describe('Typeson', function () {
             });
         });
         it('should work with stringifyAsync', () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2012,8 +2310,13 @@ describe('Typeson', function () {
         });
 
         it('should work with encapsulateAsync', () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2053,8 +2356,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with non-sync result to encapsulateSync', () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2082,8 +2390,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with non-sync result to parseSync', () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2113,8 +2426,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with sync result to encapsulateAsync', () => {
-            function MySync (prop) {
-                this.prop = prop;
+            class MySync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2136,8 +2454,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with non-sync result to stringifySync', () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2165,8 +2488,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with sync result to stringifyAsync', () => {
-            function MySync (prop) {
-                this.prop = prop;
+            class MySync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2188,8 +2516,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with non-sync result to reviveSync', async () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2224,8 +2557,13 @@ describe('Typeson', function () {
             'shouldn\'t run do revival with reviveAsync-only spec and ' +
             'reviveSync method',
             async () => {
-                function MyAsync (prop) {
-                    this.prop = prop;
+                class MyAsync {
+                    /**
+                     * @param {number} prop
+                     */
+                    constructor (prop) {
+                        this.prop = prop;
+                    }
                 }
 
                 const typeson = new Typeson().register({
@@ -2257,8 +2595,13 @@ describe('Typeson', function () {
         );
 
         it('should throw with sync result to reviveAsync', () => {
-            function MySync (prop) {
-                this.prop = prop;
+            class MySync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2271,6 +2614,7 @@ describe('Typeson', function () {
                         // Do something more useful in real code
                         return new MySync(data);
                     },
+                    /** @type {any} */
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
@@ -2287,8 +2631,13 @@ describe('Typeson', function () {
         });
 
         it('should throw with sync result to parseAsync', () => {
-            function MySync (prop) {
-                this.prop = prop;
+            class MySync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2301,6 +2650,7 @@ describe('Typeson', function () {
                         // Do something more useful in real code
                         return new MySync(data);
                     },
+                    /** @type {any} */
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
@@ -2376,8 +2726,13 @@ describe('Typeson', function () {
         */
 
         it('should revive with reviveAsync', async () => {
-            function MyAsync (prop) {
-                this.prop = prop;
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
             }
 
             const typeson = new Typeson().register({
@@ -2407,6 +2762,81 @@ describe('Typeson', function () {
             assert(back.prop === 500, 'Has same property value');
         });
 
+        it('should revive with reviveAsync (regular Promise)', async () => {
+            class MyAsync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
+            }
+
+            const typeson = new Typeson().register({
+                myAsyncType: {
+                    test (x) { return x instanceof MyAsync; },
+                    replaceAsync (o) {
+                        return new TypesonPromise((resolve, reject) => {
+                            // Do something more useful in real code
+                            setTimeout(() => {
+                                resolve(o.prop);
+                            }, 800);
+                        });
+                    },
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        // eslint-disable-next-line promise/avoid-new -- Testing
+                        return new Promise((resolve, reject) => {
+                            resolve(new MyAsync(data));
+                        });
+                    }
+                }
+            });
+
+            const mya = new MyAsync(500);
+            const encapsAsync = await typeson.encapsulateAsync(mya);
+            const back = await typeson.reviveAsync(encapsAsync);
+            assert(back instanceof MyAsync, 'Returns instance of MyAsync');
+            assert(back.prop === 500, 'Has same property value');
+        });
+
+        it('should not throw with sync result to reviveAsync', async () => {
+            class MySync {
+                /**
+                 * @param {number} prop
+                 */
+                constructor (prop) {
+                    this.prop = prop;
+                }
+            }
+
+            const typeson = new Typeson().register({
+                mySyncType: {
+                    test (x) { return x instanceof MySync; },
+                    replace (o) {
+                        return o.prop;
+                    },
+                    revive (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    },
+                    /** @type {any} */
+                    reviveAsync (data) {
+                        // Do something more useful in real code
+                        return new MySync(data);
+                    }
+                }
+            });
+
+            const mys = new MySync(500);
+            const encapsSync = typeson.encapsulate(mys);
+            const back = await typeson.reviveAsync(encapsSync, {
+                throwOnBadSyncType: false
+            });
+            assert(back instanceof MySync, 'Returns instance of MySync');
+            assert(back.prop === 500, 'Has same property value');
+        });
+
         it('should revive with reviveAsync (plain objects)', async () => {
             const typeson = new Typeson().register({
                 myAsyncType: {
@@ -2432,8 +2862,13 @@ describe('Typeson', function () {
             'should revive with nested async revive (plain with ' +
             'non-plain object)',
             async () => {
-                function MyAsync (prop) {
-                    this.prop = prop;
+                class MyAsync {
+                    /**
+                     * @param {number} prop
+                     */
+                    constructor (prop) {
+                        this.prop = prop;
+                    }
                 }
 
                 const typeson = new Typeson().register([{
@@ -2493,7 +2928,9 @@ describe('Typeson', function () {
                             return null;
                         },
                         reviveAsync () {
-                            return new Undefined();
+                            return new TypesonPromise((resolve) => {
+                                resolve(new Undefined());
+                            });
                         }
                     }
                 }, {
@@ -2554,8 +2991,13 @@ describe('Typeson', function () {
         it(
             'should revive with reviveAsync with only revive on spec',
             async () => {
-                function MyAsync (prop) {
-                    this.prop = prop;
+                class MyAsync {
+                    /**
+                     * @param {number} prop
+                     */
+                    constructor (prop) {
+                        this.prop = prop;
+                    }
                 }
 
                 const typeson = new Typeson().register({
@@ -2632,7 +3074,9 @@ describe('Typeson', function () {
                         },
                         reviveAsync (data) {
                             // Do something more useful in real code
-                            return Promise.resolve(5);
+                            return new TypesonPromise((resolve) => {
+                                resolve(Promise.resolve(5));
+                            });
                         }
                     }
                 });
@@ -2663,7 +3107,9 @@ describe('Typeson', function () {
                         },
                         reviveAsync (data) {
                             // Do something more useful in real code
-                            return 5;
+                            return new TypesonPromise((resolve) => {
+                                resolve(5);
+                            });
                         }
                     }
                 });
@@ -2698,6 +3144,7 @@ describe('isThenable', () => {
 describe('isUserObject', () => {
     it('should detect non-user objects', () => {
         const a = null;
+        /** @type {never[]} */
         const b = [];
         const c = /test/u;
 
@@ -2732,7 +3179,8 @@ describe('hasConstructorOf', () => {
         'should detect whether an object has a "null" constructor ' +
         '(i.e., `null` prototype)',
         () => {
-            function B () {}
+            /** @type {any} */
+            const B = function B () {};
             const a = Object.create(null);
             assert(
                 hasConstructorOf(a, null),
@@ -2749,7 +3197,8 @@ describe('hasConstructorOf', () => {
     );
     it('should detect whether an object is of a particular constructor', () => {
         const d = function () { /* Twin */ };
-        const e = new function () { /* Twin */ }();
+        // eslint-disable-next-line no-extra-parens
+        const e = new /** @type {any} */ (function () { /* Twin */ })();
         assert(
             hasConstructorOf(e, d),
             'Object has constructor that is identical to ' +
@@ -2787,7 +3236,7 @@ describe('Typeson.prototype.specialTypeNames', () => {
             5, new Date(), 'str', new Date()
         ]);
         assert(
-            typeNames.length === 1 && typeNames[0] === 'Date',
+            typeNames && typeNames.length === 1 && typeNames[0] === 'Date',
             'Should only return (unique) special type names'
         );
     });
@@ -2873,7 +3322,12 @@ describe('TypesonPromise', function () {
         });
     });
     it('should allow single nested Promise resolution', () => {
-        function APromiseUser (a) { this.a = a; }
+        class APromiseUser {
+            /**
+             * @param {number} a
+             */
+            constructor (a) { this.a = a; }
+        }
         const typeson = new Typeson().register({
             Date: [
                 function (x) { return x instanceof Date; },
@@ -2931,7 +3385,12 @@ describe('TypesonPromise', function () {
         });
     });
     it('should allow nested Promise resolution', () => {
-        function APromiseUser (a) { this.a = a; }
+        class APromiseUser {
+            /**
+             * @param {number} a
+             */
+            constructor (a) { this.a = a; }
+        }
         const typeson = new Typeson().register({
             Date: [
                 function (x) { return x instanceof Date; },
@@ -3002,10 +3461,20 @@ describe('TypesonPromise', function () {
                 }, 50);
             });
             const y = TypesonPromise.resolve(400);
-            return [x, y];
+            // eslint-disable-next-line promise/avoid-new -- Testing
+            const z = new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(20);
+                }, 100);
+            });
+            return [x, y, z];
         }
-        // eslint-disable-next-line promise/avoid-new
-        return new Promise(function (resolve, reject) {
+        /* eslint-disable promise/avoid-new -- Testing */
+        return new Promise(function (
+            /** @type {(value?: any) => void}} */
+            resolve,
+            reject
+        ) {
             // eslint-disable-next-line promise/catch-or-return
             TypesonPromise.all([
                 ...makePromises(),
@@ -3016,8 +3485,9 @@ describe('TypesonPromise', function () {
                 assert(
                     // eslint-disable-next-line promise/always-return
                     results[0] === 30 && results[1] === 400 &&
-                        results[2] === 100 && results[3] === null &&
-                        typeof results[4] === 'function',
+                        results[2] === 20 &&
+                        results[3] === 100 && results[4] === null &&
+                        typeof results[5] === 'function',
                     'Should work with Promise.all'
                 );
             }).then(function () {
@@ -3047,8 +3517,10 @@ describe('TypesonPromise', function () {
                         results[0].value === 30 &&
                         results[1].status === 'fulfilled' &&
                         results[1].value === 400 &&
-                        results[2].status === 'rejected' &&
-                        results[2].reason === 'foo',
+                        results[2].status === 'fulfilled' &&
+                        results[2].value === 20 &&
+                        results[3].status === 'rejected' &&
+                        results[3].reason === 'foo',
                         'Should work with Promise.allSettled'
                     );
 
@@ -3056,6 +3528,7 @@ describe('TypesonPromise', function () {
                 });
             });
         });
+        /* eslint-enable promise/avoid-new -- Testing */
     });
     it('should properly handle Promise rejections', () => {
         function makeRejectedPromises () {
@@ -3072,7 +3545,11 @@ describe('TypesonPromise', function () {
             return [x, y];
         }
         // eslint-disable-next-line promise/avoid-new
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (
+            /** @type {(value?: any) => void} */
+            resolve,
+            reject
+        ) {
             makeRejectedPromises()[0].then(null, function (errCode) {
                 assert(
                     errCode === 30,
@@ -3135,5 +3612,48 @@ describe('TypesonPromise', function () {
                 throw new Error('Should not reach here');
             });
         });
+    });
+});
+
+describe('getAtKeyPath', function () {
+    it('errs with non-object', function () {
+        try {
+            getByKeyPath(null, 'abc');
+            assert(false);
+        } catch (err) {
+            assert(/** @type {TypeError} */ (
+                err
+            ).message === 'Unexpected non-object type');
+        }
+        try {
+            getByKeyPath(null, 'abc');
+            assert(false);
+        } catch (err) {
+            assert(/** @type {TypeError} */ (
+                err
+            ).message === 'Unexpected non-object type');
+        }
+    });
+});
+
+describe('setAtKeyPath', function () {
+    it('errs with non-object', function () {
+        try {
+            setAtKeyPath(null, 'abc', 15);
+            assert(false);
+        } catch (err) {
+            assert(/** @type {TypeError} */ (
+                err
+            ).message === 'Unexpected non-object type');
+        }
+
+        try {
+            setAtKeyPath(true, 'abc', 15);
+            assert(false);
+        } catch (err) {
+            assert(/** @type {TypeError} */ (
+                err
+            ).message === 'Unexpected non-object type');
+        }
     });
 });

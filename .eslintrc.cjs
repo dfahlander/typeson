@@ -1,11 +1,48 @@
 'use strict';
 
+const mainRules = {
+    // Disable from recommended-requiring-type-checking (any)
+    '@typescript-eslint/no-unsafe-return': 0,
+    '@typescript-eslint/no-unsafe-argument': 0,
+    '@typescript-eslint/no-unsafe-assignment': 0,
+    '@typescript-eslint/no-unsafe-member-access': 0,
+    '@typescript-eslint/no-unsafe-call': 0,
+    // Disable from Strict
+    '@typescript-eslint/no-dynamic-delete': 0,
+    // Class Undefined has a use for us
+    '@typescript-eslint/no-extraneous-class': 0,
+
+    // Disable for now
+    'eslint-comments/require-description': 0,
+    'jsdoc/check-types': 0,
+
+    indent: ['error', 4, {outerIIFEBody: 0}],
+    'unicorn/consistent-destructuring': 0,
+    'promise/prefer-await-to-then': 0,
+    'promise/prefer-await-to-callbacks': 0,
+    'n/no-unsupported-features/es-builtins': 0,
+    'n/no-unsupported-features/es-syntax': 0,
+    'jsdoc/check-values': ['error', {allowedLicenses: true}],
+
+    'unicorn/no-this-assignment': 0,
+    'unicorn/prefer-spread': 0
+};
+
+const {readFileSync} = require('fs');
+
+const tsconfig = JSON.parse(readFileSync('./tsconfig.json', 'utf8'));
+
 module.exports = {
-    extends: 'ash-nazg/sauron-node-overrides',
+    extends: [
+        'ash-nazg/sauron-node-overrides'
+    ],
     parserOptions: {
         ecmaVersion: 2022
     },
     settings: {
+        jsdoc: {
+            mode: 'typescript'
+        },
         polyfills: [
             'Array.from',
             'Array.isArray',
@@ -28,9 +65,32 @@ module.exports = {
     },
     overrides: [
         {
+            files: tsconfig.include,
+            extends: [
+                // 'plugin:@typescript-eslint/recommended',
+                // eslint-disable-next-line max-len -- Long
+                // 'plugin:@typescript-eslint/recommended-requiring-type-checking',
+                'plugin:@typescript-eslint/strict',
+                'ash-nazg/sauron-node-overrides'
+            ],
+            parserOptions: {
+                project: true,
+                tsconfigRootDir: __dirname,
+                // Markdown problematic per https://github.com/typescript-eslint/typescript-eslint/issues/2373
+                extraFileExtensions: ['.html', '.md'],
+                ecmaVersion: 2022
+            },
+            rules: {
+                ...mainRules
+            }
+        },
+        {
             files: ['**/*.md/*.js'],
             settings: {
                 polyfills: ['Float64Array', 'Int8Array']
+            },
+            parserOptions: {
+                project: null
             },
             rules: {
                 'eol-last': ['off'],
@@ -69,19 +129,6 @@ module.exports = {
         }
     ],
     rules: {
-        // Disable for now
-        'eslint-comments/require-description': 0,
-        'jsdoc/check-types': 0,
-
-        indent: ['error', 4, {outerIIFEBody: 0}],
-        'unicorn/consistent-destructuring': 0,
-        'promise/prefer-await-to-then': 0,
-        'promise/prefer-await-to-callbacks': 0,
-        'n/no-unsupported-features/es-builtins': 0,
-        'n/no-unsupported-features/es-syntax': 0,
-        'jsdoc/check-values': ['error', {allowedLicenses: true}],
-
-        'unicorn/no-this-assignment': 0,
-        'unicorn/prefer-spread': 0
+        ...mainRules
     }
 };
