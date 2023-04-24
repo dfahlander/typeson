@@ -14,11 +14,17 @@
         <script src="../node_modules/mocha/mocha.js"></script>
         <script src="../node_modules/chai/chai.js"></script>
         <!-- <script src="../node_modules/sinon/pkg/sinon-no-sourcemaps.js"></script> -->
+        <script type="importmap">
+        {
+            "imports": {
+                "mocha": "./mochaESMLoader.js",
+                "chai": "./chaiESMLoader.js",
+                "base64-arraybuffer-es6": "../node_modules/base64-arraybuffer-es6/dist/base64-arraybuffer-es.js"
+            }
+        }
+        </script>
 
         <script type="module">
-        /* globals chai */
-        window.expect = chai.expect;
-        window.assert = chai.assert;
         mocha.setup({ui: 'bdd', timeout: 5000});
         </script>
         <script type="module">

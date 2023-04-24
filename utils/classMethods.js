@@ -1,12 +1,10 @@
-const {toString: toStr} = {},
-    hasOwn = ({}.hasOwnProperty),
-    getProto = Object.getPrototypeOf,
-    fnToString = hasOwn.toString;
+const {hasOwn} = Object,
+    getProto = Object.getPrototypeOf;
 
 /**
  * Second argument not in use internally, but provided for utility.
  * @param {any} v
- * @param {boolean} catchCheck
+ * @param {boolean} [catchCheck]
  * @returns {boolean}
  */
 function isThenable (v, catchCheck) {
@@ -21,14 +19,14 @@ function isThenable (v, catchCheck) {
  * @returns {string}
  */
 function toStringTag (val) {
-    return toStr.call(val).slice(8, -1);
+    return Object.prototype.toString.call(val).slice(8, -1);
 }
 
 /**
  * This function is dependent on both constructors
  *   being identical so any minimization is expected of both.
  * @param {any} a
- * @param {GenericFunction} b
+ * @param {({__typeson__type__?: string} & Function)|null} b
  * @returns {boolean}
  */
 function hasConstructorOf (a, b) {
@@ -39,14 +37,18 @@ function hasConstructorOf (a, b) {
     if (!proto) {
         return b === null;
     }
-    const Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
+    const Ctor = hasOwn(proto, 'constructor') && proto.constructor;
     if (typeof Ctor !== 'function') {
         return b === null;
     }
     if (b === Ctor) {
         return true;
     }
-    if (b !== null && fnToString.call(Ctor) === fnToString.call(b)) {
+    if (
+        b !== null &&
+        Function.prototype.toString.call(Ctor) ===
+            Function.prototype.toString.call(b)
+    ) {
         return true;
     }
 
@@ -101,7 +103,7 @@ function isUserObject (val) {
  * @returns {boolean}
  */
 function isObject (v) {
-    return v && typeof v === 'object';
+    return v !== null && typeof v === 'object';
 }
 
 /**
@@ -131,53 +133,85 @@ function unescapeKeyPathComponent (keyPathComponent) {
 }
 
 /**
- * @param {PlainObject|GenericArray} obj
+ * @typedef {null|boolean|number|string} Primitive
+ */
+
+/**
+ * @typedef {Primitive|Primitive[]|{[key: string]: JSON}} JSON
+ */
+
+/**
+ * @param {any} obj
  * @param {string} keyPath
+ * @throws {TypeError}
  * @returns {any}
  */
 function getByKeyPath (obj, keyPath) {
     if (keyPath === '') {
         return obj;
     }
+    if (obj === null || typeof obj !== 'object') {
+        throw new TypeError('Unexpected non-object type');
+    }
     const period = keyPath.indexOf('.');
     if (period > -1) {
-        const innerObj = obj[
+        const innerObj = /** @type {{[key: string]: JSON|undefined}} */ (obj)[
             unescapeKeyPathComponent(keyPath.slice(0, period))
         ];
         return innerObj === undefined
             ? undefined
             : getByKeyPath(innerObj, keyPath.slice(period + 1));
     }
-    return obj[unescapeKeyPathComponent(keyPath)];
+    return /** @type {{[key: string]: JSON}} */ (
+        obj
+    )[unescapeKeyPathComponent(keyPath)];
 }
 
 /**
+ * @typedef {{
+ *   [key: string]: NestedObject|any
+ * }} NestedObject
+ */
+
+/**
  *
- * @param {PlainObject} obj
+ * @param {unknown} obj
  * @param {string} keyPath
  * @param {any} value
+ * @throws {TypeError}
  * @returns {any}
  */
 function setAtKeyPath (obj, keyPath, value) {
     if (keyPath === '') {
         return value;
     }
+
+    // We allow arrays, however
+    if (!obj || typeof obj !== 'object') {
+        throw new TypeError('Unexpected non-object type');
+    }
     const period = keyPath.indexOf('.');
     if (period > -1) {
-        const innerObj = obj[
+        const innerObj = /** @type {{[key: string]: any}} */ (obj)[
             unescapeKeyPathComponent(keyPath.slice(0, period))
         ];
         return setAtKeyPath(innerObj, keyPath.slice(period + 1), value);
     }
-    obj[unescapeKeyPathComponent(keyPath)] = value;
+    /** @type {{[key: string]: any}} */ (obj)[
+        unescapeKeyPathComponent(keyPath)
+    ] = value;
     return obj;
 }
 
 /**
+ * @typedef {"null"|"array"|"undefined"|"boolean"|"number"|"string"|
+ *  "object"|"symbol"|"bigint"|"function"} ObjectTypeString
+ */
+
+/**
  *
- * @param {external:JSON} value
- * @returns {"null"|"array"|"undefined"|"boolean"|"number"|"string"|
- *  "object"|"symbol"}
+ * @param {any} value
+ * @returns {ObjectTypeString}
  */
 function getJSONType (value) {
     return value === null

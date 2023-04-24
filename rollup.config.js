@@ -2,16 +2,15 @@ import {babel} from '@rollup/plugin-babel';
 import terser from '@rollup/plugin-terser';
 
 /**
- * @external RollupConfig
- * @type {PlainObject}
+ * @typedef {any} RollupConfig
  * @see {@link https://rollupjs.org/guide/en#big-list-of-options}
  */
 
 /**
- * @param {PlainObject} [config={}]
+ * @param {object} [config={}]
  * @param {boolean} [config.minifying]
  * @param {string} [config.format="umd"]
- * @returns {external:RollupConfig}
+ * @returns {RollupConfig}
  */
 function getRollupObject ({minifying, format = 'umd'} = {}) {
     const nonMinified = {
