@@ -155,14 +155,14 @@ function getByKeyPath (obj, keyPath) {
     }
     const period = keyPath.indexOf('.');
     if (period > -1) {
-        const innerObj = /** @type {{[key: string]: JSON|undefined}} */ (obj)[
+        const innerObj = /** @type {{[key: string]: any|undefined}} */ (obj)[
             unescapeKeyPathComponent(keyPath.slice(0, period))
         ];
         return innerObj === undefined
             ? undefined
             : getByKeyPath(innerObj, keyPath.slice(period + 1));
     }
-    return /** @type {{[key: string]: JSON}} */ (
+    return /** @type {{[key: string]: any}} */ (
         obj
     )[unescapeKeyPathComponent(keyPath)];
 }
