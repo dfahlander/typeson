@@ -28,6 +28,7 @@ const mainRules = {
     'unicorn/prefer-spread': 0
 };
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires -- CJS
 const {readFileSync} = require('fs');
 
 const tsconfig = JSON.parse(readFileSync('./tsconfig.json', 'utf8'));
@@ -67,9 +68,8 @@ module.exports = {
         {
             files: tsconfig.include,
             extends: [
-                // 'plugin:@typescript-eslint/recommended',
-                // eslint-disable-next-line max-len -- Long
-                // 'plugin:@typescript-eslint/recommended-requiring-type-checking',
+                'plugin:@typescript-eslint/recommended',
+                'plugin:@typescript-eslint/recommended-requiring-type-checking',
                 'plugin:@typescript-eslint/strict',
                 'ash-nazg/sauron-node-overrides'
             ],

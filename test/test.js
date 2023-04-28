@@ -1,5 +1,11 @@
 /* eslint-disable no-console, no-restricted-syntax,
-    jsdoc/require-jsdoc, no-empty-function, no-shadow */
+    jsdoc/require-jsdoc, no-empty-function, no-shadow,
+    jsdoc/no-bad-blocks,
+    @typescript-eslint/no-unused-vars,
+    @typescript-eslint/no-empty-function,
+    @typescript-eslint/no-misused-promises,
+    @typescript-eslint/no-floating-promises
+    */
 
 import {describe, it} from 'mocha';
 import {assert} from 'chai';
@@ -1245,7 +1251,7 @@ describe('Typeson', function () {
             const data = {list: []};
             for (let i = 0; i < 10; ++i) {
                 data.list.push({
-                    name: 'name' + i,
+                    name: `name${i}`,
                     parent: data.list,
                     root: data,
                     children: []
@@ -1651,7 +1657,9 @@ describe('Typeson', function () {
                         }
                         if (isObject) {
                             if ('cyclicKeypath' in o) {
-                                o.value = '#' + o.cyclicKeypath;
+                                // eslint-disable-next-line max-len -- Long
+                                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                                o.value = `#${o.cyclicKeypath}`;
                             } else {
                                 str += indent() + '{\n';
                                 indentFactor++;
@@ -1663,8 +1671,11 @@ describe('Typeson', function () {
                         return;
                     }
                     const idx = o.keypath.lastIndexOf('.') + 1;
-                    str += indent() + o.keypath.slice(idx) + ': ' +
-                        ('replaced' in o ? o.replaced : o.value) + '\n';
+                    str += `${indent()}${
+                        o.keypath.slice(idx)
+                    // eslint-disable-next-line max-len -- Long
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                    }: ${('replaced' in o ? o.replaced : o.value)}\n`;
                 }
             })
                 .register(globalTypeson.types);
@@ -1743,10 +1754,14 @@ describe('Typeson', function () {
                         const idx = str.indexOf(placeholderText);
                         const start = str.slice(0, idx);
                         const end = str.slice(idx + placeholderText.length);
+                        // eslint-disable-next-line max-len -- Long
+                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands -- Testing
                         str = start + o.value + end;
                     } else if (o.awaitingTypesonPromise) {
                         str += '<span>' + placeholderText + '</span>';
                     } else if (!isObject && !isArray) {
+                        // eslint-disable-next-line max-len -- Long
+                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands -- Testing
                         str += '<span>' + o.value + '</span>';
                     }
                 }
@@ -3421,7 +3436,7 @@ describe('TypesonPromise', function () {
                 setTimeout(function () {
                     res(TypesonPromise.resolve(5));
                 });
-            }).then(function (r) {
+            }).then(function (/** @type {number} */ r) {
                 return new TypesonPromise(function (res) {
                     setTimeout(function () {
                         res(r + 90);
