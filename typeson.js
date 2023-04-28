@@ -1065,7 +1065,7 @@ class Typeson {
     /**
      * Revive an encapsulated object.
      * This method is used internally by `Typeson.parse()`.
-     * @param {JSON} obj - Object to revive. If it has a `$types` member,
+     * @param {any} obj - Object to revive. If it has a `$types` member,
      *   the properties that are listed there will be replaced with its true
      *   type instead of just plain objects.
      * @param {TypesonOptions} [options]
@@ -1078,9 +1078,9 @@ class Typeson {
         const {sync} = opts;
 
         /**
-         * @param {JSON} val
+         * @param {any} val
          * @throws {TypeError}
-         * @returns {JSON|Promise<JSON>}
+         * @returns {any|Promise<any>}
          */
         function finishRevival (val) {
             if (sync) {
