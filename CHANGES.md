@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 9.0.0
+
+- feat: TypeScript typings
+
 ## 8.0.2
 
 - fix: support distinguishing of +0 and -0
