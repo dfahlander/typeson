@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 9.0.1
+
+- fix: bundling issue
+
 ## 9.0.0
 
 - feat: TypeScript typings

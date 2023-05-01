@@ -6,5 +6,5 @@ test/
 !LICENSE-MIT.txt
 /ignore
 coverage
-utils
+/utils
 typeson.js

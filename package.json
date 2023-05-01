@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.min.cjs",
   "browser": "./dist/typeson.umd.js",
@@ -16,7 +16,7 @@
   },
   "scripts": {
     "tsc": "tsc",
-    "prepublishOnly": "pnpm i",
+    "prepublishOnly": "pnpm i && pnpm build",
     "eslint": "eslint --ext js,md,html .",
     "lint": "npm run eslint --",
     "start": "http-server -p 8092",
