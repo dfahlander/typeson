@@ -4,3 +4,6 @@ ignore
 coverage
 node_modules
 !.eslintrc.js
+
+# TS issues
+rollup.config.js

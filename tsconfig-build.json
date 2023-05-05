@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "lib": ["es2022", "DOM"],
-    "moduleResolution": "node",
-    "module": "esnext",
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
     "allowJs": true,
     "checkJs": true,
     "noEmit": false,

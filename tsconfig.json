@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "lib": ["es2022", "DOM"],
-    "moduleResolution": "node",
-    "module": "esnext",
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
@@ -15,5 +15,5 @@
     "outDir": "dist"
   },
   "include": ["typeson.js", "utils/**/*.js", "test/**/*.js", ".eslintrc.cjs", "test/index.html", "README.md", "rollup.config.js"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "rollup.config.js"]
 }

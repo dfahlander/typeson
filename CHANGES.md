@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 9.0.2
+
+- fix: `NodeNext` `moduleResolution`
+
 ## 9.0.1
 
 - fix: bundling issue
