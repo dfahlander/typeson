@@ -200,8 +200,7 @@ function nestedPathsFirst (a, b) {
  */
 
 /**
- * @callback ObserverData
- * @param {KeyPathEvent & EndIterateInEvent & EndIterateOwnEvent &
+ * @typedef {KeyPathEvent & EndIterateInEvent & EndIterateOwnEvent &
  *   EndIterateUnsetNumericEvent &
  *   TypeDetectedEvent & ReplacingEvent & {} & {
  *   replaced?: any
@@ -215,8 +214,11 @@ function nestedPathsFirst (a, b) {
  *   promisesData: PromisesData,
  *   resolvingTypesonPromise: ?boolean|undefined,
  *   awaitingTypesonPromise: boolean
- * } & {type: string}} data
- * @returns {void}
+ * } & {type: string}} ObserverData
+ */
+
+/**
+ * @typedef {(data: ObserverData) => void} EncapsulateObserver
  */
 
 /**
@@ -241,7 +243,7 @@ function nestedPathsFirst (a, b) {
 *  `encapsulateAync`, `reviveSync`, `reviveAsync`
 * @property {number|boolean} [fallback] `true` sets to 0. Default is
 *  positive infinity. Used within `register`
-* @property {ObserverData} [encapsulateObserver]
+* @property {EncapsulateObserver} [encapsulateObserver]
 */
 
 /**
@@ -1132,13 +1134,6 @@ class Typeson {
             types = types.$;
             ignore$Types = false;
         }
-
-        /**
-         * @callback RevivalReducer
-         * @param {any} value
-         * @param {string} type
-         * @returns {any}
-         */
 
         /**
          *

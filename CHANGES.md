@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 9.0.3
+
+- fix: TypeScript typings (separate `ObserverData` from `EncapsulateObserver`)
+
 ## 9.0.2
 
 - fix: `NodeNext` `moduleResolution`
