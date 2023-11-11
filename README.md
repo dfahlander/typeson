@@ -549,7 +549,7 @@ typeson.register({
   Date: [
     (x) => x instanceof Date, // tester
     (date) => date.getTime(), // encapsulator
-    (obj) => new Date(obj)    // reviver
+    (obj) => new Date(obj) // reviver
   ],
 
   RegExp: [
@@ -622,7 +622,9 @@ function MyAsync (prop) {
 
 const typeson = new Typeson({sync: false}).register({
     myAsyncType: [
-        function (x) { return x instanceof MyAsync; },
+        function (x) {
+            return x instanceof MyAsync;
+        },
         function (o) {
             return new Typeson.Promise(function (resolve, reject) {
                 setTimeout(function () {

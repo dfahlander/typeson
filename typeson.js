@@ -1,5 +1,5 @@
 /**
- * @file Typeson - JSON with types
+ * @file Typeson - JSON with types.
  * @license The MIT License (MIT)
  * @copyright (c) 2016-2018 David Fahlander, Brett Zamir
 */
@@ -107,7 +107,7 @@ import {
 
 const {keys, hasOwn} = Object,
     {isArray} = Array,
-    // eslint-disable-next-line max-len -- Long
+    // eslint-disable-next-line @stylistic/max-len -- Long
     /** @type {("type"|"replaced"|"iterateIn"|"iterateUnsetNumeric"|"addLength")[]} */
     internalStateObjPropsToIgnore = [
         'type', 'replaced', 'iterateIn', 'iterateUnsetNumeric', 'addLength'
@@ -425,7 +425,7 @@ class Typeson {
      *
      * @param {any} obj
      * @param {StateObject|null|undefined} [stateObj]
-     * @param {TypesonOptions} [opts={}]
+     * @param {TypesonOptions} [opts]
      * @returns {string[]|false}
      */
     specialTypeNames (obj, stateObj, opts = {}) {
@@ -439,7 +439,7 @@ class Typeson {
      *
      * @param {any} obj
      * @param {StateObject|null|undefined} [stateObj]
-     * @param {TypesonOptions} [opts={}]
+     * @param {TypesonOptions} [opts]
      * @returns {Promise<ObjectTypeString|string>|ObjectTypeString|string}
      */
     rootTypeName (obj, stateObj, opts = {}) {
@@ -568,7 +568,7 @@ class Typeson {
                     if (keyPath && isTypesonPromise) {
                         const encaps2 = await encaps.p;
                         // Undefined parent only for root which has no `keyPath`
-                        // eslint-disable-next-line max-len -- Long
+                        // eslint-disable-next-line @stylistic/max-len -- Long
                         /** @type {{[key: (string|number)]: any}} */ (parentObj)[
                             /** @type {string|number} */ (key)
                         ] = encaps2;
@@ -576,7 +576,7 @@ class Typeson {
                     }
                     if (keyPath) {
                         // Undefined parent only for root which has no `keyPath`
-                        // eslint-disable-next-line max-len -- Long
+                        // eslint-disable-next-line @stylistic/max-len -- Long
                         /** @type {{[key: (string|number)]: any}} */ (parentObj)[
                             /** @type {string|number} */ (key)
                         ] = encaps;
@@ -660,7 +660,8 @@ class Typeson {
             let observerData = {};
             const $typeof = typeof value;
             const runObserver = encapsulateObserver
-                // eslint-disable-next-line operator-linebreak -- Needs JSDoc
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // eslint-disable-next-line @stylistic/operator-linebreak -- Needs JSDoc
                 ?
                 // Bug with TS apparently as can't just use
                 //    `@type {Observer}` here as doesn't see param is optional
@@ -1366,7 +1367,7 @@ class Typeson {
 
             // `type` can be an array here
 
-            // eslint-disable-next-line max-len -- Long
+            // eslint-disable-next-line @stylistic/max-len -- Long
             return /** @type {(string|number|true|Primitive|{ [key: string]: JSON; })[]} */ (
                 []
             ).concat(type).reduce(function reducer (val, typ) {
@@ -1481,10 +1482,12 @@ class Typeson {
          * @param {TypeSpecSet|Preset} typeSpec
          * @returns {void}
          */
-        const R = (typeSpec) => {
+        const reg = (typeSpec) => {
             // Allow arrays of arrays of arrays...
             if (isArray(typeSpec)) {
-                typeSpec.forEach((typSpec) => R(typSpec));
+                typeSpec.forEach((typSpec) => {
+                    reg(typSpec);
+                });
                 return;
             }
             keys(typeSpec).forEach((typeId) => {
@@ -1570,7 +1573,9 @@ class Typeson {
         };
         /** @type {Preset} */ ([]).concat(
             typeSpecSets
-        ).forEach((typeSpec) => R(typeSpec));
+        ).forEach((typeSpec) => {
+            reg(typeSpec);
+        });
         return this;
     }
 }
@@ -1581,8 +1586,9 @@ class Typeson {
  * with `hasConstructorOf`.
  * @class
  */
-class Undefined{} // eslint-disable-line space-before-blocks
+class Undefined{} // eslint-disable-line @stylistic/space-before-blocks
 
+// eslint-disable-next-line camelcase -- Special identifier
 Undefined.__typeson__type__ = 'TypesonUndefined';
 
 // The following provide classes meant to avoid clashes with other values

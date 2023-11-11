@@ -1,8 +1,6 @@
 /* eslint-disable no-console, no-restricted-syntax,
     jsdoc/require-jsdoc, no-empty-function, no-shadow,
     jsdoc/no-bad-blocks,
-    @typescript-eslint/no-unused-vars,
-    @typescript-eslint/no-empty-function,
     @typescript-eslint/no-misused-promises,
     @typescript-eslint/no-floating-promises
     */
@@ -24,8 +22,6 @@ const debug = false;
  * @returns {void}
  */
 function log (...args) {
-    // eslint-disable-next-line max-len -- Long
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Debugging
     if (debug) {
         console.log(...args);
     }
@@ -95,11 +91,9 @@ const globalTypeson = typeson;
  * @returns {any}
  */
 function roundtrip (x) {
-    /* eslint-disable n/no-sync -- Safety */
     const tson = typeson.stringifySync(x, null, 2);
     log(tson);
     return typeson.parseSync(tson);
-    /* eslint-enable n/no-sync -- Safety */
 }
 
 describe('Typeson', function () {
@@ -463,14 +457,14 @@ describe('Typeson', function () {
                 date: {
                     test (x) { return x instanceof Date; },
                     replaceAsync (date) {
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(date.getTime());
                             });
                         });
                     },
                     reviveAsync (time) {
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(new Date(time));
                             });
@@ -484,12 +478,12 @@ describe('Typeson', function () {
                         return x instanceof CustomDate;
                     },
                     replaceAsync (cd) {
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             resolve(cd._date);
                         });
                     },
                     reviveAsync (date) {
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             resolve(new CustomDate(date));
                         });
                     }
@@ -573,8 +567,8 @@ describe('Typeson', function () {
         let TSON = new Typeson().register({
             Custom: [
                 (x) => x instanceof Custom,
-                (s) => false,
-                (f) => new Custom()
+                () => false,
+                () => new Custom()
             ]
         });
         let tson = TSON.stringify(new Custom());
@@ -588,8 +582,8 @@ describe('Typeson', function () {
         TSON = new Typeson().register({
             Custom: [
                 (x) => x instanceof Custom,
-                (s) => 42,
-                (f) => new Custom()
+                () => 42,
+                () => new Custom()
             ]
         });
         tson = TSON.stringify(new Custom());
@@ -603,8 +597,8 @@ describe('Typeson', function () {
         TSON = new Typeson().register({
             Custom: [
                 (x) => x instanceof Custom,
-                (s) => 'foo',
-                (f) => new Custom()
+                () => 'foo',
+                () => new Custom()
             ]
         });
         tson = TSON.stringify(new Custom());
@@ -747,7 +741,6 @@ describe('Typeson', function () {
         const typeson = new Typeson({sync: false, throwOnBadSyncType: true});
         const x = 5;
 
-        // eslint-disable-next-line n/no-sync -- Testing
         const tson = typeson.stringifySync(x);
         try {
             typeson.parse(/** @type {string} */ (tson));
@@ -1009,6 +1002,7 @@ describe('Typeson', function () {
         const typeson = new Typeson().register([map]);
 
         const a = {
+            // eslint-disable-next-line camelcase -- Testing
             __raw_map: new Map(),
             [Symbol.toStringTag]: 'a'
         };
@@ -1167,7 +1161,7 @@ describe('Typeson', function () {
             myAsyncType: {
                 test (x) { return x instanceof MyAsync; },
                 replaceAsync (o) {
-                    return new TypesonPromise((resolve, reject) => {
+                    return new TypesonPromise((resolve) => {
                         // Do something more useful in real code
                         setTimeout(() => {
                             resolve(o.prop);
@@ -1176,7 +1170,7 @@ describe('Typeson', function () {
                 },
                 reviveAsync (data) {
                     // Do something more useful in real code
-                    return new TypesonPromise((resolve, reject) => {
+                    return new TypesonPromise((resolve) => {
                         resolve(new MyAsync(data));
                     });
                 }
@@ -1337,7 +1331,6 @@ describe('Typeson', function () {
             );
         });
         it('should resolve cyclic object members', () => {
-            // eslint-disable-next-line sonarjs/prefer-object-literal
             const recursive = {};
             recursive.b = recursive;
             const recursiveContainer = {a: recursive};
@@ -1657,8 +1650,6 @@ describe('Typeson', function () {
                         }
                         if (isObject) {
                             if ('cyclicKeypath' in o) {
-                                // eslint-disable-next-line max-len -- Long
-                                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                                 o.value = `#${o.cyclicKeypath}`;
                             } else {
                                 str += indent() + '{\n';
@@ -1673,8 +1664,6 @@ describe('Typeson', function () {
                     const idx = o.keypath.lastIndexOf('.') + 1;
                     str += `${indent()}${
                         o.keypath.slice(idx)
-                    // eslint-disable-next-line max-len -- Long
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     }: ${('replaced' in o ? o.replaced : o.value)}\n`;
                 }
             })
@@ -1754,14 +1743,10 @@ describe('Typeson', function () {
                         const idx = str.indexOf(placeholderText);
                         const start = str.slice(0, idx);
                         const end = str.slice(idx + placeholderText.length);
-                        // eslint-disable-next-line max-len -- Long
-                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands -- Testing
                         str = start + o.value + end;
                     } else if (o.awaitingTypesonPromise) {
                         str += '<span>' + placeholderText + '</span>';
                     } else if (!isObject && !isArray) {
-                        // eslint-disable-next-line max-len -- Long
-                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands -- Testing
                         str += '<span>' + o.value + '</span>';
                     }
                 }
@@ -1936,17 +1921,17 @@ describe('Typeson', function () {
             const typeson = new Typeson().register([{
                 undef: {
                     test (x) { return x instanceof Undefined; },
-                    replaceAsync (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                    replaceAsync () {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(null);
                             }, 800);
                         });
                     },
-                    reviveAsync (data) {
+                    reviveAsync () {
                         // Do something more useful in real code
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             resolve(new Undefined());
                         });
                     }
@@ -1955,7 +1940,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -1964,7 +1949,7 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             setTimeout(() => {
                                 resolve(new MyAsync(data));
                             }, 300);
@@ -2060,9 +2045,9 @@ describe('Typeson', function () {
                             return typeof x === 'undefined' &&
                                 stateObj.ownKeys === false;
                         },
-                        replace (n) { return 0; },
+                        replace () { return 0; },
                         // Will avoid adding anything
-                        revive (s) { return undefined; }
+                        revive () { return undefined; }
                     }
                 }
             ];
@@ -2075,8 +2060,8 @@ describe('Typeson', function () {
                 }
             }).register([sparseUndefined]);
 
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
             const arr = [, 5, , , 6, ];
             let tson = typeson.stringify(arr);
             log(tson);
@@ -2094,8 +2079,8 @@ describe('Typeson', function () {
             // Once again for coverage of absent observer and
             //  nested keypath
             typeson = new Typeson().register([sparseUndefined]);
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
             const arr2 = {a: [, 5, , , 6, ]};
             tson = typeson.stringify(arr2);
             log(tson);
@@ -2124,9 +2109,9 @@ describe('Typeson', function () {
                             return typeof x === 'undefined' &&
                                 stateObj.ownKeys === false;
                         },
-                        replace (n) { return undefined; },
+                        replace () { return undefined; },
                         // Will avoid adding anything
-                        revive (s) { return undefined; }
+                        revive () { return undefined; }
                     }
                 }
             ];
@@ -2139,8 +2124,8 @@ describe('Typeson', function () {
                 }
             }).register([sparseUndefined]);
 
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
             const arr = [, 5, , , 6, ];
             let tson = typeson.stringify(arr);
             log(tson);
@@ -2158,8 +2143,8 @@ describe('Typeson', function () {
             // Once again for coverage of absent observer and
             //  nested keypath
             typeson = new Typeson().register([sparseUndefined]);
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
             const arr2 = {a: [, 5, , , 6, ]};
             tson = typeson.stringify(arr2);
             log(tson);
@@ -2186,7 +2171,7 @@ describe('Typeson', function () {
                             return typeof x === 'undefined' &&
                                 stateObj.ownKeys === false;
                         },
-                        replaceAsync (n) {
+                        replaceAsync () {
                             return new TypesonPromise((resolve) => {
                                 setTimeout(() => {
                                     resolve(0);
@@ -2194,7 +2179,7 @@ describe('Typeson', function () {
                             });
                         },
                         // Will avoid adding anything
-                        revive (s) { return undefined; }
+                        revive () { return undefined; }
                     }
                 }
             ];
@@ -2207,8 +2192,8 @@ describe('Typeson', function () {
                 }
             }).register([sparseUndefined]);
 
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
             const arr = [, 5, , , 6, ];
             let tson = await typeson.stringifyAsync(arr);
             log(tson);
@@ -2226,8 +2211,8 @@ describe('Typeson', function () {
             // Once again for coverage of absent observer and
             //  nested keypath
             typeson = new Typeson().register([sparseUndefined]);
-            // eslint-disable-next-line max-len
-            // eslint-disable-next-line no-sparse-arrays, comma-dangle, array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
             const arr2 = {a: [, 5, , , 6, ]};
             tson = await typeson.stringifyAsync(arr2);
             log(tson);
@@ -2251,7 +2236,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2290,7 +2275,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2338,7 +2323,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2384,7 +2369,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2399,7 +2384,6 @@ describe('Typeson', function () {
 
             const mya = new MyAsync(500);
             assert.throws(() => {
-                // eslint-disable-next-line n/no-sync
                 typeson.encapsulateSync(mya);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2421,7 +2405,7 @@ describe('Typeson', function () {
                         return o.prop;
                     },
                     function (data) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(new MyAsync(data));
@@ -2432,10 +2416,8 @@ describe('Typeson', function () {
             });
 
             const mya = new MyAsync(500);
-            // eslint-disable-next-line n/no-sync
             const smya = typeson.stringifySync(mya);
             assert.throws(() => {
-                // eslint-disable-next-line n/no-sync
                 typeson.parseSync(smya);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2482,7 +2464,7 @@ describe('Typeson', function () {
                 myAsyncType: [
                     function (x) { return x instanceof MyAsync; },
                     function (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2497,7 +2479,6 @@ describe('Typeson', function () {
 
             const mya = new MyAsync(500);
             assert.throws(() => {
-                // eslint-disable-next-line n/no-sync
                 typeson.stringifySync(mya);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2544,7 +2525,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(o.prop);
@@ -2553,7 +2534,7 @@ describe('Typeson', function () {
                     },
                     revive (data) {
                         // Do something more useful in real code
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             resolve(new MyAsync(data));
                         });
                     }
@@ -2563,7 +2544,6 @@ describe('Typeson', function () {
             const mya = new MyAsync(500);
             const encapsAsync = await typeson.encapsulateAsync(mya);
             assert.throws(() => {
-                // eslint-disable-next-line n/no-sync
                 typeson.reviveSync(encapsAsync);
             }, TypeError, 'Sync method requested but async result obtained');
         });
@@ -2585,7 +2565,7 @@ describe('Typeson', function () {
                     myAsyncType: {
                         test (x) { return x instanceof MyAsync; },
                         replaceAsync (o) {
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 // Do something more useful in real code
                                 setTimeout(() => {
                                     resolve(o.prop);
@@ -2594,7 +2574,7 @@ describe('Typeson', function () {
                         },
                         reviveAsync (data) {
                             // Do something more useful in real code
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2603,7 +2583,6 @@ describe('Typeson', function () {
 
                 const mya = new MyAsync(500);
                 const encapsAsync = await typeson.encapsulateAsync(mya);
-                // eslint-disable-next-line n/no-sync
                 const revivedAsync = typeson.reviveSync(encapsAsync);
                 assert(revivedAsync === 500);
             }
@@ -2638,7 +2617,6 @@ describe('Typeson', function () {
             });
 
             const mys = new MySync(500);
-            // eslint-disable-next-line n/no-sync
             const encapsSync = typeson.encapsulateSync(mys);
             assert.throws(() => {
                 typeson.reviveAsync(encapsSync);
@@ -2674,7 +2652,6 @@ describe('Typeson', function () {
             });
 
             const mys = new MySync(500);
-            // eslint-disable-next-line n/no-sync
             const stringSync = typeson.stringifySync(mys);
             assert.throws(() => {
                 typeson.parseAsync(stringSync);
@@ -2754,7 +2731,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             // Do something more useful in real code
                             setTimeout(() => {
                                 resolve(o.prop);
@@ -2763,7 +2740,7 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             resolve(new MyAsync(data));
                         });
                     }
@@ -2791,7 +2768,7 @@ describe('Typeson', function () {
                 myAsyncType: {
                     test (x) { return x instanceof MyAsync; },
                     replaceAsync (o) {
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             // Do something more useful in real code
                             setTimeout(() => {
                                 resolve(o.prop);
@@ -2801,7 +2778,7 @@ describe('Typeson', function () {
                     reviveAsync (data) {
                         // Do something more useful in real code
                         // eslint-disable-next-line promise/avoid-new -- Testing
-                        return new Promise((resolve, reject) => {
+                        return new Promise((resolve) => {
                             resolve(new MyAsync(data));
                         });
                     }
@@ -2860,7 +2837,7 @@ describe('Typeson', function () {
                     replace (o) { return o.prop; },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        return new TypesonPromise((resolve, reject) => {
+                        return new TypesonPromise((resolve) => {
                             resolve({prop: data});
                         });
                     }
@@ -2890,7 +2867,7 @@ describe('Typeson', function () {
                     myAsyncType: {
                         test (x) { return x instanceof MyAsync; },
                         replaceAsync (o) {
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 // Do something more useful in real code
                                 setTimeout(() => {
                                     resolve(o.prop);
@@ -2899,7 +2876,7 @@ describe('Typeson', function () {
                         },
                         revive (data) {
                             // Do something more useful in real code
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2913,7 +2890,7 @@ describe('Typeson', function () {
                         },
                         reviveAsync (data) {
                             // Do something more useful in real code
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -2939,7 +2916,7 @@ describe('Typeson', function () {
                         test (x) {
                             return 'undef' in x;
                         },
-                        replace (o) {
+                        replace () {
                             return null;
                         },
                         reviveAsync () {
@@ -2965,7 +2942,7 @@ describe('Typeson', function () {
                         reviveAsync (data) {
                             // console.log('revive', data);
                             // Do something more useful in real code
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 resolve({
                                     prop: data.prop,
                                     x: data.x,
@@ -3019,7 +2996,7 @@ describe('Typeson', function () {
                     myAsyncType: {
                         test (x) { return x instanceof MyAsync; },
                         replaceAsync (o) {
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 // Do something more useful in real code
                                 setTimeout(() => {
                                     resolve(o.prop);
@@ -3028,7 +3005,7 @@ describe('Typeson', function () {
                         },
                         revive (data) {
                             // Do something more useful in real code
-                            return new TypesonPromise((resolve, reject) => {
+                            return new TypesonPromise((resolve) => {
                                 resolve(new MyAsync(data));
                             });
                         }
@@ -3048,17 +3025,17 @@ describe('Typeson', function () {
                     test (x) {
                         return x === undefined;
                     },
-                    replaceAsync (o) {
-                        return new TypesonPromise(function (resolve, reject) {
+                    replaceAsync () {
+                        return new TypesonPromise(function (resolve) {
                             // Do something more useful in real code
                             setTimeout(function () {
                                 resolve(null);
                             }, 800);
                         });
                     },
-                    reviveAsync (data) {
+                    reviveAsync () {
                         // Do something more useful in real code
-                        return new TypesonPromise(function (resolve, reject) {
+                        return new TypesonPromise(function (resolve) {
                             resolve(new Undefined());
                         });
                     }
@@ -3079,15 +3056,15 @@ describe('Typeson', function () {
                         test (x) {
                             return x === undefined;
                         },
-                        replaceAsync (o) {
-                            return new TypesonPromise((resolve, reject) => {
+                        replaceAsync () {
+                            return new TypesonPromise((resolve) => {
                                 // Do something more useful in real code
                                 setTimeout(function () {
                                     resolve(null);
                                 }, 800);
                             });
                         },
-                        reviveAsync (data) {
+                        reviveAsync () {
                             // Do something more useful in real code
                             return new TypesonPromise((resolve) => {
                                 resolve(Promise.resolve(5));
@@ -3112,15 +3089,15 @@ describe('Typeson', function () {
                         test (x) {
                             return x === undefined;
                         },
-                        replaceAsync (o) {
-                            return new TypesonPromise((resolve, reject) => {
+                        replaceAsync () {
+                            return new TypesonPromise((resolve) => {
                                 // Do something more useful in real code
                                 setTimeout(function () {
                                     resolve(null);
                                 }, 800);
                             });
                         },
-                        reviveAsync (data) {
+                        reviveAsync () {
                             // Do something more useful in real code
                             return new TypesonPromise((resolve) => {
                                 resolve(5);
@@ -3212,7 +3189,6 @@ describe('hasConstructorOf', () => {
     );
     it('should detect whether an object is of a particular constructor', () => {
         const d = function () { /* Twin */ };
-        // eslint-disable-next-line no-extra-parens
         const e = new /** @type {any} */ (function () { /* Twin */ })();
         assert(
             hasConstructorOf(e, d),
@@ -3221,6 +3197,7 @@ describe('hasConstructorOf', () => {
         );
 
         const U = class Undefined {};
+        // eslint-disable-next-line camelcase -- Special identifier
         U.__typeson__type__ = 'TypesonUndefined';
         const undef = new U();
 
@@ -3277,7 +3254,7 @@ describe('Typeson.prototype.rootTypeName', () => {
     it('should retrieve root type name when JSON', () => {
         let runCount = 0;
         const typeson = new Typeson({
-            encapsulateObserver (o) {
+            encapsulateObserver () {
                 runCount++;
             }
         }).register({
@@ -3487,8 +3464,7 @@ describe('TypesonPromise', function () {
         /* eslint-disable promise/avoid-new -- Testing */
         return new Promise(function (
             /** @type {(value?: any) => void}} */
-            resolve,
-            reject
+            resolve
         ) {
             // eslint-disable-next-line promise/catch-or-return
             TypesonPromise.all([
@@ -3508,7 +3484,7 @@ describe('TypesonPromise', function () {
             }).then(function () {
                 return TypesonPromise.race(
                     makePromises()
-                // eslint-disable-next-line max-len -- Long
+                // eslint-disable-next-line @stylistic/max-len -- Long
                 // eslint-disable-next-line promise/always-return, promise/no-nesting
                 ).then(function (results) {
                     assert(
@@ -3552,7 +3528,7 @@ describe('TypesonPromise', function () {
                     rej(30);
                 }, 50);
             });
-            const y = new TypesonPromise(function (res, rej) {
+            const y = new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(500);
                 }, 500);
@@ -3562,8 +3538,7 @@ describe('TypesonPromise', function () {
         // eslint-disable-next-line promise/avoid-new
         return new Promise(function (
             /** @type {(value?: any) => void} */
-            resolve,
-            reject
+            resolve
         ) {
             makeRejectedPromises()[0].then(null, function (errCode) {
                 assert(

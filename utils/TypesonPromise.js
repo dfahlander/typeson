@@ -21,16 +21,17 @@ class TypesonPromise {
 
 /* eslint-enable promise/avoid-new */
 
-// eslint-disable-next-line max-len
+// eslint-disable-next-line @stylistic/max-len
 // class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
 
+// eslint-disable-next-line camelcase -- Special identifier
 TypesonPromise.__typeson__type__ = 'TypesonPromise';
 
 // Note: core-js-bundle provides a `Symbol` polyfill
 /* istanbul ignore else */
 if (typeof Symbol !== 'undefined') {
     // Ensure `isUserObject` will return `false` for `TypesonPromise`
-    // eslint-disable-next-line max-len -- Long
+    // eslint-disable-next-line @stylistic/max-len -- Long
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- Not a Promise
     Object.defineProperty(TypesonPromise.prototype, Symbol.toStringTag, {
         get () {

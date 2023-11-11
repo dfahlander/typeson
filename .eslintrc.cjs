@@ -16,7 +16,13 @@ const mainRules = {
     'eslint-comments/require-description': 0,
     'jsdoc/check-types': 0,
 
-    indent: ['error', 4, {outerIIFEBody: 0}],
+    '@stylistic/brace-style': 'off',
+
+    // Uses multiple sync methods
+    'n/no-sync': 'off',
+
+    '@stylistic/dot-location': ['error', 'property'],
+    '@stylistic/indent': ['error', 4, {outerIIFEBody: 0}],
     'unicorn/consistent-destructuring': 0,
     'promise/prefer-await-to-then': 0,
     'promise/prefer-await-to-callbacks': 0,
@@ -85,6 +91,13 @@ module.exports = {
             }
         },
         {
+            files: '.eslintrc.cjs',
+            rules: {
+                // CJS
+                'n/no-sync': 'off'
+            }
+        },
+        {
             files: ['**/*.md/*.js'],
             settings: {
                 polyfills: ['Float64Array', 'Int8Array']
@@ -111,7 +124,7 @@ module.exports = {
                 }],
                 'n/global-require': 'off',
                 // Disable until may fix https://github.com/gajus/eslint-plugin-jsdoc/issues/211
-                indent: 'off'
+                '@stylistic/indent': 'off'
             }
         },
         {
