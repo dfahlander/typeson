@@ -31,8 +31,6 @@ TypesonPromise.__typeson__type__ = 'TypesonPromise';
 /* istanbul ignore else */
 if (typeof Symbol !== 'undefined') {
     // Ensure `isUserObject` will return `false` for `TypesonPromise`
-    // eslint-disable-next-line @stylistic/max-len -- Long
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- Not a Promise
     Object.defineProperty(TypesonPromise.prototype, Symbol.toStringTag, {
         get () {
             return 'TypesonPromise';
@@ -44,7 +42,7 @@ if (typeof Symbol !== 'undefined') {
 /**
  *
  * @param {?(value: T) => any} [onFulfilled]
- * @param {(reason?: any) => void} [onRejected]
+ * @param {(reason?: any) => any} [onRejected]
  * @returns {TypesonPromise<T>}
  */
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
@@ -53,8 +51,12 @@ TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
         this.p.then(function (res) {
             // eslint-disable-next-line promise/always-return
             typesonResolve(onFulfilled ? onFulfilled(res) : res);
-        }).catch(function (res) {
-            return onRejected ? onRejected(res) : Promise.reject(res);
+        }).catch(function (/** @type {unknown} */ res) {
+            return onRejected
+                ? onRejected(res)
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Is an error
+                : Promise.reject(res);
         }).then(typesonResolve, typesonReject);
     });
 };

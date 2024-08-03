@@ -624,7 +624,6 @@ class Typeson {
                 delete _stateObj[prop];
                 return tmp;
             });
-            // eslint-disable-next-line n/callback-return
             cb();
             internalStateObjPropsToIgnore.forEach((prop, i) => {
                 // We're just copying from one StateObject to another,
@@ -894,7 +893,9 @@ class Typeson {
                 for (let i = 0; i < vl; i++) {
                     if (!(i in value)) {
                         // No need to escape numeric
-                        const kp = `${keypath}${keypath ? '.' : ''}${i}`;
+                        const kp = `${keypath}${keypath ? '.' : ''}${
+                            String(i)
+                        }`;
 
                         const ownKeysObj = {ownKeys: false};
                         _adaptBuiltinStateObjectProperties(

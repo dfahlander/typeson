@@ -22,6 +22,8 @@ const debug = false;
  * @returns {void}
  */
 function log (...args) {
+    // eslint-disable-next-line @stylistic/max-len -- Long
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Toggle
     if (debug) {
         console.log(...args);
     }
@@ -157,7 +159,7 @@ describe('Typeson', function () {
          * @param {(result: any) => void} cb
          * @returns {void}
          */
-        function test (data, cb) {
+        function check (data, cb) {
             const tson = typeson.stringify(data, null, 2);
             log(tson);
             const result = typeson.parse(/** @type {string} */ (tson));
@@ -169,20 +171,20 @@ describe('Typeson', function () {
          * @returns {void}
          */
         function valSwitch (val) {
-            test({$types: val}, function (result) {
+            check({$types: val}, function (result) {
                 assert(
                     result.$types === val &&
                         Object.keys(result).length === 1,
                     'Preserves $types on original object without additions'
                 );
             });
-            test({$: val}, function (result) {
+            check({$: val}, function (result) {
                 assert(
                     result.$ === val && Object.keys(result).length === 1,
                     'Preserves $ on original object without additions'
                 );
             });
-            test({$: val, $types: val}, function (result) {
+            check({$: val, $types: val}, function (result) {
                 assert(
                     result.$ === val &&
                         result.$types === val &&
@@ -194,7 +196,7 @@ describe('Typeson', function () {
         }
         valSwitch(true);
         valSwitch(false);
-        test(
+        check(
             {$: {}, $types: {$: {'': 'val', cyc: '#'}, '#': 'a1', '': 'b1'}},
             function (result) {
                 assert(
@@ -210,7 +212,7 @@ describe('Typeson', function () {
                 );
             }
         );
-        test({a: new Date(), $types: {}}, function (result) {
+        check({a: new Date(), $types: {}}, function (result) {
             assert(
                 result.a instanceof Date &&
                     !('$' in result) &&
@@ -220,7 +222,7 @@ describe('Typeson', function () {
                     'from original object without additions'
             );
         });
-        test({a: new Date(), $: {}}, function (result) {
+        check({a: new Date(), $: {}}, function (result) {
             assert(
                 result.a instanceof Date &&
                     !('$types' in result) &&
@@ -230,7 +232,7 @@ describe('Typeson', function () {
                     'original object without additions'
             );
         });
-        test({a: new Date(), $types: {}, $: {}}, function (result) {
+        check({a: new Date(), $types: {}, $: {}}, function (result) {
             assert(
                 result.a instanceof Date &&
                     typeof result.$types === 'object' &&
@@ -247,7 +249,7 @@ describe('Typeson', function () {
          * @returns {void}
          */
         function valSwitch2 (val) {
-            test({a: new Date(), $types: val}, function (result) {
+            check({a: new Date(), $types: val}, function (result) {
                 assert(
                     result.a instanceof Date &&
                         !('$' in result) &&
@@ -256,7 +258,7 @@ describe('Typeson', function () {
                         'from original object'
                 );
             });
-            test({a: new Date(), $: val}, function (result) {
+            check({a: new Date(), $: val}, function (result) {
                 assert(
                     result.a instanceof Date &&
                         !('$types' in result) &&
@@ -265,7 +267,7 @@ describe('Typeson', function () {
                     'from original object'
                 );
             });
-            test({a: new Date(), $types: val, $: val}, function (result) {
+            check({a: new Date(), $types: val, $: val}, function (result) {
                 assert(
                     result.a instanceof Date &&
                         result.$types === val &&
@@ -277,7 +279,7 @@ describe('Typeson', function () {
         }
         valSwitch2(true);
         valSwitch2(false);
-        test({a: new Date(), $: {}}, function (result) {
+        check({a: new Date(), $: {}}, function (result) {
             assert(
                 result.a instanceof Date &&
                     !('$types' in result) &&
@@ -920,7 +922,7 @@ describe('Typeson', function () {
             back[9].f[0][0] === back, 'Preserves nested cyclic array'
         );
     });
-    it('should allow serializing arrays to objects', () => {
+    it('should allow serializing arrays to objects (nested)', () => {
         const typeson = new Typeson().register({
             arraysToObjects: {
                 testPlainObjects: true,
@@ -1219,7 +1221,7 @@ describe('Typeson', function () {
                             return true;
                         }, function () {}, function () {}]
                     });
-                } catch (err) {
+                } catch {
                     caught = true;
                 }
                 return caught;
@@ -1245,7 +1247,7 @@ describe('Typeson', function () {
             const data = {list: []};
             for (let i = 0; i < 10; ++i) {
                 data.list.push({
-                    name: `name${i}`,
+                    name: `name${String(i)}`,
                     parent: data.list,
                     root: data,
                     children: []
@@ -1472,31 +1474,34 @@ describe('Typeson', function () {
             );
         });
 
-        it('should execute replacers with `fallback` in proper order', () => {
-            class Person {}
-            const john = new Person();
-            const typeson = new Typeson();
-            typeson.register([
-                {specificClassFinder: [
-                    (x) => x instanceof Person, () => 'specific found'
-                ]}
-            ]);
+        it(
+            'should execute replacers with `fallback: true` in proper order',
+            () => {
+                class Person {}
+                const john = new Person();
+                const typeson = new Typeson();
+                typeson.register([
+                    {specificClassFinder: [
+                        (x) => x instanceof Person, () => 'specific found'
+                    ]}
+                ]);
 
-            typeson.register([
-                {genericClassFinder: [
-                    (x) => x && typeof x === 'object', () => 'general found'
-                ]}
-            ], {
-                fallback: true
-            });
-            const clonedData = typeson.parse(/** @type {string} */ (
-                typeson.stringify(john)
-            ));
-            assert(
-                clonedData === 'specific found',
-                'Should execute replacers in proper order'
-            );
-        });
+                typeson.register([
+                    {genericClassFinder: [
+                        (x) => x && typeof x === 'object', () => 'general found'
+                    ]}
+                ], {
+                    fallback: true
+                });
+                const clonedData = typeson.parse(/** @type {string} */ (
+                    typeson.stringify(john)
+                ));
+                assert(
+                    clonedData === 'specific found',
+                    'Should execute replacers in proper order'
+                );
+            }
+        );
 
         it('should silently ignore nullish spec', () => {
             class Person {}
@@ -1650,7 +1655,7 @@ describe('Typeson', function () {
                         }
                         if (isObject) {
                             if ('cyclicKeypath' in o) {
-                                o.value = `#${o.cyclicKeypath}`;
+                                o.value = `#${String(o.cyclicKeypath)}`;
                             } else {
                                 str += indent() + '{\n';
                                 indentFactor++;
@@ -1664,6 +1669,8 @@ describe('Typeson', function () {
                     const idx = o.keypath.lastIndexOf('.') + 1;
                     str += `${indent()}${
                         o.keypath.slice(idx)
+                    // eslint-disable-next-line @stylistic/max-len -- Long
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions -- Ok
                     }: ${('replaced' in o ? o.replaced : o.value)}\n`;
                 }
             })
@@ -1743,10 +1750,14 @@ describe('Typeson', function () {
                         const idx = str.indexOf(placeholderText);
                         const start = str.slice(0, idx);
                         const end = str.slice(idx + placeholderText.length);
+                        // eslint-disable-next-line @stylistic/max-len -- Long
+                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands -- Ok
                         str = start + o.value + end;
                     } else if (o.awaitingTypesonPromise) {
                         str += '<span>' + placeholderText + '</span>';
                     } else if (!isObject && !isArray) {
+                        // eslint-disable-next-line @stylistic/max-len -- Long
+                        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands -- Ok
                         str += '<span>' + o.value + '</span>';
                     }
                 }
@@ -3547,18 +3558,24 @@ describe('TypesonPromise', function () {
                     '`then(null, onRejected)`'
                 );
                 return TypesonPromise.reject(400);
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable -- TypesonPromise
             }).catch(function (errCode) {
                 assert(
                     errCode === 400,
                     '`TypesonPromise` should work with `catch`'
                 );
                 return TypesonPromise.all(makeRejectedPromises());
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable -- TypesonPromise
             }).catch(function (errCode) {
                 assert(
                     errCode === 30,
                     'Promise.all should work with rejected promises'
                 );
                 return TypesonPromise.race(makeRejectedPromises());
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable -- TypesonPromise
             }).catch(function (errCode) {
                 assert(
                     errCode === 30,
@@ -3567,6 +3584,8 @@ describe('TypesonPromise', function () {
                 return new TypesonPromise(function () {
                     throw new Error('Sync throw');
                 });
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable -- TypesonPromise
             }).catch(function (err) {
                 assert(
                     err.message === 'Sync throw',
@@ -3584,6 +3603,8 @@ describe('TypesonPromise', function () {
                 return TypesonPromise.reject(33);
             }).then(function () {
                 throw new Error('Should not reach here');
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable -- TypesonPromise
             }).catch(function (errCode) {
                 assert(
                     errCode === 33,
@@ -3597,7 +3618,8 @@ describe('TypesonPromise', function () {
                         {status: 'fulfilled', value: 500}
                     ])
                 );
-                return resolve();
+                resolve();
+                return undefined;
             }).catch(function () {
                 throw new Error('Should not reach here');
             });
