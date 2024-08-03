@@ -23,7 +23,6 @@ const mainRules = {
     '@typescript-eslint/no-extraneous-class': 0,
 
     // Disable for now
-    '@eslint-community/eslint-comments/require-description': 0,
     'jsdoc/check-types': 0,
 
     '@stylistic/brace-style': 'off',

@@ -2,7 +2,7 @@
     jsdoc/require-jsdoc, no-empty-function, no-shadow,
     jsdoc/no-bad-blocks,
     @typescript-eslint/no-misused-promises,
-    @typescript-eslint/no-floating-promises
+    @typescript-eslint/no-floating-promises -- Testing
     */
 
 import {describe, it} from 'mocha';
@@ -2071,8 +2071,8 @@ describe('Typeson', function () {
                 }
             }).register([sparseUndefined]);
 
-            // eslint-disable-next-line @stylistic/max-len
-            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing -- Deliberately sparse
             const arr = [, 5, , , 6, ];
             let tson = typeson.stringify(arr);
             log(tson);
@@ -2090,8 +2090,8 @@ describe('Typeson', function () {
             // Once again for coverage of absent observer and
             //  nested keypath
             typeson = new Typeson().register([sparseUndefined]);
-            // eslint-disable-next-line @stylistic/max-len
-            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing -- Deliberately sparse
             const arr2 = {a: [, 5, , , 6, ]};
             tson = typeson.stringify(arr2);
             log(tson);
@@ -2135,8 +2135,8 @@ describe('Typeson', function () {
                 }
             }).register([sparseUndefined]);
 
-            // eslint-disable-next-line @stylistic/max-len
-            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing -- Deliberately sparse
             const arr = [, 5, , , 6, ];
             let tson = typeson.stringify(arr);
             log(tson);
@@ -2154,8 +2154,8 @@ describe('Typeson', function () {
             // Once again for coverage of absent observer and
             //  nested keypath
             typeson = new Typeson().register([sparseUndefined]);
-            // eslint-disable-next-line @stylistic/max-len
-            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing -- Deliberately sparse
             const arr2 = {a: [, 5, , , 6, ]};
             tson = typeson.stringify(arr2);
             log(tson);
@@ -2203,8 +2203,8 @@ describe('Typeson', function () {
                 }
             }).register([sparseUndefined]);
 
-            // eslint-disable-next-line @stylistic/max-len
-            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing -- Deliberately sparse
             const arr = [, 5, , , 6, ];
             let tson = await typeson.stringifyAsync(arr);
             log(tson);
@@ -2222,8 +2222,8 @@ describe('Typeson', function () {
             // Once again for coverage of absent observer and
             //  nested keypath
             typeson = new Typeson().register([sparseUndefined]);
-            // eslint-disable-next-line @stylistic/max-len
-            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line no-sparse-arrays, @stylistic/comma-dangle, @stylistic/array-bracket-spacing -- Deliberately sparse
             const arr2 = {a: [, 5, , , 6, ]};
             tson = await typeson.stringifyAsync(arr2);
             log(tson);
@@ -3477,7 +3477,7 @@ describe('TypesonPromise', function () {
             /** @type {(value?: any) => void}} */
             resolve
         ) {
-            // eslint-disable-next-line promise/catch-or-return
+            // eslint-disable-next-line promise/catch-or-return -- Not a promise
             TypesonPromise.all([
                 ...makePromises(),
                 100,
@@ -3485,18 +3485,18 @@ describe('TypesonPromise', function () {
                 function () {}
             ]).then(function (results) {
                 assert(
-                    // eslint-disable-next-line promise/always-return
                     results[0] === 30 && results[1] === 400 &&
                         results[2] === 20 &&
                         results[3] === 100 && results[4] === null &&
                         typeof results[5] === 'function',
                     'Should work with Promise.all'
                 );
+                return undefined;
             }).then(function () {
                 return TypesonPromise.race(
                     makePromises()
                 // eslint-disable-next-line @stylistic/max-len -- Long
-                // eslint-disable-next-line promise/always-return, promise/no-nesting
+                // eslint-disable-next-line promise/always-return, promise/no-nesting -- Not a promise
                 ).then(function (results) {
                     assert(
                         results === 400,
@@ -3511,10 +3511,10 @@ describe('TypesonPromise', function () {
                             rej('foo');
                         }, 10);
                     })
-                // eslint-disable-next-line promise/no-nesting
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // eslint-disable-next-line promise/no-nesting -- Not a regular promise
                 ]).then(function (results) {
                     assert(
-                        // eslint-disable-next-line promise/always-return
                         results[0].status === 'fulfilled' &&
                         results[0].value === 30 &&
                         results[1].status === 'fulfilled' &&
@@ -3527,6 +3527,7 @@ describe('TypesonPromise', function () {
                     );
 
                     resolve();
+                    return undefined;
                 });
             });
         });
@@ -3546,7 +3547,7 @@ describe('TypesonPromise', function () {
             });
             return [x, y];
         }
-        // eslint-disable-next-line promise/avoid-new
+        // eslint-disable-next-line promise/avoid-new -- Own API
         return new Promise(function (
             /** @type {(value?: any) => void} */
             resolve

@@ -773,7 +773,7 @@ class Typeson {
                 _ret = replaced;
                 observerData = {replaced};
             } else {
-                // eslint-disable-next-line no-lonely-if
+                // eslint-disable-next-line no-lonely-if -- Clearer
                 if (keypath === '' &&
                     hasConstructorOf(value, TypesonPromise)
                 ) {
@@ -822,7 +822,8 @@ class Typeson {
 
             // Iterate object or array
             if (_stateObj.iterateIn) {
-                // eslint-disable-next-line guard-for-in
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // eslint-disable-next-line guard-for-in -- Guard not wanted here
                 for (const key in value) {
                     const ownKeysObj = {ownKeys: hasOwn(value, key)};
                     _adaptBuiltinStateObjectProperties(
@@ -1581,13 +1582,15 @@ class Typeson {
     }
 }
 
+/* eslint-disable @stylistic/max-len -- Long */
 /**
  * We keep this function minimized so if using two instances of this
  * library, where one is minimized and one is not, it will still work
  * with `hasConstructorOf`.
  * @class
  */
-class Undefined{} // eslint-disable-line @stylistic/space-before-blocks
+class Undefined{} // eslint-disable-line @stylistic/space-before-blocks -- For minimizing
+/* eslint-enable @stylistic/max-len -- Long */
 
 // eslint-disable-next-line camelcase -- Special identifier
 Undefined.__typeson__type__ = 'TypesonUndefined';

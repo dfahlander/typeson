@@ -1,4 +1,4 @@
-/* eslint-disable promise/avoid-new */
+/* eslint-disable promise/avoid-new -- Own API */
 /**
  * We keep this function minimized so if using two instances of this
  *   library, where one is minimized and one is not, it will still work
@@ -19,9 +19,9 @@ class TypesonPromise {
     }
 }
 
-/* eslint-enable promise/avoid-new */
+/* eslint-enable promise/avoid-new -- Own API */
 
-// eslint-disable-next-line @stylistic/max-len
+// eslint-disable-next-line @stylistic/max-len -- Long
 // class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
 
 // eslint-disable-next-line camelcase -- Special identifier
@@ -47,9 +47,11 @@ if (typeof Symbol !== 'undefined') {
  */
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
     return new TypesonPromise((typesonResolve, typesonReject) => {
-        // eslint-disable-next-line promise/catch-or-return
+        // eslint-disable-next-line @stylistic/max-len -- Long
+        // eslint-disable-next-line promise/catch-or-return -- Handling ourselves
         this.p.then(function (res) {
-            // eslint-disable-next-line promise/always-return
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line promise/always-return -- Handle ourselves
             typesonResolve(onFulfilled ? onFulfilled(res) : res);
         }).catch(function (/** @type {unknown} */ res) {
             return onRejected
@@ -101,7 +103,7 @@ TypesonPromise.reject = function (v) {
  */
 TypesonPromise.all = function (promArr) {
     return new TypesonPromise(function (typesonResolve, typesonReject) {
-        // eslint-disable-next-line promise/catch-or-return
+        // eslint-disable-next-line promise/catch-or-return -- Handle ourselves
         Promise.all(promArr.map((prom) => {
             return prom?.constructor &&
                 '__typeson__type__' in prom.constructor &&
@@ -119,7 +121,7 @@ TypesonPromise.all = function (promArr) {
  */
 TypesonPromise.race = function (promArr) {
     return new TypesonPromise(function (typesonResolve, typesonReject) {
-        // eslint-disable-next-line promise/catch-or-return
+        // eslint-disable-next-line promise/catch-or-return -- Handle ourselves
         Promise.race(promArr.map((prom) => {
             return prom?.constructor &&
                 '__typeson__type__' in prom.constructor &&
@@ -137,7 +139,7 @@ TypesonPromise.race = function (promArr) {
  */
 TypesonPromise.allSettled = function (promArr) {
     return new TypesonPromise(function (typesonResolve, typesonReject) {
-        // eslint-disable-next-line promise/catch-or-return
+        // eslint-disable-next-line promise/catch-or-return -- Handle ourselves
         Promise.allSettled(promArr.map((prom) => {
             return prom?.constructor &&
                 '__typeson__type__' in prom.constructor &&
