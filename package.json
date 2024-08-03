@@ -83,7 +83,7 @@
     "c8": "^10.1.2",
     "chai": "^5.1.1",
     "eslint": "^9.8.0",
-    "eslint-config-ash-nazg": "36.9.0",
+    "eslint-config-ash-nazg": "36.10.0",
     "http-server": "^14.1.1",
     "mocha": "^10.7.0",
     "open-cli": "^8.0.0",
