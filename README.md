@@ -37,8 +37,8 @@ const objs = [
 
   {'': new Date(), "''": new Date()}
   // {"":1672504445626,"''":1672504445626,"$types":{"''":"Date","''''":"Date"}}
-  // Needs escaping of empty string (as double astrophes) and escaping of double
-  //   apostrophes (doubled apostrophes)
+  // Needs escaping of empty string (as double apostrophes) and escaping
+  //   of double apostrophes (doubled apostrophes)
 ];
 ```
 
