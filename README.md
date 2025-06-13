@@ -553,7 +553,7 @@ typeson.register({
   ],
 
   RegExp: [
-    (x) = x instanceof RegExp,
+    (x) => x instanceof RegExp,
     (re) => [re.source, re.flags],
     ([source, flags]) => new RegExp(source, flags)
   ]

@@ -156,7 +156,7 @@ function getByKeyPath (obj, keyPath) {
         throw new TypeError('Unexpected non-object type');
     }
     const period = keyPath.indexOf('.');
-    if (period > -1) {
+    if (period !== -1) {
         const innerObj = /** @type {{[key: string]: any|undefined}} */ (obj)[
             unescapeKeyPathComponent(keyPath.slice(0, period))
         ];
@@ -193,7 +193,7 @@ function setAtKeyPath (obj, keyPath, value) {
         throw new TypeError('Unexpected non-object type');
     }
     const period = keyPath.indexOf('.');
-    if (period > -1) {
+    if (period !== -1) {
         const innerObj = /** @type {{[key: string]: any}} */ (obj)[
             unescapeKeyPathComponent(keyPath.slice(0, period))
         ];

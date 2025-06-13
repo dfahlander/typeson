@@ -15,5 +15,5 @@
     "outDir": "dist"
   },
   "include": ["typeson.js", "utils/**/*.js", "test/**/*.js", ".eslintrc.cjs", "test/index.html", "README.md", "rollup.config.js"],
-  "exclude": ["node_modules", "rollup.config.js"]
+  "exclude": ["node_modules", "rollup.config.js", "test/chaiESMLoader.js"]
 }

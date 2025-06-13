@@ -619,6 +619,8 @@ class Typeson {
             _stateObj, ownKeysObj, cb
         ) => {
             Object.assign(_stateObj, ownKeysObj);
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line sonarjs/function-return-type -- Convenient as is
             const vals = internalStateObjPropsToIgnore.map((prop) => {
                 const tmp = _stateObj[prop];
                 delete _stateObj[prop];
@@ -731,7 +733,7 @@ class Typeson {
                 // Options set to detect cyclic references and be able
                 //   to rewrite them.
                 const refIndex = refObjs.indexOf(value);
-                if (refIndex < 0) {
+                if (refIndex === -1) {
                     if (_cyclic === true) {
                         refObjs.push(value);
                         refKeys.push(keypath);
@@ -1216,7 +1218,8 @@ class Typeson {
             }
 
             // console.log(plainObjectTypes.sort(nestedPathsFirst));
-            return plainObjectTypes.sort(nestedPathsFirst).reduce(
+            plainObjectTypes.sort(nestedPathsFirst);
+            return plainObjectTypes.reduce(
                 /**
                  * @param {TypesonPromise<any>|undefined} possibleTypesonPromise
                  * @param {PlainObjectType} plainObjectType

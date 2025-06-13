@@ -1,9 +1,9 @@
 /* eslint-disable no-console, no-restricted-syntax,
     jsdoc/require-jsdoc, no-empty-function, no-shadow,
-    jsdoc/no-bad-blocks,
     @typescript-eslint/no-misused-promises,
     @typescript-eslint/no-floating-promises -- Testing
     */
+/* eslint-disable sonarjs/no-in-misuse -- Not misuse here */
 
 import {describe, it} from 'mocha';
 import {assert} from 'chai';
@@ -786,7 +786,7 @@ describe('Typeson', function () {
                         stateObj.objs = [];
                     }
                     const index = stateObj.objs.indexOf(b.obj);
-                    if (index > -1) {
+                    if (index !== -1) {
                         return {index};
                     }
                     stateObj.objs.push(b.obj);
@@ -2788,7 +2788,8 @@ describe('Typeson', function () {
                     },
                     reviveAsync (data) {
                         // Do something more useful in real code
-                        // eslint-disable-next-line promise/avoid-new -- Testing
+                        // eslint-disable-next-line @stylistic/max-len -- Long
+                        // eslint-disable-next-line promise/avoid-new, sonarjs/prefer-promise-shorthand -- Testing
                         return new Promise((resolve) => {
                             resolve(new MyAsync(data));
                         });
@@ -3552,6 +3553,8 @@ describe('TypesonPromise', function () {
             /** @type {(value?: any) => void} */
             resolve
         ) {
+            // eslint-disable-next-line @stylistic/max-len -- Long
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable -- TypesonPromise
             makeRejectedPromises()[0].then(null, function (errCode) {
                 assert(
                     errCode === 30,

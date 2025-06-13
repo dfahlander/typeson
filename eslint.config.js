@@ -1,12 +1,10 @@
-// eslint-disable-next-line no-restricted-imports -- Required?
 import {readFileSync} from 'fs';
 
 import ashNazg from 'eslint-config-ash-nazg';
+// eslint-disable-next-line import/no-unresolved --- Not resolving
 import tseslint from 'typescript-eslint';
-import {dirname} from 'node:path';
-import {fileURLToPath} from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const {dirname} = import.meta;
 
 const mainRules = {
     '@brettz9/no-use-ignored-vars': 0,
@@ -98,7 +96,7 @@ export default [
                 ecmaVersion: 2022,
                 parserOptions: {
                     project: true,
-                    tsconfigRootDir: __dirname,
+                    tsconfigRootDir: dirname,
                     // Markdown problematic per https://github.com/typescript-eslint/typescript-eslint/issues/2373
                     extraFileExtensions: ['.html', '.md']
                 }

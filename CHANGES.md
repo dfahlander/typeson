@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## ?
+
+- chore: update devDeps.
+
 ## 9.0.3
 
 - fix: TypeScript typings (separate `ObserverData` from `EncapsulateObserver`)
