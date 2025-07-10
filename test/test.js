@@ -3672,4 +3672,15 @@ describe('setAtKeyPath', function () {
             ).message === 'Unexpected non-object type');
         }
     });
+
+    it('errs with __proto__', function () {
+        try {
+            setAtKeyPath({}, '__proto__', 15);
+            assert(false);
+        } catch (err) {
+            assert(/** @type {TypeError} */ (
+                err
+            ).message === 'Invalid property');
+        }
+    });
 });

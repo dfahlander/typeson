@@ -52,6 +52,7 @@ export default [
             'coverage',
             'node_modules',
             // TS issues
+            'test/chaiESMLoader.js',
             'rollup.config.js'
         ]
     },
@@ -106,13 +107,6 @@ export default [
             }
         }
     ),
-    {
-        files: ['.eslintrc.cjs'],
-        rules: {
-            // CJS
-            'n/no-sync': 'off'
-        }
-    },
     {
         files: ['**/*.md/*.js'],
         settings: {

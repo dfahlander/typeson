@@ -192,6 +192,9 @@ function setAtKeyPath (obj, keyPath, value) {
     if (!obj || typeof obj !== 'object') {
         throw new TypeError('Unexpected non-object type');
     }
+    if (keyPath === '__proto__') {
+        throw new TypeError('Invalid property');
+    }
     const period = keyPath.indexOf('.');
     if (period !== -1) {
         const innerObj = /** @type {{[key: string]: any}} */ (obj)[
