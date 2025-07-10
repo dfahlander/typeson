@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## ?
+
+- chore: update devDeps.
+
 ## 9.0.4
 
 - fix(security): disallow `__proto__` property as per <https://gist.github.com/tariqhawis/da226bfe6332e987a659dd622f535dd6>
