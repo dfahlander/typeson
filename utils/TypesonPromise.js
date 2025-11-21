@@ -121,7 +121,8 @@ TypesonPromise.all = function (promArr) {
  */
 TypesonPromise.race = function (promArr) {
     return new TypesonPromise(function (typesonResolve, typesonReject) {
-        // eslint-disable-next-line promise/catch-or-return -- Handle ourselves
+        // eslint-disable-next-line @stylistic/max-len -- Long
+        // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/await-thenable -- Handle ourselves
         Promise.race(promArr.map((prom) => {
             return prom?.constructor &&
                 '__typeson__type__' in prom.constructor &&
@@ -139,7 +140,8 @@ TypesonPromise.race = function (promArr) {
  */
 TypesonPromise.allSettled = function (promArr) {
     return new TypesonPromise(function (typesonResolve, typesonReject) {
-        // eslint-disable-next-line promise/catch-or-return -- Handle ourselves
+        // eslint-disable-next-line @stylistic/max-len -- Long
+        // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/await-thenable -- Handle ourselves
         Promise.allSettled(promArr.map((prom) => {
             return prom?.constructor &&
                 '__typeson__type__' in prom.constructor &&

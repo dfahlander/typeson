@@ -52,7 +52,6 @@ function hasConstructorOf (a, b) {
         return true;
     }
 
-    // eslint-disable-next-line sonarjs/prefer-single-boolean-return -- Cleaner
     if (typeof b === 'function' &&
         typeof Ctor.__typeson__type__ === 'string' &&
         Ctor.__typeson__type__ === b.__typeson__type__

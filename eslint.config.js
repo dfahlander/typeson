@@ -1,4 +1,6 @@
 import {readFileSync} from 'fs';
+// eslint-disable-next-line import/no-unresolved -- Present
+import {defineConfig} from 'eslint/config';
 
 import ashNazg from 'eslint-config-ash-nazg';
 // eslint-disable-next-line import/no-unresolved --- Not resolving
@@ -20,8 +22,16 @@ const mainRules = {
     // Class Undefined has a use for us
     '@typescript-eslint/no-extraneous-class': 0,
 
+    // V flag not supported in earlier browsers
+    'require-unicode-regexp': ['error', {
+        requireFlag: 'u'
+    }],
+
     // Disable for now
     'jsdoc/check-types': 0,
+    'jsdoc/reject-any-type': 0,
+    'jsdoc/ts-no-empty-object-type': 0,
+    'jsdoc/reject-function-type': 0,
 
     '@stylistic/brace-style': 'off',
 
@@ -85,7 +95,7 @@ export default [
             ...mainRules
         }
     },
-    ...tseslint.config(
+    ...defineConfig(
         ...tseslint.configs.strictTypeChecked.map((cfg) => {
             return {
                 ...cfg,
@@ -94,7 +104,7 @@ export default [
         }),
         {
             languageOptions: {
-                ecmaVersion: 2022,
+                ecmaVersion: 2024,
                 parserOptions: {
                     project: true,
                     tsconfigRootDir: dirname,
