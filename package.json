@@ -87,7 +87,7 @@
     "http-server": "^14.1.1",
     "mocha": "^11.7.5",
     "open-cli": "^8.0.0",
-    "rollup": "4.53.3",
+    "rollup": "4.59.0",
     "rollup-plugin-re": "^1.0.7",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.47.0"
