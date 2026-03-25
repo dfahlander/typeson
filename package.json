@@ -67,7 +67,7 @@
   },
   "homepage": "https://github.com/dfahlander/typeson#readme",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
