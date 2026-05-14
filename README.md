@@ -426,7 +426,7 @@ As with `encapsulate` but automatically throws upon obtaining a `TypesonPromise`
 
 #### `encapsulateAsync` (obj, [opts])
 
-As with `encapsulate` but automatically throws upon obtaining a non-`TypesonPromise` return result from the replacer (as only a `Typeson-Promise` is expected for asynchronous types).
+As with `encapsulate` but automatically throws upon obtaining a non-`TypesonPromise` return result from the replacer (as only a `TypesonPromise` is expected for asynchronous types).
 
 ##### Sample
 
