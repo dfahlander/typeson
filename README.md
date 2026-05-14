@@ -605,7 +605,7 @@ reconstructed).
 #### `TypesonPromise` class
 
 If you have a type which you wish to have resolved asynchronously, you
-can can return a `Typeson.Promise` (which works otherwise like a `Promise`)
+can can return a `TypesonPromise` (which works otherwise like a `Promise`)
 and call its first supplied argument (`resolve`) when ready.
 
 The reason we expect this class to be used here instead of regular `Promise`s
@@ -626,7 +626,7 @@ const typeson = new Typeson({sync: false}).register({
             return x instanceof MyAsync;
         },
         function (o) {
-            return new Typeson.Promise(function (resolve, reject) {
+            return new TypesonPromise(function (resolve, reject) {
                 setTimeout(function () {
                     // Do something more useful in real code
                     if (Date.now() % 2) {
