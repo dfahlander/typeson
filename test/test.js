@@ -773,7 +773,6 @@ describe('Typeson', function () {
                 test (x) {
                     return toStringTag(x) === 'ReplaceReviver';
                 },
-                // eslint-disable-next-line sonarjs/function-return-type -- Ok
                 replace (
                     b,
                     /**
