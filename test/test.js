@@ -1183,7 +1183,10 @@ describe('Typeson', function () {
 
             const revived = typeson.revive(JSON.parse(json));
 
-            assert(revived.x !== undefined, 'Reference should not be undefined');
+            assert(
+                revived.x !== undefined,
+                'Reference should not be undefined'
+            );
             assert(revived.o.x === revived.x, 'Reference identity preserved');
         }
     );
@@ -3056,6 +3059,77 @@ describe('Typeson', function () {
                 assert(
                     back.x.sth instanceof Undefined,
                     'Inner has `Undefined`'
+                );
+            }
+        );
+
+        it(
+            'should revive nested async custom objects; issue #22',
+            async () => {
+                class CustomObject {
+                    /**
+                     * @param {string} value
+                     */
+                    constructor (value) {
+                        this.value = value;
+                    }
+                }
+
+                class CustomObjectWithNestedObject {
+                    /**
+                     * @param {CustomObject} custom
+                     */
+                    constructor (custom) {
+                        this.custom = custom;
+                    }
+                }
+
+                const typeson = new Typeson().register([{
+                    CustomObject: {
+                        test (v) {
+                            return v instanceof CustomObject;
+                        },
+                        replaceAsync (v) {
+                            return TypesonPromise.resolve(v.value);
+                        },
+                        reviveAsync (v) {
+                            return TypesonPromise.resolve(new CustomObject(v));
+                        }
+                    },
+                    CustomObjectWithNestedObject: {
+                        test (v) {
+                            return v instanceof CustomObjectWithNestedObject;
+                        },
+                        replaceAsync (v) {
+                            return TypesonPromise.resolve({custom: v.custom});
+                        },
+                        reviveAsync (v) {
+                            return TypesonPromise.resolve(
+                                new CustomObjectWithNestedObject(v.custom)
+                            );
+                        }
+                    }
+                }]);
+
+                const custom = new CustomObject('Hello');
+                const customNested = new CustomObjectWithNestedObject(custom);
+
+                const encapsulated = await typeson.encapsulateAsync(
+                    customNested
+                );
+                const revived = await typeson.reviveAsync(encapsulated);
+
+                assert(
+                    revived instanceof CustomObjectWithNestedObject,
+                    'Outer object revived'
+                );
+                assert(
+                    revived.custom instanceof CustomObject,
+                    'Nested object revived before outer reviveAsync'
+                );
+                assert(
+                    revived.custom.value === 'Hello',
+                    'Nested value preserved'
                 );
             }
         );

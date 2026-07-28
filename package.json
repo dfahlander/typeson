@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "9.0.4",
+  "version": "10.0.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.min.cjs",
   "browser": "./dist/typeson.umd.js",

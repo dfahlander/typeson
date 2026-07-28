@@ -1295,6 +1295,8 @@ class Typeson {
                 return undefined;
             }
 
+            const promisesStart = revivalPromises.length;
+
             const type = /** @type {{[key: string]: JSON}} */ (
                 types
             )[keypath];
@@ -1385,34 +1387,51 @@ class Typeson {
 
             // `type` can be an array here
 
-            // eslint-disable-next-line @stylistic/max-len -- Long
-            const ret = /** @type {(string|number|true|Primitive|{ [key: string]: JSON; })[]} */ (
-                []
-            ).concat(type).reduce(function reducer (val, typ) {
-                if (hasConstructorOf(val, TypesonPromise)) {
-                    return val.then(
-                        /**
-                         * @param {unknown} v
-                         * @returns {unknown}
-                         */
-                        (v) => {
-                            return reducer(v, typ);
-                        }
-                    );
+            /**
+             * @param {any} val
+             * @returns {any}
+             */
+            const applyType = (val) => {
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                const ret = /** @type {(string|number|true|Primitive|{ [key: string]: JSON; })[]} */ (
+                    []
+                ).concat(type).reduce(function reducer (v, typ) {
+                    if (hasConstructorOf(v, TypesonPromise)) {
+                        return v.then(
+                            /**
+                             * @param {unknown} vv
+                             * @returns {unknown}
+                             */
+                            (vv) => {
+                                return reducer(vv, typ);
+                            }
+                        );
+                    }
+                    if (typeof typ !== 'string') {
+                        throw new TypeError('Bad type JSON');
+                    }
+                    return executeReviver(typ, v);
+                }, val);
+                if (hasConstructorOf(ret, TypesonPromise)) {
+                    return /** @type {TypesonPromise<any>} */ (
+                        ret
+                    ).then((v) => {
+                        keyPathValues[keypath] = v;
+                        return v;
+                    });
                 }
-                if (typeof typ !== 'string') {
-                    throw new TypeError('Bad type JSON');
-                }
-                return executeReviver(typ, val);
-            }, value);
-            if (hasConstructorOf(ret, TypesonPromise)) {
-                return /** @type {TypesonPromise<any>} */ (ret).then((v) => {
-                    keyPathValues[keypath] = v;
-                    return v;
+                keyPathValues[keypath] = ret;
+                return ret;
+            };
+
+            if (!sync && revivalPromises.length > promisesStart) {
+                return TypesonPromise.all(
+                    revivalPromises.slice(promisesStart)
+                ).then(() => {
+                    return applyType(value);
                 });
             }
-            keyPathValues[keypath] = ret;
-            return ret;
+            return applyType(value);
         }
 
         /**

@@ -1,8 +1,9 @@
 # typeson CHANGES
 
-## 10.0.0 (unreleased)
+## 10.0.0
 
 - fix: preserve shared references when reviving paths nested in replaced containers (e.g., `Set` values)
+- fix: wait for nested async child revivals before running parent revivers during `reviveAsync`
 - chore: bump `engines` to Node 22+
 - chore: update devDeps.
 
