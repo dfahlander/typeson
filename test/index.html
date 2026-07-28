@@ -25,8 +25,8 @@
         </script>
 
         <script type="module">
+        // eslint-disable-next-line unicorn/no-top-level-side-effects -- Safe
         mocha.setup({ui: 'bdd', timeout: 5000});
-        // eslint-disable-next-line unicorn/require-module-specifiers -- Flagging module
         export {};
         </script>
         <script type="module">

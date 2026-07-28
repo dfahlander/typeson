@@ -187,24 +187,33 @@ function setAtKeyPath (obj, keyPath, value) {
         return value;
     }
 
-    // We allow arrays, however
-    if (!obj || typeof obj !== 'object') {
-        throw new TypeError('Unexpected non-object type');
-    }
-    if (keyPath === '__proto__') {
-        throw new TypeError('Invalid property');
-    }
-    const period = keyPath.indexOf('.');
-    if (period !== -1) {
-        const innerObj = /** @type {{[key: string]: any}} */ (obj)[
-            unescapeKeyPathComponent(keyPath.slice(0, period))
+    let currentObj = obj;
+    let currentKeyPath = keyPath;
+
+    // eslint-disable-next-line @stylistic/max-len -- Long
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Ok
+    while (true) {
+        // We allow arrays, however
+        if (!currentObj || typeof currentObj !== 'object') {
+            throw new TypeError('Unexpected non-object type');
+        }
+        if (currentKeyPath === '__proto__') {
+            throw new TypeError('Invalid property');
+        }
+
+        const period = currentKeyPath.indexOf('.');
+        if (period === -1) {
+            /** @type {{[key: string]: any}} */ (currentObj)[
+                unescapeKeyPathComponent(currentKeyPath)
+            ] = value;
+            return obj;
+        }
+
+        currentObj = /** @type {{[key: string]: any}} */ (currentObj)[
+            unescapeKeyPathComponent(currentKeyPath.slice(0, period))
         ];
-        return setAtKeyPath(innerObj, keyPath.slice(period + 1), value);
+        currentKeyPath = currentKeyPath.slice(period + 1);
     }
-    /** @type {{[key: string]: any}} */ (obj)[
-        unescapeKeyPathComponent(keyPath)
-    ] = value;
-    return obj;
 }
 
 /**

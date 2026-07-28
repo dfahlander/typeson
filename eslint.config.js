@@ -1,9 +1,7 @@
 import {readFileSync} from 'fs';
-// eslint-disable-next-line import/no-unresolved -- Present
 import {defineConfig} from 'eslint/config';
 
 import ashNazg from 'eslint-config-ash-nazg';
-// eslint-disable-next-line import/no-unresolved --- Not resolving
 import tseslint from 'typescript-eslint';
 
 const {dirname} = import.meta;
@@ -27,6 +25,9 @@ const mainRules = {
         requireFlag: 'u'
     }],
 
+    // Until ash-nazg fixes
+    'unicorn/prefer-then-catch': 0,
+
     // Disable for now
     'jsdoc/check-types': 0,
     'jsdoc/reject-any-type': 0,
@@ -48,7 +49,12 @@ const mainRules = {
     'jsdoc/check-values': ['error', {allowedLicenses: true}],
 
     'unicorn/no-this-assignment': 0,
-    'unicorn/prefer-spread': 0
+    'unicorn/prefer-spread': 0,
+
+    // Disable for now
+    'unicorn/no-error-property-assignment': 0,
+    'sonarjs/argument-type': 0,
+    'sonarjs/in-operator-type-error': 0
 };
 
 const tsconfig = JSON.parse(readFileSync('./tsconfig.json', 'utf8'));
@@ -132,10 +138,11 @@ export default [
             'no-console': ['off'],
             'no-undef': ['off'],
             'padded-blocks': ['off'],
-            'import/unambiguous': ['off'],
-            'import/no-unresolved': ['off'],
-            'import/no-commonjs': 'off',
-            'import/no-extraneous-dependencies': 'off',
+            'import-x/unambiguous': ['off'],
+            'import-x/no-unresolved': ['off'],
+            'import-x/no-commonjs': 'off',
+            'import-x/no-extraneous-dependencies': 'off',
+            'import-x/order': 'off',
             'global-require': 'off',
             'no-restricted-syntax': ['off'],
             'n/no-missing-import': ['off'],
@@ -145,6 +152,9 @@ export default [
                 varsIgnorePattern: '^(typeson|myTypeson|objs|revived|obj)$'
             }],
             'n/global-require': 'off',
+            'unicorn/no-this-outside-of-class': 'off',
+            // Disable for now
+            'unicorn/no-error-property-assignment': 'off',
             // Disable until may fix https://github.com/gajus/eslint-plugin-jsdoc/issues/211
             '@stylistic/indent': 'off'
         }

@@ -549,6 +549,8 @@ class Typeson {
                 promResults.map(async function (promResult) {
                     /** @type {PromisesData} */
                     const newPromisesData = [];
+                    // eslint-disable-next-line @stylistic/max-len -- Long
+                    // eslint-disable-next-line unicorn/no-unnecessary-splice -- TS
                     const [prData] = promisesData.splice(0, 1);
                     const [
                         keyPath, , _cyclic, _stateObj,
@@ -619,8 +621,6 @@ class Typeson {
             _stateObj, ownKeysObj, cb
         ) => {
             Object.assign(_stateObj, ownKeysObj);
-            // eslint-disable-next-line @stylistic/max-len -- Long
-            // eslint-disable-next-line sonarjs/function-return-type -- Convenient as is
             const vals = internalStateObjPropsToIgnore.map((prop) => {
                 const tmp = _stateObj[prop];
                 delete _stateObj[prop];
@@ -695,12 +695,12 @@ class Typeson {
             )) {
                 if (value === undefined ||
                     (
+                        value === Infinity ||
+                        // This can be 0 or -0
+                        value === 0 ||
+                        value === -Infinity ||
                         // Numbers that are not supported in JSON
-                        Number.isNaN(value) ||
-                            value === Number.NEGATIVE_INFINITY ||
-                            value === Number.POSITIVE_INFINITY ||
-                            // This can be 0 or -0
-                            value === 0
+                        Number.isNaN(value)
                     )
                 ) {
                     _ret = _stateObj.replaced
@@ -726,9 +726,9 @@ class Typeson {
                 }
                 return value;
             }
-            if (_cyclic && !_stateObj.iterateIn &&
-                !_stateObj.iterateUnsetNumeric && value &&
-                typeof value === 'object'
+            if (_cyclic && value && typeof value === 'object' &&
+                !_stateObj.iterateIn &&
+                !_stateObj.iterateUnsetNumeric
             ) {
                 // Options set to detect cyclic references and be able
                 //   to rewrite them.
@@ -791,6 +791,7 @@ class Typeson {
                     clone = new Array(value.length);
                     observerData = {clone};
                 } else if (
+                    isPlainObj ||
                     (
                         !['function', 'symbol'].includes(typeof value) &&
                         !('toJSON' in value) &&
@@ -798,7 +799,6 @@ class Typeson {
                         !hasConstructorOf(value, Promise) &&
                         !hasConstructorOf(value, ArrayBuffer)
                     ) ||
-                    isPlainObj ||
                     _stateObj.iterateIn === 'object'
                 ) {
                     clone = {};
@@ -894,33 +894,37 @@ class Typeson {
             if (_stateObj.iterateUnsetNumeric) {
                 const vl = value.length;
                 for (let i = 0; i < vl; i++) {
-                    if (!(i in value)) {
-                        // No need to escape numeric
-                        const kp = `${keypath}${keypath ? '.' : ''}${
-                            String(i)
-                        }`;
-
-                        const ownKeysObj = {ownKeys: false};
-                        _adaptBuiltinStateObjectProperties(
-                            _stateObj,
-                            ownKeysObj,
-                            () => {
-                                const val = _encapsulate(
-                                    kp, undefined, Boolean(_cyclic), _stateObj,
-                                    promisesData, resolvingTypesonPromise
-                                );
-                                if (hasConstructorOf(val, TypesonPromise)) {
-                                    promisesData.push([
-                                        kp, val, Boolean(_cyclic), _stateObj,
-                                        clone, i, _stateObj.type
-                                    ]);
-                                } else if (val !== undefined) {
-                                    /** @type {{[key: Integer]: any}} */
-                                    (clone)[i] = val;
-                                }
-                            }
-                        );
+                    // eslint-disable-next-line @stylistic/max-len -- Long
+                    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- Ok
+                    if (i in value) {
+                        continue;
                     }
+
+                    // No need to escape numeric
+                    const kp = `${keypath}${keypath ? '.' : ''}${
+                        String(i)
+                    }`;
+
+                    const ownKeysObj = {ownKeys: false};
+                    _adaptBuiltinStateObjectProperties(
+                        _stateObj,
+                        ownKeysObj,
+                        () => {
+                            const val = _encapsulate(
+                                kp, undefined, Boolean(_cyclic), _stateObj,
+                                promisesData, resolvingTypesonPromise
+                            );
+                            if (hasConstructorOf(val, TypesonPromise)) {
+                                promisesData.push([
+                                    kp, val, Boolean(_cyclic), _stateObj,
+                                    clone, i, _stateObj.type
+                                ]);
+                            } else if (val !== undefined) {
+                                /** @type {{[key: Integer]: any}} */
+                                (clone)[i] = val;
+                            }
+                        }
+                    );
                 }
                 if (runObserver) {
                     runObserver({endIterateUnsetNumeric: true, end: true});
@@ -954,7 +958,7 @@ class Typeson {
                 const replacer = replacers[i];
                 if (replacer.test(value, _stateObj)) {
                     const {type} = replacer;
-                    if (this.revivers[type]) {
+                    if (Object.hasOwn(this.revivers, type)) {
                         // Record the type only if a corresponding reviver
                         //   exists. This is to support specs where only
                         //   replacement is done.
@@ -1034,7 +1038,7 @@ class Typeson {
         //   a promise is the result, we don't want to resolve leading
         //   to an async result, so we return an array to avoid
         //   ambiguity
-        if (opts.stringification && sync) {
+        if (sync && opts.stringification) {
             return [finish(ret)];
         }
 
@@ -1182,12 +1186,13 @@ class Typeson {
             // const references = [];
             // const reviveTypes = [];
 
-            /** @type {PlainObjectType[]} */
-            const plainObjectTypes = [];
             /* c8 ignore next 3 */
             if (!types) {
                 throw new Error('Found bad `types`');
             }
+            /** @type {PlainObjectType[]} */
+            const plainObjectTypes = [];
+
             Object.entries(types).forEach(([
                 keypath, type
             ]) => {
@@ -1350,7 +1355,7 @@ class Typeson {
                     } else {
                         break;
                     }
-                    keyPathResolutions.splice(0, 1);
+                    keyPathResolutions.shift();
                 }
             }
             if (!type) {
@@ -1501,7 +1506,8 @@ class Typeson {
                         '# cannot be used as a type name as it is reserved ' +
                         'for cyclic objects'
                     );
-                } else if (JSON_TYPES.includes(typeId)) {
+                }
+                if (JSON_TYPES.includes(typeId)) {
                     throw new TypeError(
                         'Plain JSON object types are reserved as type names'
                     );
@@ -1551,7 +1557,7 @@ class Typeson {
                 }
                 const start = typeof opts.fallback === 'number'
                     ? opts.fallback
-                    : (opts.fallback ? 0 : Number.POSITIVE_INFINITY);
+                    : (opts.fallback ? 0 : Infinity);
                 if (spec.testPlainObjects) {
                     this.plainObjectReplacers.splice(start, 0, replacerObj);
                 } else {

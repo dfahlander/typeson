@@ -48,7 +48,7 @@ if (typeof Symbol !== 'undefined') {
 TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
     return new TypesonPromise((typesonResolve, typesonReject) => {
         // eslint-disable-next-line @stylistic/max-len -- Long
-        // eslint-disable-next-line promise/catch-or-return -- Handling ourselves
+        // eslint-disable-next-line unicorn/no-this-outside-of-class, promise/catch-or-return -- Handling ourselves
         this.p.then(function (res) {
             // eslint-disable-next-line @stylistic/max-len -- Long
             // eslint-disable-next-line promise/always-return -- Handle ourselves
@@ -69,6 +69,7 @@ TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
  * @returns {TypesonPromise<T>}
  */
 TypesonPromise.prototype.catch = function (onRejected) {
+    // eslint-disable-next-line unicorn/no-this-outside-of-class -- See above
     return this.then(() => {
         return undefined;
     }, onRejected);

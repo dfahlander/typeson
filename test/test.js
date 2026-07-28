@@ -52,17 +52,17 @@ const typeson = new Typeson().register({
     ],
     SpecialNumber: [
         function (x) {
-            return Number.isNaN(x) || x === Number.POSITIVE_INFINITY ||
-                x === Number.NEGATIVE_INFINITY;
+            return Number.isNaN(x) || x === Infinity ||
+                x === -Infinity;
         },
         function (n) {
             return Number.isNaN(n) ? 'NaN' : n > 0 ? 'Infinity' : '-Infinity';
         },
         function (/** @type {string} */ s) {
             return {
-                NaN: Number.NaN,
-                Infinity: Number.POSITIVE_INFINITY,
-                '-Infinity': Number.NEGATIVE_INFINITY
+                NaN,
+                Infinity,
+                '-Infinity': -Infinity
             }[s];
         }
     ],
@@ -462,14 +462,14 @@ describe('Typeson', function () {
                         return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(date.getTime());
-                            });
+                            }, 0);
                         });
                     },
                     reviveAsync (time) {
                         return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(new Date(time));
-                            });
+                            }, 0);
                         });
                     }
                 }
@@ -757,6 +757,7 @@ describe('Typeson', function () {
 
     it('should transmit state through replacers and revivers', () => {
         class ReplaceReviver {
+            [Symbol.toStringTag] = 'ReplaceReviver';
             /**
              * @param {object} obj
              */
@@ -766,13 +767,13 @@ describe('Typeson', function () {
                     value: obj
                 });
             }
-            [Symbol.toStringTag] = 'ReplaceReviver';
         }
         const typeson = new Typeson().register({
             replaceReviveContainer: {
                 test (x) {
                     return toStringTag(x) === 'ReplaceReviver';
                 },
+                // eslint-disable-next-line sonarjs/function-return-type -- Ok
                 replace (
                     b,
                     /**
@@ -996,7 +997,7 @@ describe('Typeson', function () {
         const map = {
             map: {
                 test (x) { return toStringTag(x) === 'Map'; },
-                replace (mp) { return [...mp.entries()]; },
+                replace (mp) { return mp.entries().toArray(); },
                 revive (entries) { return new Map(entries); }
             }
         };
@@ -1032,7 +1033,7 @@ describe('Typeson', function () {
         const map = {
             map: {
                 test (x) { return toStringTag(x) === 'Map'; },
-                replace (mp) { return [...mp.entries()]; },
+                replace (mp) { return mp.entries().toArray(); },
                 revive (entries) { return new Map(entries); }
             }
         };
@@ -1109,7 +1110,7 @@ describe('Typeson', function () {
                 set: {
                     test (x) { return toStringTag(x) === 'Set'; },
                     replace (st) {
-                        return [...st.values()];
+                        return st.values().toArray();
                     },
                     revive (values) { return new Set(values); }
                 }
@@ -1268,6 +1269,8 @@ describe('Typeson', function () {
                 'result.list[3] should have 2 children'
             );
             assert(
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // eslint-disable-next-line unicorn/better-dom-traversing -- Not DOM
                 result.list[3].children[0] === result.list[0],
                 'First child of result.list[3] should be result.list[0]'
             );
@@ -1980,14 +1983,14 @@ describe('Typeson', function () {
                         return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(val);
-                            });
+                            }, 0);
                         });
                     },
                     reviveAsync (val) {
                         return new TypesonPromise((resolve) => {
                             setTimeout(() => {
                                 resolve(val);
-                            });
+                            }, 0);
                         });
                     }
                 }
@@ -2186,7 +2189,7 @@ describe('Typeson', function () {
                             return new TypesonPromise((resolve) => {
                                 setTimeout(() => {
                                     resolve(0);
-                                });
+                                }, 0);
                             });
                         },
                         // Will avoid adding anything
@@ -3424,7 +3427,7 @@ describe('TypesonPromise', function () {
             new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(TypesonPromise.resolve(5));
-                });
+                }, 0);
             }).then(function (/** @type {number} */ r) {
                 return new TypesonPromise(function (res) {
                     setTimeout(function () {
@@ -3436,7 +3439,7 @@ describe('TypesonPromise', function () {
             new TypesonPromise(function (res) {
                 setTimeout(function () {
                     res(new APromiseUser(555));
-                });
+                }, 0);
             })
         ];
         return typeson.stringifyAsync(x).then(function (tson) {
