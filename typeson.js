@@ -1132,6 +1132,7 @@ class Typeson {
          * ][]}
          */
         const keyPathResolutions = [];
+        const keyPathValues = Object.create(null);
         const stateObj = {};
 
         let ignore$Types = true;
@@ -1347,10 +1348,11 @@ class Typeson {
                 // Try to resolve cyclic reference as soon as available
                 while (keyPathResolutions.length) {
                     const [[_target, keyPath, __clone, k]] = keyPathResolutions;
-                    const val = getByKeyPath(_target, keyPath);
-                    // Typeson.Undefined not expected here as not cyclic or
-                    //   `undefined`
-                    if (val !== undefined) {
+                    const hasTracked = hasOwn(keyPathValues, keyPath);
+                    const val = hasTracked
+                        ? keyPathValues[keyPath]
+                        : getByKeyPath(_target, keyPath);
+                    if (hasTracked || val !== undefined) {
                         __clone[k] = val;
                     } else {
                         break;
@@ -1359,13 +1361,19 @@ class Typeson {
                 }
             }
             if (!type) {
+                keyPathValues[keypath] = value;
                 return value;
             }
             if (type === '#') {
-                const ret = getByKeyPath(target, value.slice(1));
-                if (ret === undefined) { // Cyclic reference not yet available
+                const referenceKeypath = value.slice(1);
+                const hasTracked = hasOwn(keyPathValues, referenceKeypath);
+                const ret = hasTracked
+                    ? keyPathValues[referenceKeypath]
+                    : getByKeyPath(target, referenceKeypath);
+                if (!hasTracked && ret === undefined) {
+                    // Cyclic reference not yet available
                     keyPathResolutions.push([
-                        target, value.slice(1),
+                        target, referenceKeypath,
                         // Should be a `clone` and `key` present as
                         //   pushed when non-root (cyclical reference)
                         /** @type {{[key: string]: any }} */ (clone),
@@ -1378,7 +1386,7 @@ class Typeson {
             // `type` can be an array here
 
             // eslint-disable-next-line @stylistic/max-len -- Long
-            return /** @type {(string|number|true|Primitive|{ [key: string]: JSON; })[]} */ (
+            const ret = /** @type {(string|number|true|Primitive|{ [key: string]: JSON; })[]} */ (
                 []
             ).concat(type).reduce(function reducer (val, typ) {
                 if (hasConstructorOf(val, TypesonPromise)) {
@@ -1397,6 +1405,14 @@ class Typeson {
                 }
                 return executeReviver(typ, val);
             }, value);
+            if (hasConstructorOf(ret, TypesonPromise)) {
+                return /** @type {TypesonPromise<any>} */ (ret).then((v) => {
+                    keyPathValues[keypath] = v;
+                    return v;
+                });
+            }
+            keyPathValues[keypath] = ret;
+            return ret;
         }
 
         /**

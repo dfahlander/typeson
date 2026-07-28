@@ -1123,6 +1123,71 @@ describe('Typeson', function () {
         }
     );
 
+    it(
+        'should revive shared references inside multiple sets; ' +
+        'typeson-registry issue #27',
+        function () {
+            const typeson = new Typeson().register({
+                set: {
+                    test (x) { return toStringTag(x) === 'Set'; },
+                    replace (st) {
+                        return st.values().toArray();
+                    },
+                    revive (values) {
+                        return new Set(values);
+                    }
+                }
+            });
+
+            const shared = {hi: 1};
+            const original = [
+                new Set([shared]),
+                new Set([shared])
+            ];
+
+            const revived = typeson.revive(typeson.encapsulate(original));
+            const first = [...revived[0]][0];
+            const second = [...revived[1]][0];
+
+            assert(first !== undefined, 'First set entry revived');
+            assert(second !== undefined, 'Second set entry revived');
+            assert(first === second, 'Sets should share same reference');
+        }
+    );
+
+    it(
+        'should preserve references with user-defined conversion; issue #11',
+        function () {
+            class ComplexClassThroughArray {
+                /**
+                 * @param {any} [x]
+                 */
+                constructor (x = {}) {
+                    this.x = x;
+                }
+            }
+
+            const typeson = new Typeson().register({
+                ComplexClassThroughArray: [
+                    (x) => x instanceof ComplexClassThroughArray,
+                    (d) => [d.x],
+                    (d) => new ComplexClassThroughArray(d[0])
+                ]
+            });
+
+            const o = new ComplexClassThroughArray();
+            const json = JSON.stringify(typeson.encapsulate({
+                o,
+                x: o.x
+            }));
+
+            const revived = typeson.revive(JSON.parse(json));
+
+            assert(revived.x !== undefined, 'Reference should not be undefined');
+            assert(revived.o.x === revived.x, 'Reference identity preserved');
+        }
+    );
+
     it('should throw with bad $types revival', function () {
         const typeson = new Typeson().register({
             Date: {
@@ -3652,6 +3717,11 @@ describe('getAtKeyPath', function () {
                 err
             ).message === 'Unexpected non-object type');
         }
+    });
+
+    it('returns undefined when nested branch is missing', function () {
+        const value = getByKeyPath({}, 'missing.child');
+        assert(value === undefined);
     });
 });
 

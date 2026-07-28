@@ -2,6 +2,7 @@
 
 ## 10.0.0 (unreleased)
 
+- fix: preserve shared references when reviving paths nested in replaced containers (e.g., `Set` values)
 - chore: bump `engines` to Node 22+
 - chore: update devDeps.
 
