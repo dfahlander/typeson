@@ -100,7 +100,7 @@ The module `typeson-registry/presets/builtin` is 1.6 kb minified and gzipped and
 
 ## Limitations
 
-Since typeson has a synchronous API, it cannot encapsulate and revive async types such as `Blob`, `File` or `Observable`. Encapsulating an async object requires to be able to emit streamed content asynchronically. Remoting libraries could however complement typeson with a streaming channel that handles the emitting of stream content. For example, a remoting library could define a typeson rule that encapsulates an [Observable](https://github.com/zenparsing/es-observable) to an id (string or number for example), then starts subscribing to it and emitting the chunks to the peer as they arrive. The peer could revive the id to an observable that when subscribed to, will listen to the channel for chunks destinated to the encapsulated ID.
+typeson has synchronous and asynchronous APIs, but no streaming APIs, so for encapsulating and reviving async types such as `Blob`, `File` or `Observable` in a streaming manner one must be able to emit streamed content asynchronically. Remoting libraries could however complement typeson with a streaming channel that handles the emitting of stream content. For example, a remoting library could define a typeson rule that encapsulates an [Observable](https://github.com/zenparsing/es-observable) to an id (string or number for example), then starts subscribing to it and emitting the chunks to the peer as they arrive. The peer could revive the id to an observable that when subscribed to, will listen to the channel for chunks destinated to the encapsulated ID.
 
 ## Usage
 
@@ -250,6 +250,7 @@ Creates an instance of Typeson, on which you may configure additional types to s
 {
     cyclic?: boolean, // Default true to allow cyclic objects
     encapsulateObserver?: function, // Default no-op
+    encapsulateError?: function, // Optional ignore/substitute handler
     sync?: true, // Don't force a promise response regardless of type
     throwOnBadSyncType?: true // Default to throw when mismatch with `TypesonPromise` obtained for sync request or not returned for async
 }
@@ -287,6 +288,22 @@ The following properties are also present in particular cases:
 - `endIterateOwn` - Will be `true` if finishing iteration of "own" properties.
 - `endIterateUnsetNumeric` - Will be `true` if finishing iteration of unset numeric properties.
 - `end` - Convenience property that will be `true` if `endIterateIn`, `endIterateOwn`, or `endIterateUnsetNumeric` is `true`.
+
+###### `encapsulateError`: callback (see description)
+
+Called when a property access throws during encapsulation. The callback
+receives an object with:
+
+- `keypath` - The full keypath for the failing property.
+- `error` - The thrown error.
+- `parent` - The object or array containing the property.
+- `key` - The property key being read.
+- `stateObj` - The current state object.
+- `type` - The current detected type, if any.
+
+Return `{ignore: true}` to omit the property from the encapsulated result, or
+`{substitute: value}` to serialize a fallback value at that path instead.
+Throwing or returning nothing preserves the original error.
 
 ###### `sync`: boolean (Internal property)
 
