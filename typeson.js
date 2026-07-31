@@ -222,6 +222,28 @@ function nestedPathsFirst (a, b) {
  */
 
 /**
+ * @typedef {object} EncapsulateErrorAction
+ * @property {boolean} [ignore]
+ * @property {any} [substitute]
+ */
+
+/**
+ * @typedef {object} EncapsulateErrorData
+ * @property {string} keypath
+ * @property {any} error
+ * @property {any} parent
+ * @property {string|Integer} key
+ * @property {StateObject} stateObj
+ * @property {string} type
+ */
+
+/**
+ * @callback EncapsulateErrorHandler
+ * @param {EncapsulateErrorData} data
+ * @returns {EncapsulateErrorAction|void}
+ */
+
+/**
  * @callback Observer
  * @param {KeyPathEvent|EndIterateInEvent|EndIterateOwnEvent|
  *   EndIterateUnsetNumericEvent|
@@ -244,6 +266,7 @@ function nestedPathsFirst (a, b) {
 * @property {number|boolean} [fallback] `true` sets to 0. Default is
 *  positive infinity. Used within `register`
 * @property {EncapsulateObserver} [encapsulateObserver]
+ * @property {EncapsulateErrorHandler} [encapsulateError]
 */
 
 /**
@@ -489,7 +512,7 @@ class Typeson {
         // Clone the object deeply while at the same time replacing any
         //   special types or cyclic reference:
         const cyclic = 'cyclic' in opts ? opts.cyclic : true;
-        const {encapsulateObserver} = opts;
+        const {encapsulateObserver, encapsulateError} = opts;
 
         /**
          *
@@ -690,6 +713,59 @@ class Typeson {
                     }, {type}));
                 }
                 : null;
+
+            /**
+             *
+             * @param {string} kp
+             * @param {any} error
+             * @param {any} parent
+             * @param {string|Integer} key
+             * @returns {any}
+             */
+            /**
+             *
+             * @param {string} kp
+             * @param {any} parent
+             * @param {string|Integer} key
+             * @returns {any}
+             */
+            const getEncapsulatedValue = (kp, parent, key) => {
+                try {
+                    return {
+                        value: _encapsulate(
+                            kp, parent[key], Boolean(_cyclic), _stateObj,
+                            promisesData, resolvingTypesonPromise
+                        )
+                    };
+                } catch (error) {
+                    if (!encapsulateError) {
+                        throw error;
+                    }
+                    const type = detectedType ?? _stateObj.type ??
+                        getJSONType(parent);
+                    const handled = encapsulateError({
+                        keypath: kp,
+                        error,
+                        parent,
+                        key,
+                        stateObj: _stateObj,
+                        type
+                    });
+                    if (!handled) {
+                        throw error;
+                    }
+                    if ('substitute' in handled) {
+                        return {
+                            value: handled.substitute,
+                            substitute: true
+                        };
+                    }
+                    if (handled.ignore) {
+                        return undefined;
+                    }
+                    throw error;
+                }
+            };
             if (['string', 'boolean', 'number', 'undefined'].includes(
                 $typeof
             )) {
@@ -834,16 +910,21 @@ class Typeson {
                         () => {
                             const kp = keypath + (keypath ? '.' : '') +
                                 escapeKeyPathComponent(key);
-                            const val = _encapsulate(
-                                kp, value[key], Boolean(_cyclic), _stateObj,
-                                promisesData, resolvingTypesonPromise
-                            );
+                            const encapsulatedValue =
+                                getEncapsulatedValue(kp, value, key);
+                            const val = encapsulatedValue &&
+                                encapsulatedValue.value;
                             if (hasConstructorOf(val, TypesonPromise)) {
                                 promisesData.push([
                                     kp, val, Boolean(_cyclic), _stateObj,
                                     clone, key, _stateObj.type
                                 ]);
-                            } else if (val !== undefined) {
+                            } else if (
+                                encapsulatedValue && (
+                                    val !== undefined ||
+                                    'substitute' in encapsulatedValue
+                                )
+                            ) {
                                 /** @type {{[key: (string|Integer)]: any}} */ (
                                     clone
                                 )[key] = val;
@@ -867,16 +948,21 @@ class Typeson {
                         _stateObj,
                         ownKeysObj,
                         () => {
-                            const val = _encapsulate(
-                                kp, value[key], Boolean(_cyclic), _stateObj,
-                                promisesData, resolvingTypesonPromise
-                            );
+                            const encapsulatedValue =
+                                getEncapsulatedValue(kp, value, key);
+                            const val = encapsulatedValue &&
+                                encapsulatedValue.value;
                             if (hasConstructorOf(val, TypesonPromise)) {
                                 promisesData.push([
                                     kp, val, Boolean(_cyclic), _stateObj,
                                     clone, key, _stateObj.type
                                 ]);
-                            } else if (val !== undefined) {
+                            } else if (
+                                encapsulatedValue && (
+                                    val !== undefined ||
+                                    'substitute' in encapsulatedValue
+                                )
+                            ) {
                                 /** @type {{[key: string]: any}} */ (
                                     clone
                                 )[key] = val;

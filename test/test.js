@@ -1884,6 +1884,170 @@ describe('Typeson', function () {
         });
     });
 
+    describe('encapsulateError', () => {
+        it('should ignore accessor errors when requested', () => {
+            const input = {
+                keep: 1,
+                inner: {}
+            };
+            Object.defineProperty(input.inner, 'boom', {
+                enumerable: true,
+                get () {
+                    throw new Error('baz');
+                }
+            });
+
+            /** @type {string[]} */
+            const paths = [];
+            const typeson = new Typeson({
+                encapsulateError (o) {
+                    paths.push(o.keypath);
+                    assert(o.keypath === 'inner.boom', 'Should report path');
+                    assert(o.key === 'boom', 'Should report property key');
+                    assert(
+                        o.error instanceof Error && o.error.message === 'baz',
+                        'Should report the thrown error'
+                    );
+                    return {ignore: true};
+                }
+            });
+
+            const result = typeson.encapsulate(input);
+            assert(result.keep === 1, 'Should keep unaffected properties');
+            assert(
+                result.inner && !Object.hasOwn(result.inner, 'boom'),
+                'Should omit the throwing property'
+            );
+            assert(
+                paths.length === 1 && paths[0] === 'inner.boom',
+                'Should invoke the handler once for the failing path'
+            );
+        });
+
+        it('should substitute accessor errors when requested', () => {
+            const input = {
+                inner: {}
+            };
+            Object.defineProperty(input.inner, 'boom', {
+                enumerable: true,
+                get () {
+                    throw new Error('baz');
+                }
+            });
+
+            const typeson = new Typeson({
+                encapsulateError (o) {
+                    assert(o.keypath === 'inner.boom', 'Should report path');
+                    return {substitute: `fallback:${o.keypath}`};
+                }
+            });
+
+            const result = typeson.encapsulate(input);
+            assert(
+                result.inner.boom === 'fallback:inner.boom',
+                'Should replace the failing property with the substitute'
+            );
+        });
+
+        it('should ignore accessor errors in arrays when requested', () => {
+            /** @type {unknown[]} */
+            const input = [];
+            Object.defineProperty(input, 'foo', {
+                enumerable: true,
+                get () {
+                    throw new Error('baz');
+                }
+            });
+
+            let called = false;
+            const typeson = new Typeson({
+                encapsulateError (o) {
+                    called = true;
+                    assert(o.keypath === 'foo', 'Should report array key');
+                    return {ignore: true};
+                }
+            });
+
+            const result = typeson.encapsulate(input);
+            assert(called, 'Should invoke the handler');
+            assert(Array.isArray(result), 'Should preserve the array result');
+            assert(!Object.hasOwn(result, 'foo'), 'Should omit the item');
+        });
+
+        it('should rethrow when the handler does not handle the error', () => {
+            const input = {
+                inner: {}
+            };
+            Object.defineProperty(input.inner, 'boom', {
+                enumerable: true,
+                get () {
+                    throw new Error('baz');
+                }
+            });
+
+            const typeson = new Typeson({
+                // @ts-expect-error Intentional bad handler result for test
+                encapsulateError () {
+                    return null;
+                }
+            });
+
+            assert.throws(
+                () => typeson.encapsulate(input),
+                /baz/u,
+                'Should preserve the original error when unhandled'
+            );
+        });
+
+        it(
+            'should rethrow when the handler returns an unsupported action',
+            () => {
+                const input = {
+                    inner: {}
+                };
+                Object.defineProperty(input.inner, 'boom', {
+                    enumerable: true,
+                    get () {
+                        throw new Error('baz');
+                    }
+                });
+
+                const typeson = new Typeson({
+                    // @ts-expect-error Intentional bad handler result for test
+                    encapsulateError () {
+                        return {unsupported: true};
+                    }
+                });
+
+                assert.throws(
+                    () => typeson.encapsulate(input),
+                    /baz/u,
+                    'Should preserve the original error for unknown responses'
+                );
+            }
+        );
+
+        it('should rethrow by default when a getter throws', () => {
+            const input = {
+                inner: {}
+            };
+            Object.defineProperty(input.inner, 'boom', {
+                enumerable: true,
+                get () {
+                    throw new Error('baz');
+                }
+            });
+
+            const typeson = new Typeson();
+
+            assert.throws(
+                () => typeson.encapsulate(input),
+                /baz/u,
+                'Should keep the original fail-fast behavior'
+            );
+        });
+    });
+
     describe('Iteration', function () {
         it('should allow `iterateIn`', () => {
             class A {
