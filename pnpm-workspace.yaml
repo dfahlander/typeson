@@ -1,5 +1,9 @@
 allowBuilds:
   unrs-resolver: false
+
+ignoredBuiltDependencies:
+  - unrs-resolver
+
 minimumReleaseAgeExclude:
   - '@types/node@26.1.2'
   - eslint-config-ash-nazg@41.0.0

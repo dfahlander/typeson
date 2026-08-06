@@ -1,6 +1,6 @@
 {
   "name": "typeson",
-  "version": "10.0.0",
+  "version": "10.1.0",
   "description": "Preserves types over JSON, BSON or socket.io",
   "main": "./dist/typeson-commonjs2.min.cjs",
   "browser": "./dist/typeson.umd.js",
@@ -82,14 +82,14 @@
     "c8": "^12.0.0",
     "chai": "^6.2.2",
     "eslint": "^10.8.0",
-    "eslint-config-ash-nazg": "41.0.0",
+    "eslint-config-ash-nazg": "42.1.1",
     "http-server": "^14.1.1",
-    "mocha": "^11.7.6",
+    "mocha": "^11.8.0",
     "open-cli": "^9.0.0",
-    "rollup": "4.62.3",
+    "rollup": "4.62.4",
     "rollup-plugin-re": "^1.0.7",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0"
+    "typescript-eslint": "^8.66.0"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }

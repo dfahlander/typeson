@@ -1,5 +1,11 @@
 # typeson CHANGES
 
+## 10.1.0
+
+- feat: add `encapsulateError` option for control of throwing properties; fixes #29
+- docs: make mention of fact that there is an asynchronous API today, just not a streaming one
+- chore: update devDeps.
+
 ## 10.0.0
 
 - fix: preserve shared references when reviving paths nested in replaced containers (e.g., `Set` values)
