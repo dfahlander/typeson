@@ -803,9 +803,9 @@ describe('Typeson', function () {
                     o,
                     /**
                      * @type {import('../typeson.js').StateObject & {
-                    *   objs?: any[]
-                    * }}
-                    */
+                     *   objs?: any[]
+                     * }}
+                     */
                     stateObj
                 ) {
                     if (!stateObj.objs) {

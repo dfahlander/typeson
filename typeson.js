@@ -2,7 +2,7 @@
  * @file Typeson - JSON with types.
  * @license The MIT License (MIT)
  * @copyright (c) 2016-2018 David Fahlander, Brett Zamir
-*/
+ */
 
 /**
  * @typedef {number} Integer
@@ -40,18 +40,18 @@
  */
 
 /**
-* @callback Reviver
-* @param {any} value May not be JSON if processed already by another type
-* @param {StateObject} stateObj
-* @returns {any}
-*/
+ * @callback Reviver
+ * @param {any} value May not be JSON if processed already by another type
+ * @param {StateObject} stateObj
+ * @returns {any}
+ */
 
 /**
-* @callback AsyncReviver
-* @param {any} value May not be JSON if processed already by another type
-* @param {StateObject} stateObj
-* @returns {TypesonPromise<any>|Promise<any>}
-*/
+ * @callback AsyncReviver
+ * @param {any} value May not be JSON if processed already by another type
+ * @param {StateObject} stateObj
+ * @returns {TypesonPromise<any>|Promise<any>}
+ */
 
 /**
  * @typedef {{
@@ -114,10 +114,10 @@ const {keys, hasOwn} = Object,
     ];
 
 /**
-* @typedef {object} PlainObjectType
-* @property {string} keypath
-* @property {string} type
-*/
+ * @typedef {object} PlainObjectType
+ * @property {string} keypath
+ * @property {string} type
+ */
 
 /**
  * Handle plain object revivers first so reference setting can use
@@ -252,22 +252,22 @@ function nestedPathsFirst (a, b) {
  */
 
 /**
-* @typedef {object} TypesonOptions
-* @property {boolean} [stringification] Auto-set by `stringify`
-* @property {boolean} [parse] Auto-set by `parse`
-* @property {boolean} [sync] Can be overridden when auto-set by
-*  `encapsulate` and `revive`.
-* @property {boolean} [returnTypeNames] Auto-set by `specialTypeNames`
-* @property {boolean} [iterateNone] Auto-set by `rootTypeName`
-* @property {boolean} [cyclic]
-* @property {boolean} [throwOnBadSyncType] Auto-set by `stringifyAsync`,
-*  `stringifySync`, `parseSync`, `parseAsync`, `encapsulateSync`,
-*  `encapsulateAync`, `reviveSync`, `reviveAsync`
-* @property {number|boolean} [fallback] `true` sets to 0. Default is
-*  positive infinity. Used within `register`
-* @property {EncapsulateObserver} [encapsulateObserver]
+ * @typedef {object} TypesonOptions
+ * @property {boolean} [stringification] Auto-set by `stringify`
+ * @property {boolean} [parse] Auto-set by `parse`
+ * @property {boolean} [sync] Can be overridden when auto-set by
+ *  `encapsulate` and `revive`.
+ * @property {boolean} [returnTypeNames] Auto-set by `specialTypeNames`
+ * @property {boolean} [iterateNone] Auto-set by `rootTypeName`
+ * @property {boolean} [cyclic]
+ * @property {boolean} [throwOnBadSyncType] Auto-set by `stringifyAsync`,
+ *  `stringifySync`, `parseSync`, `parseAsync`, `encapsulateSync`,
+ *  `encapsulateAync`, `reviveSync`, `reviveAsync`
+ * @property {number|boolean} [fallback] `true` sets to 0. Default is
+ *  positive infinity. Used within `register`
+ * @property {EncapsulateObserver} [encapsulateObserver]
  * @property {EncapsulateErrorHandler} [encapsulateError]
-*/
+ */
 
 /**
  * An instance of this class can be used to call `stringify()` and `parse()`.
@@ -321,12 +321,12 @@ class Typeson {
      */
 
     /**
-    * @callback JSONReplacer
-    * @param {""|string} key
-    * @param {JSON} value
-    * @returns {any}
-    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#The%20replacer%20parameter
-    */
+     * @callback JSONReplacer
+     * @param {""|string} key
+     * @param {JSON} value
+     * @returns {any}
+     * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#The%20replacer%20parameter
+     */
 
     /**
      * Serialize given object to Typeson.
@@ -391,11 +391,11 @@ class Typeson {
     }
 
     /**
-    * @callback JSONReviver
-    * @param {string} key
-    * @param {JSON} value
-    * @returns {JSON}
-    */
+     * @callback JSONReviver
+     * @param {string} key
+     * @param {JSON} value
+     * @returns {JSON}
+     */
 
     /**
      * Parse Typeson back into an obejct.
@@ -415,13 +415,13 @@ class Typeson {
     }
 
     /**
-    * Also sync but throws on non-sync result.
-    * @param {string} text
-    * @param {JSONReviver} [reviver] This JSON reviver has nothing to do with
-    *   our revivers.
-    * @param {TypesonOptions} [opts]
-    * @returns {any}
-    */
+     * Also sync but throws on non-sync result.
+     * @param {string} text
+     * @param {JSONReviver} [reviver] This JSON reviver has nothing to do with
+     *   our revivers.
+     * @param {TypesonOptions} [opts]
+     * @returns {any}
+     */
     parseSync (text, reviver, opts) {
         return this.parse(
             text,
@@ -430,12 +430,12 @@ class Typeson {
         );
     }
     /**
-    * @param {string} text
-    * @param {JSONReviver} [reviver] This JSON reviver has nothing to do with
-    *   our revivers.
-    * @param {TypesonOptions} [opts]
-    * @returns {Promise<any>}
-    */
+     * @param {string} text
+     * @param {JSONReviver} [reviver] This JSON reviver has nothing to do with
+     *   our revivers.
+     * @param {TypesonOptions} [opts]
+     * @returns {Promise<any>}
+     */
     parseAsync (text, reviver, opts) {
         return this.parse(
             text,
@@ -469,9 +469,9 @@ class Typeson {
         opts.iterateNone = true;
         return (
             /**
-            * @type {Promise<ObjectTypeString|string>|
-            * ObjectTypeString|string}
-            */
+             * @type {Promise<ObjectTypeString|string>|
+             * ObjectTypeString|string}
+             */
             (this.encapsulate(obj, stateObj, opts))
         );
     }
@@ -624,14 +624,14 @@ class Typeson {
         };
 
         /**
-        * @typedef {object} OwnKeysObject
-        * @property {boolean} ownKeys
-        */
+         * @typedef {object} OwnKeysObject
+         * @property {boolean} ownKeys
+         */
 
         /**
-        * @callback BuiltinStateObjectPropertiesCallback
-        * @returns {void}
-        */
+         * @callback BuiltinStateObjectPropertiesCallback
+         * @returns {void}
+         */
 
         /**
          *
@@ -676,11 +676,11 @@ class Typeson {
 
             /**
              * @type {{}|{
-            *   replaced: any
-            * }|{
-            *   clone: {[key: string]: any}
-            * }}
-            */
+             *   replaced: any
+             * }|{
+             *   clone: {[key: string]: any}
+             * }}
+             */
             let observerData = {};
             const $typeof = typeof value;
             const runObserver = encapsulateObserver
@@ -690,11 +690,11 @@ class Typeson {
                 // Bug with TS apparently as can't just use
                 //    `@type {Observer}` here as doesn't see param is optional
                 /**
-                * @param {KeyPathEvent|EndIterateInEvent|EndIterateOwnEvent|
-                *   EndIterateUnsetNumericEvent|
-                *   TypeDetectedEvent|ReplacingEvent} [_obj]
-                * @returns {void}
-                */
+                 * @param {KeyPathEvent|EndIterateInEvent|EndIterateOwnEvent|
+                 *   EndIterateUnsetNumericEvent|
+                 *   TypeDetectedEvent|ReplacingEvent} [_obj]
+                 * @returns {void}
+                 */
                 function (_obj) {
                     const type = detectedType ?? _stateObj.type ?? (
                         getJSONType(value)
@@ -1587,10 +1587,10 @@ class Typeson {
     }
 
     /**
-    * @param {any} obj
-    * @param {TypesonOptions} [opts]
-    * @returns {Promise<any>}
-    */
+     * @param {any} obj
+     * @param {TypesonOptions} [opts]
+     * @returns {Promise<any>}
+     */
     reviveAsync (obj, opts) {
         return this.revive(obj, {
             throwOnBadSyncType: true, ...opts, sync: false
