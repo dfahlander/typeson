@@ -128,6 +128,11 @@ describe('Typeson', function () {
         assert(Object.is(res.j, 0), 'Positive zero');
         assert(Object.is(res.k, -0), 'Negative zero');
     });
+    it('should encapsulate bigint without checking for `toJSON`', () => {
+        // eslint-disable-next-line unicorn/prefer-bigint-literals -- ES target
+        const value = BigInt('1');
+        assert(new Typeson().encapsulateSync(value) === value);
+    });
     it('should resolve nested objects', () => {
         const input = {a: [{subA: 5}, [6, 7]], b: {subB: {c: 8}}};
         const res = roundtrip(input);

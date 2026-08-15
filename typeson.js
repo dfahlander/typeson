@@ -869,7 +869,7 @@ class Typeson {
                 } else if (
                     isPlainObj ||
                     (
-                        !['function', 'symbol'].includes(typeof value) &&
+                        typeof value === 'object' &&
                         !('toJSON' in value) &&
                         !hasConstructorOf(value, TypesonPromise) &&
                         !hasConstructorOf(value, Promise) &&

@@ -1,5 +1,9 @@
 # typeson CHANGES
 
+## 10.1.1
+
+- fix: ensure bigint literal doesn't throw with encapsulation
+
 ## 10.1.0
 
 - feat: add `encapsulateError` option for control of throwing properties; fixes #29
