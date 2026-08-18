@@ -296,6 +296,23 @@ describe('Typeson', function () {
         });
     });
 
+    it('should preserve an own __proto__ property', () => {
+        const input = JSON.parse(
+            '{"__proto__":{"marker":true},"safe":2}'
+        );
+        input.date = new Date(91000000000);
+
+        const result = roundtrip(input);
+        const descriptor = Object.getOwnPropertyDescriptor(
+            result, '__proto__'
+        );
+
+        assert(descriptor && descriptor.value.marker === true);
+        assert(result.safe === 2);
+        assert(result.date instanceof Date);
+        assert(Object.getPrototypeOf(result) === Object.prototype);
+    });
+
     it('should handle path separators in objects', () => {
         const input = {
             aaa: {

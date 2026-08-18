@@ -114,6 +114,21 @@ const {keys, hasOwn} = Object,
     ];
 
 /**
+ * @param {object} obj
+ * @param {string|Integer} key
+ * @param {any} value
+ * @returns {void}
+ */
+function setOwnEnumerable (obj, key, value) {
+    Object.defineProperty(obj, key, {
+        configurable: true,
+        enumerable: true,
+        value,
+        writable: true
+    });
+}
+
+/**
  * @typedef {object} PlainObjectType
  * @property {string} keypath
  * @property {string} type
@@ -593,18 +608,20 @@ class Typeson {
                     if (keyPath && isTypesonPromise) {
                         const encaps2 = await encaps.p;
                         // Undefined parent only for root which has no `keyPath`
-                        // eslint-disable-next-line @stylistic/max-len -- Long
-                        /** @type {{[key: (string|number)]: any}} */ (parentObj)[
-                            /** @type {string|number} */ (key)
-                        ] = encaps2;
+                        setOwnEnumerable(
+                            /** @type {object} */ (parentObj),
+                            /** @type {string|number} */ (key),
+                            encaps2
+                        );
                         return checkPromises(_ret, newPromisesData);
                     }
                     if (keyPath) {
                         // Undefined parent only for root which has no `keyPath`
-                        // eslint-disable-next-line @stylistic/max-len -- Long
-                        /** @type {{[key: (string|number)]: any}} */ (parentObj)[
-                            /** @type {string|number} */ (key)
-                        ] = encaps;
+                        setOwnEnumerable(
+                            /** @type {object} */ (parentObj),
+                            /** @type {string|number} */ (key),
+                            encaps
+                        );
                     } else if (isTypesonPromise) {
                         _ret = encaps.p;
                     } else {
@@ -925,9 +942,7 @@ class Typeson {
                                     'substitute' in encapsulatedValue
                                 )
                             ) {
-                                /** @type {{[key: (string|Integer)]: any}} */ (
-                                    clone
-                                )[key] = val;
+                                setOwnEnumerable(clone, key, val);
                             }
                         }
                     );
@@ -963,9 +978,7 @@ class Typeson {
                                     'substitute' in encapsulatedValue
                                 )
                             ) {
-                                /** @type {{[key: string]: any}} */ (
-                                    clone
-                                )[key] = val;
+                                setOwnEnumerable(clone, key, val);
                             }
                         }
                     );
@@ -1006,8 +1019,7 @@ class Typeson {
                                     clone, i, _stateObj.type
                                 ]);
                             } else if (val !== undefined) {
-                                /** @type {{[key: Integer]: any}} */
-                                (clone)[i] = val;
+                                setOwnEnumerable(clone, i, val);
                             }
                         }
                     );
@@ -1383,9 +1395,9 @@ class Typeson {
 
             const promisesStart = revivalPromises.length;
 
-            const type = /** @type {{[key: string]: JSON}} */ (
-                types
-            )[keypath];
+            const type = hasOwn(types, keypath)
+                ? /** @type {{[key: string]: JSON}} */ (types)[keypath]
+                : undefined;
             const isArr = isArray(value);
             if (isArr || isPlainObject(value)) {
                 /* eslint-disable unicorn/no-new-array -- Sparse */
@@ -1410,9 +1422,9 @@ class Typeson {
                      */
                     const set = (v) => {
                         if (hasConstructorOf(v, Undefined)) {
-                            _clone[k] = undefined;
+                            setOwnEnumerable(_clone, k, undefined);
                         } else if (v !== undefined) {
-                            _clone[k] = v;
+                            setOwnEnumerable(_clone, k, v);
                         }
                         return v;
                     };
@@ -1441,7 +1453,7 @@ class Typeson {
                         ? keyPathValues[keyPath]
                         : getByKeyPath(_target, keyPath);
                     if (hasTracked || val !== undefined) {
-                        __clone[k] = val;
+                        setOwnEnumerable(__clone, k, val);
                     } else {
                         break;
                     }

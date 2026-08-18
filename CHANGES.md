@@ -1,5 +1,10 @@
 # typeson CHANGES
 
+## ?
+
+- fix(security): avoid potntial to set nested __proto__
+- fix: revival metadata lookup now accepts only own `$types` entries, avoiding inherited `Object.prototype` being mistaken for type metadata.
+
 ## 10.1.1
 
 - fix: ensure bigint literal doesn't throw with encapsulation
