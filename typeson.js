@@ -467,9 +467,10 @@ class Typeson {
      * @returns {string[]|false}
      */
     specialTypeNames (obj, stateObj, opts = {}) {
-        opts.returnTypeNames = true;
         return /** @type {string[]|false} */ (
-            this.encapsulate(obj, stateObj, opts)
+            this.encapsulate(obj, stateObj, {
+                ...opts, returnTypeNames: true
+            })
         );
     }
 
@@ -481,13 +482,14 @@ class Typeson {
      * @returns {Promise<ObjectTypeString|string>|ObjectTypeString|string}
      */
     rootTypeName (obj, stateObj, opts = {}) {
-        opts.iterateNone = true;
         return (
             /**
              * @type {Promise<ObjectTypeString|string>|
              * ObjectTypeString|string}
              */
-            (this.encapsulate(obj, stateObj, opts))
+            (this.encapsulate(obj, stateObj, {
+                ...opts, iterateNone: true
+            }))
         );
     }
 

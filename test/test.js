@@ -3587,6 +3587,13 @@ describe('Typeson.prototype.specialTypeNames', () => {
             'Should return `false` on failing to find any special type names'
         );
     });
+    it('should not mutate options', () => {
+        const opts = {cyclic: false};
+
+        new Typeson().specialTypeNames({}, null, opts);
+
+        assert(!Object.hasOwn(opts, 'returnTypeNames'));
+    });
 });
 
 describe('Typeson.prototype.rootTypeName', () => {
@@ -3631,6 +3638,14 @@ describe('Typeson.prototype.rootTypeName', () => {
             rootTypeName === 'Date',
             'Should return the single root type name'
         );
+    });
+
+    it('should not mutate options', () => {
+        const opts = {cyclic: false};
+
+        new Typeson().rootTypeName({}, null, opts);
+
+        assert(!Object.hasOwn(opts, 'iterateNone'));
     });
 });
 
