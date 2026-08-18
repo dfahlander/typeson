@@ -197,20 +197,26 @@ function setAtKeyPath (obj, keyPath, value) {
         if (!currentObj || typeof currentObj !== 'object') {
             throw new TypeError('Unexpected non-object type');
         }
-        if (currentKeyPath === '__proto__') {
+
+        const period = currentKeyPath.indexOf('.');
+        const key = unescapeKeyPathComponent(
+            period === -1
+                ? currentKeyPath
+                : currentKeyPath.slice(0, period)
+        );
+        if (key === '__proto__') {
             throw new TypeError('Invalid property');
         }
 
-        const period = currentKeyPath.indexOf('.');
         if (period === -1) {
             /** @type {{[key: string]: any}} */ (currentObj)[
-                unescapeKeyPathComponent(currentKeyPath)
+                key
             ] = value;
             return obj;
         }
 
         currentObj = /** @type {{[key: string]: any}} */ (currentObj)[
-            unescapeKeyPathComponent(currentKeyPath.slice(0, period))
+            key
         ];
         currentKeyPath = currentKeyPath.slice(period + 1);
     }

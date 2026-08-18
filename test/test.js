@@ -3998,4 +3998,25 @@ describe('setAtKeyPath', function () {
             ).message === 'Invalid property');
         }
     });
+
+    it('errs with nested __proto__', function () {
+        let caughtError;
+        try {
+            setAtKeyPath(
+                {foo: {}}, 'foo.__proto__.typesonPolluted', true
+            );
+        } catch (err) {
+            caughtError = err;
+        }
+
+        const polluted = Object.hasOwn(
+            Object.prototype, 'typesonPolluted'
+        );
+        Reflect.deleteProperty(Object.prototype, 'typesonPolluted');
+
+        assert(/** @type {TypeError} */ (
+            caughtError
+        ).message === 'Invalid property');
+        assert(!polluted);
+    });
 });
