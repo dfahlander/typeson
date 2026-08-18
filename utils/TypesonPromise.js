@@ -70,9 +70,7 @@ TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
  */
 TypesonPromise.prototype.catch = function (onRejected) {
     // eslint-disable-next-line unicorn/no-this-outside-of-class -- See above
-    return this.then(() => {
-        return undefined;
-    }, onRejected);
+    return this.then(undefined, onRejected);
 };
 
 /**

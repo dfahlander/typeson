@@ -2,8 +2,9 @@
 
 ## ?
 
-- fix(security): avoid potntial to set nested __proto__
+- fix(security): avoid potential to set nested __proto__
 - fix: revival metadata lookup now accepts only own `$types` entries, avoiding inherited `Object.prototype` being mistaken for type metadata.
+- fix: `catch()` now delegates with `this.then(undefined, onRejected)`, preserving fulfilled values while handling only rejections.
 
 ## 10.1.1
 

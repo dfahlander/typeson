@@ -3861,6 +3861,14 @@ describe('TypesonPromise', function () {
         });
         /* eslint-enable promise/avoid-new -- Testing */
     });
+    it('should preserve fulfilled values through catch', () => {
+        return TypesonPromise.resolve(5).catch(() => {
+            throw new Error('Should not reach here');
+        }).then((value) => {
+            assert(value === 5);
+            return undefined;
+        });
+    });
     it('should properly handle Promise rejections', () => {
         function makeRejectedPromises () {
             const x = new TypesonPromise(function (res, rej) {
