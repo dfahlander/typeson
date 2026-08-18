@@ -3541,6 +3541,26 @@ describe('isUserObject', () => {
     });
 });
 
+describe('Typeson reference revival', () => {
+    it('should not revive references to inherited properties', () => {
+        ['#__proto__', '#constructor'].forEach((reference) => {
+            const revived = new Typeson().reviveSync({
+                value: reference,
+                $types: {value: '#'}
+            });
+
+            assert(!Object.hasOwn(revived, 'value'));
+        });
+    });
+
+    it('should revive references to an own constructor property', () => {
+        const constructor = {value: true};
+        const revived = roundtrip({constructor, reference: constructor});
+
+        assert(revived.reference === revived.constructor);
+    });
+});
+
 describe('hasConstructorOf', () => {
     it(
         'should detect whether an object has a "null" constructor ' +
@@ -3562,6 +3582,7 @@ describe('hasConstructorOf', () => {
             );
         }
     );
+
     it('should detect whether an object is of a particular constructor', () => {
         const d = function () { /* Twin */ };
         const e = new /** @type {any} */ (function () { /* Twin */ })();
@@ -4041,6 +4062,14 @@ describe('getAtKeyPath', function () {
         const value = getByKeyPath({}, 'missing.child');
         assert(value === undefined);
     });
+
+    it('optionally limits traversal to own properties', function () {
+        const prototype = {inherited: {value: true}};
+        const obj = Object.create(prototype);
+
+        assert(getByKeyPath(obj, 'inherited.value') === true);
+        assert(getByKeyPath(obj, 'inherited.value', true) === undefined);
+    });
 });
 
 describe('setAtKeyPath', function () {
@@ -4094,5 +4123,14 @@ describe('setAtKeyPath', function () {
             caughtError
         ).message === 'Invalid property');
         assert(!polluted);
+    });
+
+    it('optionally rejects inherited intermediate properties', function () {
+        assert.throws(() => {
+            setAtKeyPath(
+                {}, 'constructor.prototype.typesonPolluted', true, true
+            );
+        }, TypeError, 'Invalid property');
+        assert(!Object.hasOwn(Object.prototype, 'typesonPolluted'));
     });
 });

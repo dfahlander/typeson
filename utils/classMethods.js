@@ -144,10 +144,11 @@ function unescapeKeyPathComponent (keyPathComponent) {
 /**
  * @param {any} obj
  * @param {string} keyPath
+ * @param {boolean} [ownOnly]
  * @throws {TypeError}
  * @returns {any}
  */
-function getByKeyPath (obj, keyPath) {
+function getByKeyPath (obj, keyPath, ownOnly) {
     if (keyPath === '') {
         return obj;
     }
@@ -155,17 +156,23 @@ function getByKeyPath (obj, keyPath) {
         throw new TypeError('Unexpected non-object type');
     }
     const period = keyPath.indexOf('.');
+    const key = unescapeKeyPathComponent(
+        period === -1 ? keyPath : keyPath.slice(0, period)
+    );
+    if (ownOnly && !hasOwn(obj, key)) {
+        return undefined;
+    }
     if (period !== -1) {
         const innerObj = /** @type {{[key: string]: any|undefined}} */ (obj)[
-            unescapeKeyPathComponent(keyPath.slice(0, period))
+            key
         ];
         return innerObj === undefined
             ? undefined
-            : getByKeyPath(innerObj, keyPath.slice(period + 1));
+            : getByKeyPath(innerObj, keyPath.slice(period + 1), ownOnly);
     }
     return /** @type {{[key: string]: any}} */ (
         obj
-    )[unescapeKeyPathComponent(keyPath)];
+    )[key];
 }
 
 /**
@@ -179,10 +186,11 @@ function getByKeyPath (obj, keyPath) {
  * @param {unknown} obj
  * @param {string} keyPath
  * @param {any} value
+ * @param {boolean} [ownOnly]
  * @throws {TypeError}
  * @returns {any}
  */
-function setAtKeyPath (obj, keyPath, value) {
+function setAtKeyPath (obj, keyPath, value, ownOnly) {
     if (keyPath === '') {
         return value;
     }
@@ -213,6 +221,10 @@ function setAtKeyPath (obj, keyPath, value) {
                 key
             ] = value;
             return obj;
+        }
+
+        if (ownOnly && !hasOwn(currentObj, key)) {
+            throw new TypeError('Invalid property');
         }
 
         currentObj = /** @type {{[key: string]: any}} */ (currentObj)[

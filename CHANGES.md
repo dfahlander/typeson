@@ -1,5 +1,11 @@
 # typeson CHANGES
 
+## 10.2.0
+
+- feat: add an optional `ownOnly` argument to `getByKeyPath()` and `setAtKeyPath()`
+- fix: enable own-only traversal for type revival and cyclic-reference metadata
+- fix: Crafted `#__proto__` and `#constructor` references no longer expose built-in objects
+
 ## 10.1.2
 
 - fix(security): avoid potential to set nested __proto__

@@ -1344,7 +1344,7 @@ class Typeson {
                         });
                     }
                     // console.log('obj', JSON.stringify(keypath), obj);
-                    let val = getByKeyPath(obj, keypath);
+                    let val = getByKeyPath(obj, keypath, true);
                     val = executeReviver(type, val);
 
                     if (hasConstructorOf(
@@ -1354,7 +1354,7 @@ class Typeson {
                             val
                         ).then((v) => {
                             const newVal = setAtKeyPath(
-                                obj, keypath, v
+                                obj, keypath, v, true
                             );
                             if (newVal === v) {
                                 obj = newVal;
@@ -1363,9 +1363,7 @@ class Typeson {
                         });
                     }
                     const newVal = setAtKeyPath(
-                        obj,
-                        keypath,
-                        val
+                        obj, keypath, val, true
                     );
                     if (newVal === val) {
                         obj = newVal;
@@ -1453,7 +1451,7 @@ class Typeson {
                     const hasTracked = hasOwn(keyPathValues, keyPath);
                     const val = hasTracked
                         ? keyPathValues[keyPath]
-                        : getByKeyPath(_target, keyPath);
+                        : getByKeyPath(_target, keyPath, true);
                     if (hasTracked || val !== undefined) {
                         setOwnEnumerable(__clone, k, val);
                     } else {
@@ -1471,7 +1469,7 @@ class Typeson {
                 const hasTracked = hasOwn(keyPathValues, referenceKeypath);
                 const ret = hasTracked
                     ? keyPathValues[referenceKeypath]
-                    : getByKeyPath(target, referenceKeypath);
+                    : getByKeyPath(target, referenceKeypath, true);
                 if (!hasTracked && ret === undefined) {
                     // Cyclic reference not yet available
                     keyPathResolutions.push([
