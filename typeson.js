@@ -1648,19 +1648,19 @@ class Typeson {
                     );
                 }
                 let spec = typeSpec[typeId];
-                const replacers = spec && typeof spec !== 'function' &&
-                    !Array.isArray(spec) && spec.testPlainObjects
-                    ? this.plainObjectReplacers
-                    : this.nonplainObjectReplacers;
-                const existingReplacer = replacers.filter(function (r) {
-                    return r.type === typeId;
+                [
+                    this.plainObjectReplacers,
+                    this.nonplainObjectReplacers
+                ].forEach((registeredReplacers) => {
+                    const index = registeredReplacers.findIndex((replacer) => {
+                        return replacer.type === typeId;
+                    });
+                    if (index !== -1) {
+                        registeredReplacers.splice(index, 1);
+                    }
                 });
-                if (existingReplacer.length) {
-                    // Remove existing spec and replace with this one.
-                    replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
-                    delete this.revivers[typeId];
-                    delete this.types[typeId];
-                }
+                delete this.revivers[typeId];
+                delete this.types[typeId];
                 if (typeof spec === 'function') {
                     // Support registering just a class without replacer/reviver
                     const Class = spec;

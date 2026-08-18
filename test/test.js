@@ -1649,6 +1649,42 @@ describe('Typeson', function () {
             );
         });
 
+        it('should replace a replacer in the other object category', () => {
+            const typeson = new Typeson().register({same: {
+                test (value) {
+                    return value instanceof Date;
+                },
+                replace () {
+                    return 'stale';
+                },
+                revive (value) {
+                    return value;
+                }
+            }});
+            typeson.register({same: {
+                testPlainObjects: true,
+                test (value) {
+                    return value.fresh === true;
+                },
+                replace () {
+                    return 'fresh';
+                },
+                revive (value) {
+                    return value;
+                }
+            }});
+
+            assert(
+                typeson.nonplainObjectReplacers.every(({type}) => {
+                    return type !== 'same';
+                })
+            );
+            assert(typeson.encapsulateSync(new Date()) instanceof Date);
+            assert(typeson.parseSync(/** @type {string} */ (
+                typeson.stringifySync({fresh: true})
+            )) === 'fresh');
+        });
+
         it('should allow removing previously registered replacer', () => {
             class Person {}
             const john = new Person();
