@@ -6,4 +6,7 @@ ignoredBuiltDependencies:
 
 minimumReleaseAgeExclude:
   - '@types/node@26.1.2'
-  - eslint-config-ash-nazg@41.0.0
+  - eslint-config-ash-nazg@41.0.0 || 42.5.0
+  - '@es-joy/jsdoccomment@0.95.1'
+  - eslint-plugin-jsdoc@64.2.1
+  - jsdoc-type-pratt-parser@9.1.2
