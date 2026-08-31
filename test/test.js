@@ -1034,7 +1034,7 @@ describe('Typeson', function () {
             }
         };
 
-        const typeson = new Typeson().register([map]);
+        const typeson = new Typeson({iterateSymbols: true}).register([map]);
 
         const a = {
             // eslint-disable-next-line camelcase -- Testing
@@ -1051,11 +1051,303 @@ describe('Typeson', function () {
             'Revives `Map` on class with Symbol.toStringTag'
         );
 
-        // Todo: Need to implement Symbol iteration
-        // assert(
-        //     back[Symbol.toStringTag] === 'a',
-        //     'Revives `Symbol.toStringTag`'
-        // );
+        assert(
+            back[Symbol.toStringTag] === 'a',
+            'Revives `Symbol.toStringTag`'
+        );
+    });
+
+    describe('Symbol keys', () => {
+        /**
+         * @type {import('../typeson.js').TypeSpecSet}
+         */
+        const DateType = {
+            Date: {
+                test (x) { return x instanceof Date; },
+                replace (d) { return d.getTime(); },
+                revive (n) { return new Date(n); }
+            }
+        };
+
+        it('does not iterate Symbol keys by default', () => {
+            const sym = Symbol('s');
+            const tson = new Typeson();
+            const back = tson.parseSync(tson.stringifySync({[sym]: 1, a: 2}));
+            assert(
+                !Object.getOwnPropertySymbols(back).includes(sym),
+                'Symbol key dropped without opt-in'
+            );
+            assert(back.a === 2, 'Ordinary keys unaffected');
+        });
+
+        it(
+            'round-trips registered, global and well-known Symbol keys ' +
+            'via the `iterateSymbols` option',
+            () => {
+                const local = Symbol('local');
+                const tson = new Typeson({
+                    symbols: {Local: local}, iterateSymbols: true
+                });
+
+                const input = {
+                    plain: 1,
+                    [local]: 'a',
+                    [Symbol.for('global')]: 'b',
+                    [Symbol.toStringTag]: 'Tag'
+                };
+                const back = tson.parseSync(tson.stringifySync(input));
+
+                assert(back.plain === 1, 'Ordinary key preserved');
+                assert(back[local] === 'a', 'Registered local Symbol key');
+                assert(
+                    back[Symbol.for('global')] === 'b',
+                    '`Symbol.for` key revived to the same global Symbol'
+                );
+                assert(
+                    back[Symbol.toStringTag] === 'Tag',
+                    'Well-known Symbol key revived by name'
+                );
+            }
+        );
+
+        it('can be enabled per type via `stateObj.iterateSymbols`', () => {
+            const local = Symbol('local');
+            const tson = new Typeson({symbols: {Local: local}}).register({
+                withSymbols: {
+                    testPlainObjects: true,
+                    test (x, stateObj) {
+                        if (Object.getOwnPropertySymbols(x).length) {
+                            stateObj.iterateSymbols = true;
+                            return true;
+                        }
+                        return false;
+                    },
+                    replace: (x) => ({...x}),
+                    revive: (x) => x
+                }
+            });
+
+            const other = {noSymbols: true};
+            const back = tson.parseSync(tson.stringifySync({
+                nested: {[local]: 'x'}, other
+            }));
+            assert(
+                back.nested[local] === 'x',
+                'Symbol key on the object the type matched'
+            );
+            assert(
+                !Object.getOwnPropertySymbols(back.other).length,
+                'Objects not matched by the type are left alone'
+            );
+        });
+
+        it('records a typed Symbol value in `$types` and revives it', () => {
+            const local = Symbol('local');
+            const tson = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            }).register(DateType);
+
+            const tson1 = tson.stringifySync({[local]: new Date(0)});
+            const parsed = JSON.parse(tson1);
+            assert(
+                parsed.$types["$symbolKeys.''.0.value"] === 'Date',
+                'Symbol value keypath is namespaced under `$symbolKeys`'
+            );
+
+            const back = tson.parseSync(tson1);
+            assert(
+                back[local] instanceof Date && back[local].getTime() === 0,
+                'Typed Symbol value revived to an instance'
+            );
+        });
+
+        it('drops a Symbol key whose value is `undefined`', () => {
+            const local = Symbol('local');
+            const tson = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            });
+            const back = tson.parseSync(tson.stringifySync({
+                [local]: undefined, kept: 1
+            }));
+            assert(
+                !Object.getOwnPropertySymbols(back).includes(local),
+                'Symbol key with `undefined` value is dropped, like a ' +
+                'plain key'
+            );
+            assert(back.kept === 1, 'Other keys preserved');
+        });
+
+        it('preserves a cyclic reference held under a Symbol key', () => {
+            const local = Symbol('local');
+            const tson = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            });
+
+            /** @type {{name: string, [key: symbol]: unknown}} */
+            const obj = {name: 'root'};
+            obj[local] = obj;
+            const back = tson.parseSync(tson.stringifySync(obj));
+            assert(back[local] === back, 'Cyclic Symbol value points at root');
+            assert(back.name === 'root', 'Ordinary key preserved');
+        });
+
+        it(
+            'skips a Symbol with no portable identity, or throws when ' +
+            '`throwOnUnregisteredSymbol` is set',
+            () => {
+                const orphan = Symbol('orphan');
+                const lenient = new Typeson({iterateSymbols: true});
+                const back = lenient.parseSync(
+                    lenient.stringifySync({[orphan]: 1, keep: 2})
+                );
+                assert(
+                    !Object.getOwnPropertySymbols(back).includes(orphan),
+                    'Unregistered Symbol key skipped'
+                );
+                assert(back.keep === 2, 'Other keys preserved');
+
+                const strict = new Typeson({
+                    iterateSymbols: true, throwOnUnregisteredSymbol: true
+                });
+                assert.throws(
+                    () => strict.stringifySync({[orphan]: 1}),
+                    TypeError
+                );
+            }
+        );
+
+        it('round-trips Symbol keys asynchronously', async () => {
+            const local = Symbol('local');
+            const tson = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            }).register({
+                Date: {
+                    test: (x) => x instanceof Date,
+                    replaceAsync: (d) => new TypesonPromise((resolve) => {
+                        resolve(d.getTime());
+                    }),
+                    reviveAsync: (n) => new TypesonPromise((resolve) => {
+                        resolve(new Date(n));
+                    })
+                }
+            });
+
+            const back = await tson.parseAsync(
+                await tson.stringifyAsync({q: 1, [local]: new Date(7)})
+            );
+            assert(back.q === 1, 'Ordinary key preserved');
+            assert(
+                back[local] instanceof Date && back[local].getTime() === 7,
+                'Async typed Symbol value revived'
+            );
+        });
+
+        it('round-trips Symbol keys on a non-plain root (array)', () => {
+            const local = Symbol('local');
+            const tson = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            });
+
+            const arr = [1, 2];
+            Object.defineProperty(arr, local, {
+                configurable: true, enumerable: true, value: 'x', writable: true
+            });
+            const back = tson.parseSync(tson.stringifySync(arr));
+            assert(back[local] === 'x', 'Symbol key on the array preserved');
+            assert(Array.isArray(back) && back[0] === 1 && back[1] === 2,
+                'Array data preserved');
+        });
+
+        it('emits an `endIterateSymbols` observer event', () => {
+            const local = Symbol('local');
+            let seen = false;
+            const tson = new Typeson({
+                symbols: {Local: local},
+                iterateSymbols: true,
+                encapsulateObserver (o) {
+                    if (o.endIterateSymbols) {
+                        seen = true;
+                    }
+                }
+            });
+            tson.encapsulateSync({[local]: 1});
+            assert(seen, '`endIterateSymbols` was observed');
+        });
+
+        it('throws on revival when a registered Symbol is unknown', () => {
+            const local = Symbol('local');
+            const writer = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            });
+            const tson = writer.stringifySync({[local]: 1});
+
+            // A reader that never registered the Symbol under that name
+            const reader = new Typeson({iterateSymbols: true});
+            assert.throws(
+                () => reader.parseSync(tson),
+                /Unregistered symbol: Local/u
+            );
+        });
+
+        it('rejects a non-symbol value in the `symbols` option', () => {
+            assert.throws(
+                // @ts-expect-error Intentional bad `symbols` entry for test
+                () => new Typeson({symbols: {Bad: 123}}),
+                TypeError
+            );
+        });
+
+        it('throws on a crafted unknown well-known Symbol identity', () => {
+            const reader = new Typeson({iterateSymbols: true});
+            assert.throws(
+                () => reader.parseSync(JSON.stringify({
+                    a: 1,
+                    $symbolKeys: {
+                        '': [{key: {wellKnown: 'nope'}, value: 1}]
+                    }
+                })),
+                /Unknown well-known Symbol: nope/u
+            );
+        });
+
+        it('honors an explicit descriptor in `$symbolKeys` metadata', () => {
+            // `descriptor` is a reserved extension point; encapsulation does
+            //   not emit it yet, but revival must respect one if present.
+            const reader = new Typeson({iterateSymbols: true});
+            const back = reader.parseSync(JSON.stringify({
+                a: 1,
+                $symbolKeys: {
+                    '': [{
+                        key: {for: 'ext'},
+                        value: 2,
+                        descriptor: {enumerable: false}
+                    }]
+                }
+            }));
+            const sym = Symbol.for('ext');
+            assert(back[sym] === 2, 'Value assigned under the Symbol key');
+            assert(
+                !Object.prototype.propertyIsEnumerable.call(back, sym),
+                '`descriptor.enumerable: false` was honored'
+            );
+        });
+
+        it('round-trips an object with a literal `$symbolKeys` key', () => {
+            const local = Symbol('local');
+            const tson = new Typeson({
+                symbols: {Local: local}, iterateSymbols: true
+            });
+
+            const back = tson.parseSync(tson.stringifySync({
+                $symbolKeys: 'literal', [local]: 'sym', z: 9
+            }));
+            assert(
+                back.$symbolKeys === 'literal',
+                'Literal `$symbolKeys` string key survives'
+            );
+            assert(back[local] === 'sym', 'Symbol key still revived');
+            assert(back.z === 9, 'Other keys preserved');
+        });
     });
 
     it('should throw upon attempt to parse type that is not registered', () => {

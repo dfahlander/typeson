@@ -7,7 +7,6 @@
     "checkJs": true,
     "noEmit": false,
     "noImplicitAny": true,
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,

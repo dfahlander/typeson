@@ -1,5 +1,21 @@
 # typeson CHANGES
 
+## 10.3.0
+
+- feat: preserve Symbol-keyed properties (issue #6). A type may set
+  `iterateSymbols: true` on its state object, or the `Typeson` constructor
+  may be given `iterateSymbols: true`, to iterate enumerable own
+  Symbol-keyed properties. `Symbol.for()` and well-known Symbols round-trip
+  automatically; local `Symbol()`s round-trip when both ends are constructed
+  with a matching `symbols` name map. Metadata is stored under a separate
+  `$symbolKeys` map (keyed by owner keypath) so `$types` and cyclic
+  references keep working; unrevivable Symbol keys are skipped unless
+  `throwOnUnregisteredSymbol` is set. Each `$symbolKeys` entry reserves an
+  optional `descriptor` object (`enumerable`/`writable`/`configurable`),
+  honored on revival, so property attributes can be added later without a
+  breaking format change.
+- feat: add `endIterateSymbols` encapsulate-observer event.
+
 ## 10.2.0
 
 - feat: add an optional `ownOnly` argument to `getByKeyPath()` and `setAtKeyPath()`

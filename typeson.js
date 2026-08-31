@@ -14,6 +14,8 @@
  * @property {boolean} [replaced]
  * @property {"object"|"array"} [iterateIn]
  * @property {boolean} [iterateUnsetNumeric]
+ * @property {boolean} [iterateSymbols] Iterate enumerable own Symbol-keyed
+ *   properties (see also the `iterateSymbols` option)
  * @property {boolean} [addLength]
  * @property {boolean} [ownKeys]
  */
@@ -127,6 +129,87 @@ function setOwnEnumerable (obj, key, value) {
     });
 }
 
+// Names of the well-known symbols (`Symbol.iterator`, `Symbol.toStringTag`,
+//   etc.); these have a portable identity across realms via their name.
+const wellKnownSymbolNames = /** @type {const} */ ([
+    'asyncIterator', 'hasInstance', 'isConcatSpreadable', 'iterator',
+    'match', 'matchAll', 'replace', 'search', 'species', 'split',
+    'toPrimitive', 'toStringTag', 'unscopables'
+]);
+
+/**
+ * @typedef {{for: string}|{wellKnown: string}|{registered: string}}
+ *   SymbolKeyIdentity
+ */
+
+/**
+ * Optional property-descriptor bits for a Symbol-keyed entry in the
+ * `$symbolKeys` map. Currently unused by encapsulation (only enumerable
+ * own Symbol keys are iterated and they are revived as plain data
+ * properties); reserved so that attributes such as `enumerable` can be
+ * added later without a breaking format change. When absent, an entry is
+ * revived as a configurable, writable, enumerable data property.
+ * @typedef {{
+ *   enumerable?: boolean,
+ *   writable?: boolean,
+ *   configurable?: boolean
+ * }} SymbolKeyDescriptor
+ */
+
+/**
+ * Describe a Symbol in a way that can be serialized and later revived to a
+ * Symbol with the same identity. Returns `null` for a plain `Symbol()` that
+ * was not registered (it has no portable identity).
+ * @param {symbol} sym
+ * @param {Map<symbol, string>} symbolsByValue
+ * @returns {SymbolKeyIdentity|null}
+ */
+function resolveSymbolIdentity (sym, symbolsByValue) {
+    const globalKey = Symbol.keyFor(sym);
+    if (globalKey !== undefined) {
+        return {for: globalKey};
+    }
+    const wellKnown = wellKnownSymbolNames.find((name) => {
+        return Symbol[name] === sym;
+    });
+    if (wellKnown) {
+        return {wellKnown};
+    }
+    const registered = symbolsByValue.get(sym);
+    if (registered !== undefined) {
+        return {registered};
+    }
+    return null;
+}
+
+/**
+ * Reverse of {@link resolveSymbolIdentity}.
+ * @param {SymbolKeyIdentity} identity
+ * @param {{[name: string]: symbol}} symbolsByName
+ * @throws {Error} If a registered identity names an unknown Symbol
+ * @returns {symbol}
+ */
+function resolveSymbolFromIdentity (identity, symbolsByName) {
+    if ('for' in identity) {
+        return Symbol.for(identity.for);
+    }
+    if ('wellKnown' in identity) {
+        const name = wellKnownSymbolNames.find((nm) => {
+            return nm === identity.wellKnown;
+        });
+        if (!name) {
+            throw new Error(
+                'Unknown well-known Symbol: ' + identity.wellKnown
+            );
+        }
+        return Symbol[name];
+    }
+    if (!hasOwn(symbolsByName, identity.registered)) {
+        throw new Error('Unregistered symbol: ' + identity.registered);
+    }
+    return symbolsByName[identity.registered];
+}
+
 /**
  * @typedef {object} PlainObjectType
  * @property {string} keypath
@@ -192,6 +275,12 @@ function nestedPathsFirst (a, b) {
  */
 
 /**
+ * @typedef {object} EndIterateSymbolsEvent
+ * @property {boolean} [endIterateSymbols]
+ * @property {boolean} [end]
+ */
+
+/**
  * @typedef {object} TypeDetectedEvent
  * @property {boolean} [typeDetected]
  */
@@ -215,7 +304,7 @@ function nestedPathsFirst (a, b) {
 
 /**
  * @typedef {KeyPathEvent & EndIterateInEvent & EndIterateOwnEvent &
- *   EndIterateUnsetNumericEvent &
+ *   EndIterateUnsetNumericEvent & EndIterateSymbolsEvent &
  *   TypeDetectedEvent & ReplacingEvent & {} & {
  *   replaced?: any
  * } & {
@@ -260,7 +349,7 @@ function nestedPathsFirst (a, b) {
 /**
  * @callback Observer
  * @param {KeyPathEvent|EndIterateInEvent|EndIterateOwnEvent|
- *   EndIterateUnsetNumericEvent|
+ *   EndIterateUnsetNumericEvent|EndIterateSymbolsEvent|
  *   TypeDetectedEvent|ReplacingEvent} [event]
  * @returns {void}
  */
@@ -279,6 +368,15 @@ function nestedPathsFirst (a, b) {
  *  `encapsulateAync`, `reviveSync`, `reviveAsync`
  * @property {number|boolean} [fallback] `true` sets to 0. Default is
  *  positive infinity. Used within `register`
+ * @property {{[name: string]: symbol}} [symbols] Map of names to local
+ *  `Symbol()` instances, so that Symbol-keyed properties using them can be
+ *  revived with the same identity. Both ends must supply the same map.
+ * @property {boolean} [iterateSymbols] Iterate enumerable own Symbol-keyed
+ *  properties of every object (a type may instead set `iterateSymbols` on
+ *  its state object to enable this only for its own instances).
+ * @property {boolean} [throwOnUnregisteredSymbol] Throw (rather than
+ *  silently skip) when a Symbol-keyed property uses a Symbol with no
+ *  portable identity (not global, not well-known, and not in `symbols`).
  * @property {EncapsulateObserver} [encapsulateObserver]
  * @property {EncapsulateErrorHandler} [encapsulateError]
  */
@@ -324,6 +422,31 @@ class Typeson {
 
         /** @type {TypeSpecSet} */
         this.types = {};
+
+        // Symbol-key identity maps, populated from the `symbols` option.
+        //   `symbolsByName` is used on revival to look a Symbol up by the
+        //   name it was registered under; `symbolsByValue` is used on
+        //   encapsulation to find the name for an encountered Symbol.
+
+        /** @type {{[name: string]: symbol}} */
+        this.symbolsByName = Object.create(null);
+
+        /** @type {Map<symbol, string>} */
+        this.symbolsByValue = new Map();
+
+        const symbolsOption = options?.symbols;
+        if (symbolsOption) {
+            Object.entries(symbolsOption).forEach(([name, sym]) => {
+                if (typeof sym !== 'symbol') {
+                    throw new TypeError(
+                        'Non-symbol value supplied for `symbols` entry: ' +
+                        name
+                    );
+                }
+                this.symbolsByName[name] = sym;
+                this.symbolsByValue.set(sym, name);
+            });
+        }
     }
 
     /**
@@ -518,6 +641,20 @@ class Typeson {
          * }}
          */
         const types = {},
+            /**
+             * Symbol-keyed properties encountered while `iterateSymbols` is
+             *   in effect, keyed by the (raw) keypath of the owning object;
+             *   each entry pairs a portable Symbol description with the
+             *   encapsulated value. Attached to the result as `$symbolKeys`.
+             * @type {{
+             *   [ownerKeypath: string]: {
+             *     key: SymbolKeyIdentity,
+             *     value?: unknown,
+             *     descriptor?: SymbolKeyDescriptor
+             *   }[]
+             * }}
+             */
+            symbolKeys = {},
             /** @type {object[]} */
             refObjs = [], // For checking cyclic references
             /** @type {string[]} */
@@ -546,28 +683,34 @@ class Typeson {
                 }
                 return getJSONType(_ret);
             }
-            if (typeNames.length) {
-                if (opts.returnTypeNames) {
-                    return [...new Set(typeNames)];
-                }
+            if (opts.returnTypeNames) {
+                return typeNames.length ? [...new Set(typeNames)] : false;
+            }
 
+            const hasSymbolKeys = Object.keys(symbolKeys).length > 0;
+
+            // An object that already carries its own `$types` or
+            //   `$symbolKeys` string key must be wrapped in `$` to avoid
+            //   ambiguity with our metadata (checked before we attach ours).
+            const ambiguous = isObject(_ret) &&
+                (hasOwn(_ret, '$types') || hasOwn(_ret, '$symbolKeys'));
+
+            if (hasSymbolKeys || typeNames.length) {
                 // Special if array (or a primitive) was serialized
                 //   because JSON would ignore custom `$types` prop on it
-                if (!_ret || !isPlainObject(_ret) ||
-                    // Also need to handle if this is an object with its
-                    //   own `$types` property (to avoid ambiguity)
-                    hasOwn(_ret, '$types')
-                ) {
+                if (ambiguous || !_ret || !isPlainObject(_ret)) {
+                    // The `$types` companion may be empty here when only
+                    //   Symbol keys were found; revival tolerates that.
                     _ret = {$: _ret, $types: {$: types}};
-                } else {
+                } else if (typeNames.length) {
                     _ret.$types = types;
                 }
+                if (hasSymbolKeys) {
+                    _ret.$symbolKeys = symbolKeys;
+                }
             // No special types
-            } else if (isObject(_ret) && hasOwn(_ret, '$types')) {
+            } else if (ambiguous) {
                 _ret = {$: _ret, $types: true};
-            }
-            if (opts.returnTypeNames) {
-                return false;
             }
             return _ret;
         };
@@ -709,7 +852,7 @@ class Typeson {
                 //    `@type {Observer}` here as doesn't see param is optional
                 /**
                  * @param {KeyPathEvent|EndIterateInEvent|EndIterateOwnEvent|
-                 *   EndIterateUnsetNumericEvent|
+                 *   EndIterateUnsetNumericEvent|EndIterateSymbolsEvent|
                  *   TypeDetectedEvent|ReplacingEvent} [_obj]
                  * @returns {void}
                  */
@@ -987,6 +1130,89 @@ class Typeson {
                 if (runObserver) {
                     runObserver({endIterateOwn: true, end: true});
                 }
+
+                // Iterate enumerable own Symbol-keyed properties when a type
+                //   (via its state object) or the `iterateSymbols` option
+                //   asks for it. Each such property is recorded in the
+                //   separate `symbolKeys` map (keyed by the owner's keypath)
+                //   with a portable description of the Symbol, and its value
+                //   is encapsulated at a real keypath under `$symbolKeys` so
+                //   `$types` and cyclic-reference handling apply unchanged.
+                if (_stateObj.iterateSymbols || opts.iterateSymbols) {
+                    Object.getOwnPropertySymbols(value).filter((sym) => {
+                        // With regular object keys, we don't iterate
+                        //   enumerable properties (e.g., by
+                        //   `Object.getOwnPropertyNames`) by default, so,
+                        //   for parity, we don't do so for symbols either.
+                        //   However, we make space for a `descriptor` if
+                        //    this is desired in the future. If we wanted one
+                        //    for regular keys, we'd need to add the likes of
+                        //    a `$descriptors` property keyed by keypath,
+                        //    parallel to $types
+                        return Object.prototype.propertyIsEnumerable.call(
+                            value, sym
+                        );
+                    }).forEach((sym) => {
+                        const identity = resolveSymbolIdentity(
+                            sym, this.symbolsByValue
+                        );
+                        if (!identity) {
+                            if (opts.throwOnUnregisteredSymbol) {
+                                throw new TypeError(
+                                    'Cannot serialize a Symbol-keyed ' +
+                                    'property whose Symbol has no portable ' +
+                                    'identity (not global, not well-known, ' +
+                                    'and not in the `symbols` option): ' +
+                                    String(sym)
+                                );
+                            }
+                            return;
+                        }
+                        const list = symbolKeys[keypath] ??= [];
+                        /**
+                         * @type {{
+                         *   key: SymbolKeyIdentity,
+                         *   value?: unknown,
+                         *   descriptor?: SymbolKeyDescriptor
+                         * }}
+                         */
+                        const entry = {key: identity};
+                        list.push(entry);
+                        const idx = list.length - 1;
+                        const kp = `$symbolKeys.${
+                            escapeKeyPathComponent(keypath)
+                        }.${String(idx)}.value`;
+                        const symbolValueHolder = {value: value[sym]};
+                        const ownKeysObj = {ownKeys: true};
+                        _adaptBuiltinStateObjectProperties(
+                            _stateObj,
+                            ownKeysObj,
+                            () => {
+                                const encapsulatedValue = getEncapsulatedValue(
+                                    kp, symbolValueHolder, 'value'
+                                );
+                                const val = encapsulatedValue &&
+                                    encapsulatedValue.value;
+                                if (hasConstructorOf(val, TypesonPromise)) {
+                                    promisesData.push([
+                                        kp, val, Boolean(_cyclic), _stateObj,
+                                        entry, 'value', _stateObj.type
+                                    ]);
+                                } else if (
+                                    encapsulatedValue && (
+                                        val !== undefined ||
+                                        'substitute' in encapsulatedValue
+                                    )
+                                ) {
+                                    setOwnEnumerable(entry, 'value', val);
+                                }
+                            }
+                        );
+                    });
+                    if (runObserver) {
+                        runObserver({endIterateSymbols: true, end: true});
+                    }
+                }
             }
             // Iterate array for non-own numeric properties (we can't
             //   replace the prior loop though as it iterates non-integer
@@ -1216,9 +1442,23 @@ class Typeson {
             return finishRevival(obj.$);
         }
 
-        // No type info added. Revival not needed.
+        // Symbol-keyed properties are recorded separately by `encapsulate`
+        //   (see the `$symbolKeys` map); when present, revival is needed
+        //   even if there is no `$types` map at all. When the result was
+        //   wrapped in `$`, the metadata rode on the wrapper (captured here
+        //   before any unwrap). `symbolMetaInTree` tracks whether the
+        //   metadata sits on the object `_revive` walks, in which case its
+        //   revived copy (with nested types/cyclic refs resolved) is used.
+        const symbolKeysMeta = obj.$symbolKeys;
+        let symbolMetaInTree = symbolKeysMeta !== undefined;
+
+        // No type info added. Revival not needed (unless Symbol keys were
+        //   recorded, in which case we still need to re-home them).
         if (!types || typeof types !== 'object' || Array.isArray(types)) {
-            return finishRevival(obj);
+            if (!symbolKeysMeta) {
+                return finishRevival(obj);
+            }
+            types = {};
         }
 
         /**
@@ -1242,6 +1482,18 @@ class Typeson {
             obj = obj.$;
             types = types.$;
             ignore$Types = false;
+            // The `$symbolKeys` metadata rode on the wrapper. Move it onto
+            //   the object `_revive` will actually walk so that its
+            //   `$symbolKeys...` keypaths resolve as normal — but never
+            //   clobber a genuine own `$symbolKeys` property (the reason
+            //   this object was wrapped in the first place).
+            symbolMetaInTree = false;
+            if (symbolKeysMeta !== undefined && isObject(obj) &&
+                !hasOwn(obj, '$symbolKeys')
+            ) {
+                obj.$symbolKeys = symbolKeysMeta;
+                symbolMetaInTree = true;
+            }
         }
 
         /**
@@ -1540,6 +1792,73 @@ class Typeson {
             return hasConstructorOf(retrn, Undefined) ? undefined : retrn;
         }
 
+        /**
+         * Re-home Symbol-keyed properties (recorded by `encapsulate` in the
+         * `$symbolKeys` map) onto their owning objects once the rest of the
+         * tree, including any nested types and cyclic references, has been
+         * revived; then drop the `$symbolKeys` scaffolding from `result`.
+         * Mutates `result` in place.
+         * @param {any} result
+         * @returns {void}
+         */
+        const reHomeSymbolKeys = (result) => {
+            /* c8 ignore next 3 -- Defensive; `result` is an object here */
+            if (!isObject(result)) {
+                return;
+            }
+            // When the metadata was walked as part of the tree, use its
+            //   revived copy (nested types and cyclic references resolved)
+            //   and remove the scaffolding afterwards; otherwise fall back
+            //   to the raw metadata (plain Symbol values only).
+            const meta = symbolMetaInTree
+                ? result.$symbolKeys
+                : symbolKeysMeta;
+            /* c8 ignore next 3 -- Defensive; only a typed root could drop it */
+            if (!meta) {
+                return;
+            }
+            Object.entries(meta).forEach(([ownerKeypath, entries]) => {
+                const owner = getByKeyPath(result, ownerKeypath, true);
+                /* c8 ignore next 3 -- Defensive; owner keypath resolves */
+                if (!isObject(owner)) {
+                    return;
+                }
+                /**
+                 * @type {{
+                 *   key: SymbolKeyIdentity,
+                 *   value?: unknown,
+                 *   descriptor?: SymbolKeyDescriptor
+                 * }[]}
+                 */
+                (entries).forEach((entry) => {
+                    if (!hasOwn(entry, 'value')) {
+                        return;
+                    }
+                    const sym = resolveSymbolFromIdentity(
+                        entry.key, this.symbolsByName
+                    );
+                    const value = checkUndefined(entry.value);
+                    if (entry.descriptor) {
+                        // Reserved extension point: honor an explicit
+                        //   descriptor (e.g. a future non-enumerable Symbol
+                        //   key) over the default data-property assignment.
+                        Object.defineProperty(owner, sym, {
+                            configurable: true,
+                            enumerable: true,
+                            writable: true,
+                            ...entry.descriptor,
+                            value
+                        });
+                    } else {
+                        owner[sym] = value;
+                    }
+                });
+            });
+            if (symbolMetaInTree) {
+                delete result.$symbolKeys;
+            }
+        };
+
         const possibleTypesonPromise = revivePlainObjects();
         let ret;
         if (hasConstructorOf(possibleTypesonPromise, TypesonPromise)) {
@@ -1561,6 +1880,23 @@ class Typeson {
                 }).then(([r]) => {
                     return r;
                 });
+            }
+        }
+
+        if (symbolKeysMeta) {
+            if (isThenable(ret)) {
+                ret = ret.then(
+                    /**
+                     * @param {unknown} r
+                     * @returns {unknown}
+                     */
+                    (r) => {
+                        reHomeSymbolKeys(r);
+                        return r;
+                    }
+                );
+            } else {
+                reHomeSymbolKeys(ret);
             }
         }
 

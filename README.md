@@ -42,6 +42,29 @@ const objs = [
 ];
 ```
 
+With Symbol iteration enabled (the `iterateSymbols` option or state-object
+property), Symbol-keyed properties are collected under a `$symbolKeys` map
+keyed by the owner's keypath, and typed values within it are still tracked
+in `$types`:
+
+```js
+// new Typeson({symbols: {S: mySymbol}, iterateSymbols: true})
+//   .stringify({a: 1, [mySymbol]: new Date(0), [Symbol.for('g')]: 2});
+// {"a":1,
+//  "$symbolKeys":{"":[
+//    {"key":{"registered":"S"},"value":0},
+//    {"key":{"for":"g"},"value":2}]},
+//  "$types":{"$symbolKeys.''.0.value":"Date"}}
+```
+
+Each `$symbolKeys` entry is `{key, value}`, where `key` is one of
+`{registered: name}`, `{for: globalKey}` or `{wellKnown: name}`. An optional
+`descriptor` object (`{enumerable?, writable?, configurable?}`) is reserved
+for future use: encapsulation does not emit it today (only enumerable own
+Symbol keys are iterated, and they revive as plain data properties), but
+`revive()` will apply one if present, so the attribute set can grow without a
+breaking format change.
+
 Or a cyclic array:
 
 ```js
@@ -252,13 +275,53 @@ Creates an instance of Typeson, on which you may configure additional types to s
     encapsulateObserver?: function, // Default no-op
     encapsulateError?: function, // Optional ignore/substitute handler
     sync?: true, // Don't force a promise response regardless of type
-    throwOnBadSyncType?: true // Default to throw when mismatch with `TypesonPromise` obtained for sync request or not returned for async
+    throwOnBadSyncType?: true, // Default to throw when mismatch with `TypesonPromise` obtained for sync request or not returned for async
+    symbols?: {[name: string]: symbol}, // Local Symbols to preserve as keys
+    iterateSymbols?: boolean, // Iterate Symbol-keyed properties of every object
+    throwOnUnregisteredSymbol?: boolean // Throw rather than skip an unrevivable Symbol key
 }
 ```
 
 ###### `cyclic`: boolean
 
 Whether or not to support cyclic references. Defaults to `true` unless explicitly set to `false`. If this property is `false`, the parsing algorithm becomes a little faster and in case a single object occurs on multiple properties, it will be duplicated in the output (as `JSON.stringify()` would do). If this property is `true`, several instances of same object will only occur once in the generated JSON and other references will just contain a pointer to the single reference.
+
+###### `symbols`: object
+
+A map of names to local `Symbol()` instances. `JSON.stringify()` drops
+Symbol-keyed properties; when symbol iteration is enabled (see `iterateSymbols`
+below and the `iterateSymbols` state-object property), Typeson records them
+separately under a `$symbolKeys` property on the root and restores them on `revive()`.
+
+Global registry Symbols (`Symbol.for()`) and well-known Symbols (`Symbol.iterator`,
+`Symbol.toStringTag`, etc.) have a portable identity and are handled
+automatically. A plain `Symbol()` does not, so to round-trip such a key both the
+serializing and the reviving `Typeson` must be constructed with the same
+`symbols` map:
+
+```js
+const mySymbol = Symbol('my symbol');
+const typeson = new Typeson({
+    symbols: {MySymbol: mySymbol},
+    iterateSymbols: true
+});
+const back = typeson.parse(typeson.stringify({[mySymbol]: 123}));
+console.log(back[mySymbol]); // 123
+```
+
+###### `iterateSymbols`: boolean
+
+When `true`, enumerable own Symbol-keyed properties of *every* object are
+iterated and preserved (see `symbols` above). Defaults to `false`. For modular
+control, a type may instead set `iterateSymbols: true` on its state object (see
+the `test`/`replace` `stateObj`) so that only its own instances are affected.
+
+###### `throwOnUnregisteredSymbol`: boolean
+
+By default a Symbol-keyed property whose Symbol has no portable identity (not a
+`Symbol.for()` value, not well-known, and not present in `symbols`) is silently
+skipped, just as functions and Symbol *values* are. Set this to `true` to throw a
+`TypeError` instead.
 
 ###### `encapsulateObserver`: object (see description)
 
@@ -287,7 +350,8 @@ The following properties are also present in particular cases:
 - `endIterateIn` - Will be `true` if finishing iteration of `in` properties.
 - `endIterateOwn` - Will be `true` if finishing iteration of "own" properties.
 - `endIterateUnsetNumeric` - Will be `true` if finishing iteration of unset numeric properties.
-- `end` - Convenience property that will be `true` if `endIterateIn`, `endIterateOwn`, or `endIterateUnsetNumeric` is `true`.
+- `endIterateSymbols` - Will be `true` if finishing iteration of Symbol-keyed properties.
+- `end` - Convenience property that will be `true` if `endIterateIn`, `endIterateOwn`, `endIterateUnsetNumeric`, or `endIterateSymbols` is `true`.
 
 ###### `encapsulateError`: callback (see description)
 
@@ -494,7 +558,7 @@ A class (constructor function) that would use default test, encapsulation and re
 - `revive`: Uses `Object.create()` to revive the correct type and copies all properties into it.
 - `testPlainObjects`: `false`: Tests non-plain objects only.
 
-###### `test` (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : boolean
+###### `test` (obj : any, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean, iterateSymbols: boolean}) : boolean
 
 Function that tests whether an instance is of your type and returns a truthy value if it is.
 
@@ -524,7 +588,19 @@ converted to `null` by a `stringify` call). Thus encapsulators have the
 ability to set `iterateUnsetNumeric: true` on their state object, but
 note that doing so will add a performance cost.
 
-###### `replace` (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : Object
+Enumerable own Symbol-keyed properties are also skipped by default (as
+`JSON.stringify()` skips them). An encapsulator may set
+`iterateSymbols: true` on its state object to have them preserved for its
+own instances (the constructor's `iterateSymbols` option does the same for
+every object). Such properties are written to a `$symbolKeys` map on the
+root rather than into the keypath-based `$types` map, and restored on
+`revive()`. Only Symbols with a portable identity are kept — `Symbol.for()`
+values, well-known Symbols such as `Symbol.toStringTag`, and local
+`Symbol()`s supplied to both ends via the constructor's `symbols` option;
+any other Symbol key is skipped (or throws, with
+`throwOnUnregisteredSymbol`).
+
+###### `replace` (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean, iterateSymbols: boolean}) : Object
 
 Function that maps your instance to a JSON-serializable object. Can also be called an
 `encapsulator`. For the `stateObj`, see `tester`. In a property context (for arrays
@@ -535,7 +611,7 @@ See the `tester` for a discussion of the `stateObj`.
 Note that replacement results will themselves be recursed for state changes
 and type detection.
 
-###### `replaceAsync` (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean}) : `TypesonPromise`
+###### `replaceAsync` (obj: YourType, stateObj : {ownKeys: boolean, iterateIn: ('array'|'object'), iterateUnsetNumeric: boolean, iterateSymbols: boolean}) : `TypesonPromise`
 
 Expected to return a `TypesonPromise` which resolves to the replaced value.
 See `replace`.
